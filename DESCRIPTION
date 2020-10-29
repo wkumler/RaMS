@@ -8,3 +8,4 @@ Description: R-based access to mass-spectrometry (MS) data
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Imports: data.table
