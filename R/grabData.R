@@ -1,6 +1,4 @@
 # Requires xml2, mzR, data.table
-library(data.table)
-
 
 #' Read an mzML file into a data.frame
 #'
