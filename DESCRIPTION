@@ -9,3 +9,4 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports: data.table, mzR, xml2
+RoxygenNote: 7.1.1
