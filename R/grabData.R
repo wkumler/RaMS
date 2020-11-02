@@ -109,54 +109,54 @@ grabMzmlData <- function(filename){
 }
 
 
-# filename <- "G:\\Shared drives\\Ingalls Lab\\Collaborative_Projects\\MESO-SCOPE\\Falkor\\HILIC_pos\\190715_Poo_TruePooFK180310_Full2.mzXML"
-# grabMzXmlData <- function(filename){
-#   xml_data <- xml2::read_xml(filename)
-#
-#   rt_xpath <- '//d1:scan'
-#   rt_nodes <- xml2::xml_find_all(xml_data, rt_xpath)
-#   rt_attrs <- xml2::xml_attr(rt_nodes, "retentionTime")
-#   rt_vals <- as.numeric(gsub("PT|S", "", rt_attrs))
-#
-#   compr_xpath <- '//d1:peaks'
-#   compr_type <- xml2::xml_attr(xml2::xml_find_first(xml_data, compr_xpath),
-#                                "compressionType")
-#   compr <- switch(compr_type,
-#                   `zlib compression`="gzip",
-#                   `none`="none")
-#
-#   bit_xpath <- '//d1:peaks'
-#   bit_type <- xml2::xml_attr(xml2::xml_find_first(xml_data, bit_xpath), "precision")
-#   precision <- as.numeric(bit_type)/8
-#
-#   xpath <- '//d1:peaks'
-#   vals <- xml2::xml_text(xml2::xml_find_all(xml_data, xpath))
-#   vals <- lapply(vals, function(binary){
-#     decoded_binary <- base64enc::base64decode(binary)
-#     raw_binary <- as.raw(decoded_binary)
-#     decomp_binary <- memDecompress(raw_binary, type = compr)
-#     final_binary <- readBin(decomp_binary, what = "double",
-#                             n=length(decomp_binary)*2/precision,
-#                             size = precision)
-#   })
-#
-#   int_bit_xpath <- '//d1:cvParam[@accession="MS:1000521"]'
-#   int_bit_type <- xml2::xml_attr(xml2::xml_find_first(xml_data, int_bit_xpath), "name")
-#   int_precision <- sub(int_bit_type, pattern = "-bit float", replacement = "")
-#   int_precision <- as.numeric(int_precision)/8
-#
-#   int_xpath <- paste0('//d1:spectrum/d1:binaryDataArrayList',
-#                       '/d1:binaryDataArray[2]/d1:binary')
-#   int_vals <- xml2::xml_text(xml2::xml_find_all(xml_data, int_xpath))
-#   int_vals <- lapply(int_vals, function(binary){
-#     decoded_binary <- base64decode(binary)
-#     raw_binary <- as.raw(decoded_binary)
-#     decomp_binary <- memDecompress(raw_binary, type = compr)
-#     final_binary <- readBin(decomp_binary, what = "double",
-#                             n=length(decomp_binary)/int_precision,
-#                             size = int_precision)
-#   })
-#
-#   data.frame(rt=rep(rt_vals, sapply(mz_vals, length)),
-#              mz=unlist(mz_vals), int=unlist(int_vals))
-# }
+filename <- "G:\\Shared drives\\Ingalls Lab\\Collaborative_Projects\\MESO-SCOPE\\Falkor\\HILIC_pos\\190715_Poo_TruePooFK180310_Full2.mzXML"
+grabMzXmlData <- function(filename){
+  xml_data <- xml2::read_xml(filename)
+
+  rt_xpath <- '//d1:scan'
+  rt_nodes <- xml2::xml_find_all(xml_data, rt_xpath)
+  rt_attrs <- xml2::xml_attr(rt_nodes, "retentionTime")
+  rt_vals <- as.numeric(gsub("PT|S", "", rt_attrs))
+
+  compr_xpath <- '//d1:peaks'
+  compr_type <- xml2::xml_attr(xml2::xml_find_first(xml_data, compr_xpath),
+                               "compressionType")
+  compr <- switch(compr_type,
+                  `zlib compression`="gzip",
+                  `none`="none")
+
+  bit_xpath <- '//d1:peaks'
+  bit_type <- xml2::xml_attr(xml2::xml_find_first(xml_data, bit_xpath), "precision")
+  precision <- as.numeric(bit_type)/8
+
+  xpath <- '//d1:peaks'
+  vals <- xml2::xml_text(xml2::xml_find_all(xml_data, xpath))
+  vals <- lapply(vals, function(binary){
+    decoded_binary <- base64enc::base64decode(binary)
+    raw_binary <- as.raw(decoded_binary)
+    decomp_binary <- memDecompress(raw_binary, type = compr)
+    final_binary <- readBin(decomp_binary, what = "double",
+                            n=length(decomp_binary)*2/precision,
+                            size = precision)
+  })
+
+  int_bit_xpath <- '//d1:cvParam[@accession="MS:1000521"]'
+  int_bit_type <- xml2::xml_attr(xml2::xml_find_first(xml_data, int_bit_xpath), "name")
+  int_precision <- sub(int_bit_type, pattern = "-bit float", replacement = "")
+  int_precision <- as.numeric(int_precision)/8
+
+  int_xpath <- paste0('//d1:spectrum/d1:binaryDataArrayList',
+                      '/d1:binaryDataArray[2]/d1:binary')
+  int_vals <- xml2::xml_text(xml2::xml_find_all(xml_data, int_xpath))
+  int_vals <- lapply(int_vals, function(binary){
+    decoded_binary <- base64decode(binary)
+    raw_binary <- as.raw(decoded_binary)
+    decomp_binary <- memDecompress(raw_binary, type = compr)
+    final_binary <- readBin(decomp_binary, what = "double",
+                            n=length(decomp_binary)/int_precision,
+                            size = int_precision)
+  })
+
+  data.frame(rt=rep(rt_vals, sapply(mz_vals, length)),
+             mz=unlist(mz_vals), int=unlist(int_vals))
+}
