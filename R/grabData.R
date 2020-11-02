@@ -59,7 +59,7 @@ grabMzxmlBPC <- function(filename, TIC=FALSE){
 
   scan_nodes <- xml2::xml_find_all(mz_xml, '//d1:scan')
   rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
-  rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
+  rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))/60
 
   int_attr <- ifelse(TIC, "totIonCurrent", "basePeakIntensity")
   int_vals <- as.numeric(xml2::xml_attr(scan_nodes, int_attr))
@@ -192,7 +192,8 @@ grabMzxmlData <- function(filename){
                             size = precision, endian = endi_enc)
     matrix(final_binary, ncol = 2, byrow = TRUE)
   })
-  output <- as.data.frame(do.call(mapply(cbind, rt_vals, vals), what = "rbind"))
+  add_rts <- mapply(cbind, rt_vals, vals)
+  output <- as.data.frame(do.call(add_rts, what = "rbind")%*%diag(c(1/60, 1, 1)))
   names(output) <- c("rt", "mz", "int")
   output
 }
