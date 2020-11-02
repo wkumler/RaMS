@@ -3,7 +3,7 @@
 #' @importFrom base64enc base64decode
 NULL
 
-#' Grab the BPC or TIC for a given file
+#' Grab the BPC or TIC for a given mzML file
 #'
 #' @param filename The name of the mzML file to be read.
 #' @param TIC Should the BPC or TIC be read? If TIC=TRUE,
@@ -31,6 +31,39 @@ grabMzmlBPC <- function(filename, TIC=FALSE){
   int_xpath_full <- paste0('//d1:cvParam[@name="', int_xpath, '"]')
   int_nodes <- xml2::xml_find_all(mz_xml, xpath = int_xpath_full)
   int_vals <- as.numeric(xml2::xml_attr(int_nodes, "value"))
+  return(data.frame(rt=rt_vals, int=int_vals))
+}
+
+
+
+#' Grab the BPC or TIC for a given mzXML file
+#'
+#' @param filename The name of the mzXML file to be read.
+#' @param TIC Should the BPC or TIC be read? If TIC=TRUE,
+#' the total ion current (TIC)
+#' for each retention time is read in. Otherwise, the BPC
+#' (base peak chromatogram) is read for each retention time, corresponding
+#' to the *maximum* intensity for each scan.
+#'
+#' @return A data.frame object with columns for retention time (rt) in minutes and
+#' and intensity (int) corresponding to the TIC or BPC for a given file.
+#'
+#' @export
+#'
+#' @examples
+#' mzXML_filename <- system.file("extdata", "190715_Poo_TruePooFK180310_Full2.mzXML", package = "RaMS")
+#' grabMzxmlBPC(mzXML_filename)
+#' grabMzxmlBPC(mzXML_filename, TIC=TRUE)
+grabMzxmlBPC <- function(filename, TIC=FALSE){
+  mz_xml <- xml2::read_xml(filename)
+
+  scan_nodes <- xml2::xml_find_all(mz_xml, '//d1:scan')
+  rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
+  rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
+
+  int_attr <- ifelse(TIC, "totIonCurrent", "basePeakIntensity")
+  int_vals <- as.numeric(xml2::xml_attr(scan_nodes, int_attr))
+
   return(data.frame(rt=rt_vals, int=int_vals))
 }
 
@@ -105,6 +138,8 @@ grabMzmlData <- function(filename){
   data.frame(rt=rep(rt_vals, sapply(mz_vals, length)),
              mz=unlist(mz_vals), int=unlist(int_vals))
 }
+
+
 
 #' Read an mzXML file into a data.frame
 #'
