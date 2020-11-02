@@ -48,9 +48,6 @@ grabSingleFileBPC <- function(filename, TIC=FALSE){
 #' @return A data.frame object with columns for retention time (rt) in minutes,
 #' m/z (mz), and intensity (int).
 #'
-#' @import xml2
-#' @importFrom base64enc base64decode
-#'
 #' @export
 #'
 #' @examples
@@ -108,8 +105,25 @@ grabMzmlData <- function(filename){
              mz=unlist(mz_vals), int=unlist(int_vals))
 }
 
-
-filename <- "G:\\Shared drives\\Ingalls Lab\\Collaborative_Projects\\MESO-SCOPE\\Falkor\\HILIC_pos\\190715_Poo_TruePooFK180310_Full2.mzXML"
+#' Read an mzXML file into a data.frame
+#'
+#' @details This function reads an mzXML file into R's working memory. mzXML files
+#' are fundamentally XML documents, which allows rapid access to the data by
+#' parsing the XML. The R package `xml2::` is used for this purpose here.
+#' Retention time information can be read directly, while *m/z* and intensity
+#' information must be decoded from binary. To read data from the mzML format
+#' instead, check out grabMzmlData.
+#'
+#' @param filename The name of the mzXML file to be read.
+#'
+#' @return A data.frame object with columns for retention time (rt) in minutes,
+#' m/z (mz), and intensity (int).
+#'
+#' @export
+#'
+#' @examples
+#' mzXML_filename <- system.file("extdata", "180205_Poo_TruePoo_Full2.mzXML", package = "RaMS")
+#' grabMzmlData(mzXML_filename)
 grabMzXmlData <- function(filename){
   xml_data <- xml2::read_xml(filename)
 
@@ -146,3 +160,4 @@ grabMzXmlData <- function(filename){
   names(output) <- c("rt", "mz", "int")
   output
 }
+
