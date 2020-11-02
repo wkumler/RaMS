@@ -7,7 +7,7 @@
 grabSingleFileBPC(filename, TIC = FALSE)
 }
 \arguments{
-\item{filename}{The name of the mzML file to be read}
+\item{filename}{The name of the mzML file to be read.}
 
 \item{TIC}{Should the BPC or TIC be read? If TIC=TRUE,
 the total ion current (TIC)
@@ -16,14 +16,14 @@ for each retention time is read in. Otherwise, the BPC
 to the *maximum* intensity for each scan.}
 }
 \value{
-A data.frame object with columns for retention time (rt) and
-and intensity (int) corresponding to the
+A data.frame object with columns for retention time (rt) in minutes and
+and intensity (int) corresponding to the TIC or BPC for a given file.
 }
 \description{
 Grab the BPC or TIC for a given file
 }
 \examples{
-mzML_filename <- "data/180205_Poo_TruePoo_Full2.mzML"
+mzML_filename <- system.file("extdata", "180205_Poo_TruePoo_Full2.mzML", package = "RaMS")
 grabSingleFileBPC(mzML_filename)
 grabSingleFileBPC(mzML_filename, TIC=TRUE)
 }

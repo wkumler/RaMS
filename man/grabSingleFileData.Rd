@@ -7,16 +7,22 @@
 grabSingleFileData(filename)
 }
 \arguments{
-\item{filename}{The name of the mzML file to be read}
+\item{filename}{The name of the mzML file to be read.}
 }
 \value{
-A data.frame object with columns for retention time (rt), m/z (mz),
-and intensity (int)
+A data.frame object with columns for retention time (rt) in minutes,
+m/z (mz), and intensity (int).
 }
 \description{
 Read an mzML file into a data.frame
 }
+\details{
+This function reads an mzML file into R's working memory. mzML files
+are fundamentally XML documents, which allows rapid access to the data by
+parsing the XML. The R package `xml2::` is used for this purpose here.
+Retention time information can be read directly from the
+}
 \examples{
-mzML_filename <- "data/180205_Poo_TruePoo_Full2.mzML"
+mzML_filename <- system.file("extdata", "180205_Poo_TruePoo_Full2.mzML", package = "RaMS")
 grabSingleFileData(mzML_filename)
 }
