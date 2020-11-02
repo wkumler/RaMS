@@ -1,6 +1,7 @@
+
 #' @import xml2
 #' @importFrom base64enc base64decode
-
+NULL
 
 #' Grab the BPC or TIC for a given file
 #'
@@ -17,10 +18,10 @@
 #' @export
 #'
 #' @examples
-#' mzML_filename <- system.file("extdata", "180205_Poo_TruePoo_Full2.mzML", package = "RaMS")
-#' grabSingleFileBPC(mzML_filename)
-#' grabSingleFileBPC(mzML_filename, TIC=TRUE)
-grabSingleFileBPC <- function(filename, TIC=FALSE){
+#' mzML_filename <- system.file("extdata", "190715_Poo_TruePooFK180310_Full2.mzML", package = "RaMS")
+#' grabMzmlBPC(mzML_filename)
+#' grabMzmlBPC(mzML_filename, TIC=TRUE)
+grabMzmlBPC <- function(filename, TIC=FALSE){
   mz_xml <- xml2::read_xml(filename)
 
   rt_nodes <- xml2::xml_find_all(mz_xml, '//d1:cvParam[@name="scan start time"]')
@@ -51,7 +52,7 @@ grabSingleFileBPC <- function(filename, TIC=FALSE){
 #' @export
 #'
 #' @examples
-#' mzML_filename <- system.file("extdata", "180205_Poo_TruePoo_Full2.mzML", package = "RaMS")
+#' mzML_filename <- system.file("extdata", "190715_Poo_TruePooFK180310_Full2.mzML", package = "RaMS")
 #' grabMzmlData(mzML_filename)
 grabMzmlData <- function(filename){
   xml_data <- xml2::read_xml(filename)
@@ -122,9 +123,9 @@ grabMzmlData <- function(filename){
 #' @export
 #'
 #' @examples
-#' mzXML_filename <- system.file("extdata", "180205_Poo_TruePoo_Full2.mzXML", package = "RaMS")
-#' grabMzmlData(mzXML_filename)
-grabMzXmlData <- function(filename){
+#' mzXML_filename <- system.file("extdata", "190715_Poo_TruePooFK180310_Full2.mzXML", package = "RaMS")
+#' grabMzxmlData(mzXML_filename)
+grabMzxmlData <- function(filename){
   xml_data <- xml2::read_xml(filename)
 
   rt_xpath <- '//d1:scan'

@@ -1,15 +1,16 @@
 test_that("file can be read", {
-  mzML_data <- grabSingleFileData(mzML_filename)
+  mzML_data <- grabMzmlData(mzML_filename)
+  expect_s3_class(mzML_data, class = "data.frame")
   expect_identical(names(mzML_data), c("rt", "mz", "int"))
   expect_gt(nrow(mzML_data), 0)
 })
 
 test_that("BPC can be read", {
-  BPC <- grabSingleFileBPC(mzML_filename)
+  BPC <- grabMzmlBPC(mzML_filename)
   expect_identical(names(BPC), c("rt", "int"))
   expect_gt(nrow(BPC), 0)
 
-  TIC <- grabSingleFileBPC(mzML_filename, TIC = TRUE)
+  TIC <- grabMzmlBPC(mzML_filename, TIC = TRUE)
   expect_identical(names(TIC), c("rt", "int"))
   expect_gt(nrow(TIC), 0)
 
@@ -32,7 +33,7 @@ test_that("new matches previous", {
   }
   old_mzML_data <- old_grabData_fun(mzML_filename)
   old_mzML_data$rt <- old_mzML_data$rt/60
-  mzML_data <- grabSingleFileData(mzML_filename)
+  mzML_data <- grabMzmlData(mzML_filename)
 
   expect_equal(old_mzML_data, mzML_data)
 })
