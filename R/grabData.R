@@ -94,17 +94,10 @@ grabMzmlData <- function(filename){
   rt_nodes <- xml2::xml_find_all(xml_data, rt_xpath)
   rt_vals <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
 
-  compr_xpath <- '//d1:cvParam[@accession="MS:1000574"]'
-
-  compr_type <- xml2::xml_attr(xml2::xml_find_first(xml_data, compr_xpath), "name")
-  compr <- switch(compr_type,
-                  `zlib compression`="gzip",
-                  `none`="none")
-
-  mz_bit_xpath <- '//d1:cvParam[@accession="MS:1000523"]'
-  mz_bit_type <- xml2::xml_attr(xml2::xml_find_first(xml_data, mz_bit_xpath), "name")
-  mz_precision <- sub(mz_bit_type, pattern = "-bit float", replacement = "")
-  mz_precision <- as.numeric(mz_precision)/8
+  #SHOULD PROB BE COMBINED INTO SINGLE "GRAB FILE METADATA" FUNCTION
+  compr <- getCompression(xml_data)
+  mz_precision <- getMzPrecision(xml_data)
+  int_precision <- getIntPrecision(xml_data)
 
   mz_xpath <- paste0('//d1:spectrum/d1:binaryDataArrayList',
                      '/d1:binaryDataArray[1]/d1:binary')
@@ -117,11 +110,6 @@ grabMzmlData <- function(filename){
                               n=length(decomp_binary)/mz_precision,
                               size = mz_precision)
     })
-
-  int_bit_xpath <- '//d1:cvParam[@accession="MS:1000521"]'
-  int_bit_type <- xml2::xml_attr(xml2::xml_find_first(xml_data, int_bit_xpath), "name")
-  int_precision <- sub(int_bit_type, pattern = "-bit float", replacement = "")
-  int_precision <- as.numeric(int_precision)/8
 
   int_xpath <- paste0('//d1:spectrum/d1:binaryDataArrayList',
                       '/d1:binaryDataArray[2]/d1:binary')
@@ -170,6 +158,7 @@ grabMzxmlData <- function(filename){
 
   peak_metadata <- xml2::xml_find_first(xml_data, '//d1:peaks')
 
+  #SHOULD BE UPDATED WITH HELPER FUNCTIONS getMzPrecision etc.
   compr_type <- xml2::xml_attr(peak_metadata, "compressionType")
   compr <- switch(compr_type,
                   `zlib compression`="gzip",
@@ -196,5 +185,27 @@ grabMzxmlData <- function(filename){
   output <- as.data.frame(do.call(add_rts, what = "rbind")%*%diag(c(1/60, 1, 1)))
   names(output) <- c("rt", "mz", "int")
   output
+}
+
+getMzPrecision <- function(xml_data){
+  mz_precision_xpath <- '//d1:cvParam[@accession="MS:1000523"]'
+  mz_bit_type <- xml_attr(xml_find_first(xml_data, mz_precision_xpath), "name")
+  mz_precision <- sub(mz_bit_type, pattern = "-bit float", replacement = "")
+  mz_precision <- as.numeric(mz_precision)/8
+}
+
+getCompression <- function(xml_data){
+  compr_xpath <- '//d1:cvParam[@accession="MS:1000574"]'
+  compr_type <- xml2::xml_attr(xml2::xml_find_first(xml_data, compr_xpath), "name")
+  compr <- switch(compr_type,
+                  `zlib compression`="gzip",
+                  `none`="none")
+}
+
+getIntPrecision <- function(xml_data){
+  int_bit_xpath <- '//d1:cvParam[@accession="MS:1000521"]'
+  int_bit_type <- xml2::xml_attr(xml2::xml_find_first(xml_data, int_bit_xpath), "name")
+  int_precision <- sub(int_bit_type, pattern = "-bit float", replacement = "")
+  int_precision <- as.numeric(int_precision)/8
 }
 
