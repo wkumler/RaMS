@@ -107,18 +107,55 @@ grabMzmlMS2 <- function(filename){
   mz_vals <- grabSpectraMz(ms2_nodes, file_metadata)
   int_vals <- grabSpectraInt(ms2_nodes, file_metadata)
 
-  data.frame(rt=rep(rt_vals, sapply(mz_vals, length)),
+  data.table(rt=rep(rt_vals, sapply(mz_vals, length)),
              premz=rep(premz_vals, sapply(mz_vals, length)),
              fragmz=unlist(mz_vals), int=unlist(int_vals))
+}
+
+
+#' Simple wrapper around grabMzmlData to extract a specific mass across multiple files
+#'
+#' @details This function reads an mzML file's *m/z*, retention time, and intensity
+#' data into R using `grabMzmlData` and extracts a mass slice according to the user-
+#' provided *m/z* and ppm. It is vectorized via `sapply` across all the files in
+#' the `filenames` vector.
+#'
+#' @param mass The *m/z* of the compound of interest
+#' @param ppm The instrument's parts-per-million accuracy
+#' @param filenames A vector of complete paths to the mzML files to be read, i.e.
+#' those produced by system.file() or list.files(full.names=TRUE)
+#'
+#' @return A data.frame object with columns for retention time (rt) in minutes,
+#' *m/z*, intensity (int), and filename.
+#'
+#' @export
+#'
+#' @examples
+#' msdata_1 <- system.file("proteomics", "MS3TMT10_01022016_32917-33481.mzML.gz", package = "msdata")
+#' msdata_2 <- system.file("proteomics", "MS3TMT11.mzML", package = "msdata")
+#' grabMzmlEIC(mass=444.22, ppm=50, filenames=c(msdata_1, msdata_2))
+grabMzmlEIC <- function(mass, ppm, filenames){
+  if(any(!grepl("\\.mzML|\\.mzML.gz$", filenames))){
+    stop("This function is currently only has support for mzML files")
+  }
+  raw_eics <- sapply(filenames, function(filename){
+    all_data <- grabMzmlData(filename)
+    all_data[mz%between%pmppm(mass, ppm = ppm)]
+  }, simplify = FALSE)
+  clean_filenames <- sub(pattern = "\\.mzML.*$", replacement = "", basename(filenames))
+  filenamed <- mapply(FUN = cbind, raw_eics, clean_filenames, SIMPLIFY = FALSE)
+  out_eic <- do.call(what=rbind, filenamed)
+  names(out_eic) <- c("rt", "mz", "int", "filename")
+  return(out_eic)
 }
 
 
 
 #' Helper function to extract mzML file metadata
 #'
-#' @param xml_data mzML data parsed by xml2
+#' @param xml_data mzML data as parsed by xml2
 #'
-#' @return A list of values used by other parsing functions, such as
+#' @return A list of values used by other parsing functions, currently
 #' compression, mz_precision, int_precision
 #'
 #' @export
