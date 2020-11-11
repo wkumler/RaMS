@@ -1,5 +1,6 @@
 
 #' @import xml2
+#' @import data.table
 #' @importFrom base64enc base64decode
 NULL
 
@@ -34,7 +35,7 @@ grabMzmlBPC <- function(filename, TIC=FALSE){
   int_xpath_full <- paste0('d1:cvParam[@name="', int_xpath, '"]')
   int_nodes <- xml2::xml_find_all(ms1_nodes, xpath = int_xpath_full)
   int_vals <- as.numeric(xml2::xml_attr(int_nodes, "value"))
-  return(data.frame(rt=rt_vals, int=int_vals))
+  return(data.table(rt=rt_vals, int=int_vals))
 }
 
 
@@ -69,7 +70,7 @@ grabMzmlData <- function(filename){
   mz_vals <- grabSpectraMz(ms1_nodes, file_metadata)
   int_vals <- grabSpectraInt(ms1_nodes, file_metadata)
 
-  data.frame(rt=rep(rt_vals, sapply(mz_vals, length)),
+  data.table(rt=rep(rt_vals, sapply(mz_vals, length)),
              mz=unlist(mz_vals), int=unlist(int_vals))
 }
 
