@@ -46,19 +46,3 @@ test_that("new matches MSnbase", {
 #
 #   expect_equal(old_mzML_data, mzML_data)
 # })
-
-# test_that("mzML matches mzXML", {
-#   mzML_data <- grabMzmlData(mzML_filename)
-#   mzXML_data <- grabMzxmlData(mzXML_filename)
-#   all.equal(mzML_data, mzXML_data)
-#
-#   mzML_BPC <- grabMzmlBPC(mzML_filename)
-#   mzXML_BPC <- grabMzxmlBPC(mzXML_filename)
-#   all.equal(mzML_BPC$rt, mzXML_BPC$rt, tolerance = 1e-3)
-#   all.equal(mzML_BPC$int, mzXML_BPC$int, tolerance = 1)
-#
-#   mzML_TIC <- grabMzmlBPC(mzML_filename, TIC = TRUE)
-#   mzXML_TIC <- grabMzxmlBPC(mzXML_filename, TIC = TRUE)
-#   all.equal(mzML_TIC$rt, mzXML_TIC$rt, tolerance = 1e-3)
-#   all.equal(mzML_TIC$int, mzXML_TIC$int, tolerance = 1)
-# })

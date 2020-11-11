@@ -2,6 +2,7 @@
 
 export(grabMzmlBPC)
 export(grabMzmlData)
+export(grabMzmlMS2)
 export(grabMzmlMetadata)
 export(grabMzxmlBPC)
 export(grabMzxmlData)
