@@ -66,9 +66,7 @@ grabMzmlData <- function(filename){
   )
 
   rt_vals <- grabSpectraRt(ms1_nodes)
-
   mz_vals <- grabSpectraMz(ms1_nodes, file_metadata)
-
   int_vals <- grabSpectraInt(ms1_nodes, file_metadata)
 
   data.frame(rt=rep(rt_vals, sapply(mz_vals, length)),

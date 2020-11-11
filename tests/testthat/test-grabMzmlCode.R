@@ -18,24 +18,19 @@ test_that("BPC can be read", {
   expect_true(all(TIC$int>=BPC$int))
 })
 
-test_that("new matches previous", {
-  old_grabData_fun <- function(filename){
-    msdata <- mzR:::openMSfile(filename)
-    fullhd <- mzR::header(msdata)
-    spectra_list <- lapply(seq_len(nrow(fullhd)), function(x){
-      given_peaks <- mzR::peaks(msdata, x)
-      rtime <- fullhd[x, "retentionTime"]
-      return(cbind(rtime, given_peaks))
-    })
-    all_data <- `names<-`(as.data.frame(do.call(rbind, spectra_list)),
-                          c("rt", "mz", "int"))
-    return(all_data)
-  }
-  old_mzML_data <- old_grabData_fun(mzML_filename)
-  old_mzML_data$rt <- old_mzML_data$rt/60
+test_that("new matches MSnbase", {
+  MSnExp <- readMSData(mzML_filename, msLevel. = 1)
+  parsed_spectra <- lapply(as.list(MSnExp@assayData), function(spectrum){
+    data.frame(rt=spectrum@rt, mz=spectrum@mz, int=spectrum@intensity)
+  })
+  all_df <- do.call(rbind, parsed_spectra)
+  all_df <- all_df[order(all_df$rt),]
+  all_df$rt <- all_df$rt/60
+  rownames(all_df) <- NULL
+
   mzML_data <- grabMzmlData(mzML_filename)
 
-  expect_equal(old_mzML_data, mzML_data)
+  expect_equal(all_df, mzML_data)
 })
 
 # Except it doesn't - the sum of the individual intensities is less than the
@@ -52,18 +47,18 @@ test_that("new matches previous", {
 #   expect_equal(old_mzML_data, mzML_data)
 # })
 
-test_that("mzML matches mzXML", {
-  mzML_data <- grabMzmlData(mzML_filename)
-  mzXML_data <- grabMzxmlData(mzXML_filename)
-  all.equal(mzML_data, mzXML_data)
-
-  mzML_BPC <- grabMzmlBPC(mzML_filename)
-  mzXML_BPC <- grabMzxmlBPC(mzXML_filename)
-  all.equal(mzML_BPC$rt, mzXML_BPC$rt, tolerance = 1e-3)
-  all.equal(mzML_BPC$int, mzXML_BPC$int, tolerance = 1)
-
-  mzML_TIC <- grabMzmlBPC(mzML_filename, TIC = TRUE)
-  mzXML_TIC <- grabMzxmlBPC(mzXML_filename, TIC = TRUE)
-  all.equal(mzML_TIC$rt, mzXML_TIC$rt, tolerance = 1e-3)
-  all.equal(mzML_TIC$int, mzXML_TIC$int, tolerance = 1)
-})
+# test_that("mzML matches mzXML", {
+#   mzML_data <- grabMzmlData(mzML_filename)
+#   mzXML_data <- grabMzxmlData(mzXML_filename)
+#   all.equal(mzML_data, mzXML_data)
+#
+#   mzML_BPC <- grabMzmlBPC(mzML_filename)
+#   mzXML_BPC <- grabMzxmlBPC(mzXML_filename)
+#   all.equal(mzML_BPC$rt, mzXML_BPC$rt, tolerance = 1e-3)
+#   all.equal(mzML_BPC$int, mzXML_BPC$int, tolerance = 1)
+#
+#   mzML_TIC <- grabMzmlBPC(mzML_filename, TIC = TRUE)
+#   mzXML_TIC <- grabMzxmlBPC(mzXML_filename, TIC = TRUE)
+#   all.equal(mzML_TIC$rt, mzXML_TIC$rt, tolerance = 1e-3)
+#   all.equal(mzML_TIC$int, mzXML_TIC$int, tolerance = 1)
+# })
