@@ -38,6 +38,20 @@ test_that("new matches previous", {
   expect_equal(old_mzML_data, mzML_data)
 })
 
+# Except it doesn't - the sum of the individual intensities is less than the
+# actual TIC recorded in the file???
+# test_that("BPC matches MSnbase BPC", {
+#   MSnExp_obj <- readMSData(mzML_filename, msLevel. = 1)
+#   old_chrom <- chromatogram(MSnExp_obj, aggregationFun="max")[[1]]
+#   old_mzML_data <- data.frame(rt=old_chrom@rtime, int=old_chrom@intensity)
+#   old_mzML_data$rt <- old_mzML_data$rt/60
+#   rownames(old_mzML_data) <- NULL
+#
+#   mzML_data <- grabMzmlBPC(mzML_filename, TIC = FALSE)
+#
+#   expect_equal(old_mzML_data, mzML_data)
+# })
+
 test_that("mzML matches mzXML", {
   mzML_data <- grabMzmlData(mzML_filename)
   mzXML_data <- grabMzxmlData(mzXML_filename)

@@ -18,18 +18,21 @@ NULL
 #' @export
 #'
 #' @examples
-#' mzML_filename <- system.file("extdata", "190715_Poo_TruePooFK180310_Full2.mzML", package = "RaMS")
+#' mzML_filename <- system.file("proteomics", "MS3TMT11.mzML", package = "msdata")
 #' grabMzmlBPC(mzML_filename)
 #' grabMzmlBPC(mzML_filename, TIC=TRUE)
 grabMzmlBPC <- function(filename, TIC=FALSE){
-  mz_xml <- xml2::read_xml(filename)
+  xml_data <- xml2::read_xml(filename)
 
-  rt_nodes <- xml2::xml_find_all(mz_xml, '//d1:cvParam[@name="scan start time"]')
-  rt_vals <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
+  ms1_nodes <- xml2::xml_find_all(
+    xml_data, '//d1:cvParam[@name="MS1 spectrum"]/parent::d1:spectrum'
+  )
+
+  rt_vals <- grabSpectraRt(ms1_nodes)
 
   int_xpath <- ifelse(TIC, "total ion current", "base peak intensity")
-  int_xpath_full <- paste0('//d1:cvParam[@name="', int_xpath, '"]')
-  int_nodes <- xml2::xml_find_all(mz_xml, xpath = int_xpath_full)
+  int_xpath_full <- paste0('d1:cvParam[@name="', int_xpath, '"]')
+  int_nodes <- xml2::xml_find_all(ms1_nodes, xpath = int_xpath_full)
   int_vals <- as.numeric(xml2::xml_attr(int_nodes, "value"))
   return(data.frame(rt=rt_vals, int=int_vals))
 }
@@ -52,7 +55,7 @@ grabMzmlBPC <- function(filename, TIC=FALSE){
 #' @export
 #'
 #' @examples
-#' mzML_filename <- system.file("extdata", "190715_Poo_TruePooFK180310_Full2.mzML", package = "RaMS")
+#' mzML_filename <- system.file("proteomics", "MS3TMT11.mzML", package = "msdata")
 #' grabMzmlData(mzML_filename)
 grabMzmlData <- function(filename){
   xml_data <- xml2::read_xml(filename)
@@ -90,8 +93,8 @@ grabMzmlData <- function(filename){
 #' @export
 #'
 #' @examples
-#' mzML_MS2 <- system.file("extdata", "190715_Poo_TruePooFK180310_DDApos50.mzML", package = "RaMS")
-#' grabMzmlMS2(mzML_MS2)
+#' mzML_MS2_filename <- system.file("proteomics", "TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.mzML.gz", package = "msdata")
+#' grabMzmlMS2(mzML_MS2_filename)
 grabMzmlMS2 <- function(filename){
   xml_data <- xml2::read_xml(filename)
 
@@ -120,10 +123,12 @@ grabMzmlMS2 <- function(filename){
 #'
 #' @export
 grabMzmlMetadata <- function(xml_data){
-  compr_xpath <- '//d1:cvParam[@accession="MS:1000574"]'
+  compr_xpath <- paste0('//d1:cvParam[@accession="MS:1000574"]|',
+                        '//d1:cvParam[@accession="MS:1000576"]')
   compr_type <- xml2::xml_attr(xml2::xml_find_first(xml_data, compr_xpath), "name")
   compr <- switch(compr_type,
                   `zlib compression`="gzip",
+                  `no compression`="none",
                   `none`="none")
 
   mz_precision_xpath <- '//d1:cvParam[@accession="MS:1000523"]'
