@@ -21,7 +21,7 @@ test_that("BPC can be read", {
 test_that("new matches MSnbase", {
   MSnExp <- readMSData(mzML_filename, msLevel. = 1)
   parsed_spectra <- lapply(as.list(MSnExp@assayData), function(spectrum){
-    data.frame(rt=spectrum@rt, mz=spectrum@mz, int=spectrum@intensity)
+    data.table(rt=spectrum@rt, mz=spectrum@mz, int=spectrum@intensity)
   })
   all_df <- do.call(rbind, parsed_spectra)
   all_df <- all_df[order(all_df$rt),]

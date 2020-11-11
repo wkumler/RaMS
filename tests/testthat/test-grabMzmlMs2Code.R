@@ -8,7 +8,7 @@ test_that("file can be read", {
 test_that("new matches MSnbase", {
   MSnExp <- readMSData(mzML_filename, msLevel. = 2)
   parsed_spectra <- lapply(as.list(MSnExp@assayData), function(spectrum){
-    data.frame(rt=spectrum@rt, premz=spectrum@precursorMz,
+    data.table(rt=spectrum@rt, premz=spectrum@precursorMz,
                fragmz=spectrum@mz, int=spectrum@intensity)
   })
   all_df <- do.call(rbind, parsed_spectra)
