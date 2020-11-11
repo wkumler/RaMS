@@ -1,6 +1,7 @@
 
 #' @import xml2
 #' @import data.table
+#' @importFrom pbapply pbsapply
 #' @importFrom base64enc base64decode
 NULL
 
@@ -136,13 +137,15 @@ grabMzmlMS2 <- function(filename){
 #' grabMzmlEIC(mass=444.22, ppm=50, filenames=c(msdata_1, msdata_2))
 grabMzmlEIC <- function(mass, ppm, filenames){
   if(any(!grepl("\\.mzML|\\.mzML.gz$", filenames))){
-    stop("This function is currently only has support for mzML files")
+    stop("This function currently only has support for mzML files")
   }
-  raw_eics <- sapply(filenames, function(filename){
+  raw_eics <- pbsapply(filenames, function(filename){
     all_data <- grabMzmlData(filename)
+    if(!nrow(all_data))return(data.table(rt=numeric(0), mz=numeric(0), int=numeric(0)))
     all_data[mz%between%pmppm(mass, ppm = ppm)]
   }, simplify = FALSE)
-  clean_filenames <- sub(pattern = "\\.mzML.*$", replacement = "", basename(filenames))
+  raw_eics <- raw_eics[which(as.logical(sapply(raw_eics, nrow)))]
+  clean_filenames <- sub(pattern = "\\.mzML.*$", replacement = "", basename(names(raw_eics)))
   filenamed <- mapply(FUN = cbind, raw_eics, clean_filenames, SIMPLIFY = FALSE)
   out_eic <- do.call(what=rbind, filenamed)
   names(out_eic) <- c("rt", "mz", "int", "filename")

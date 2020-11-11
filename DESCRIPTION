@@ -15,7 +15,8 @@ LazyData: true
 Imports: 
     xml2, 
     base64enc,
-    data.table
+    data.table,
+    pbapply
 RoxygenNote: 7.1.1
 Suggests: 
     testthat, 
