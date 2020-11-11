@@ -16,6 +16,11 @@ NULL
 #' and intensity (int) corresponding to the TIC or BPC for a given file.
 #'
 #' @export
+#'
+#' @examples
+#' mzXML_filename <- system.file("extdata", "dummyiTRAQ.mzXML", package="MSnbase")
+#' grabMzxmlBPC(mzXML_filename)
+#' grabMzxmlBPC(mzXML_filename, TIC=TRUE)
 grabMzxmlBPC <- function(filename, TIC=FALSE){
   mz_xml <- xml2::read_xml(filename)
 
@@ -46,6 +51,10 @@ grabMzxmlBPC <- function(filename, TIC=FALSE){
 #' m/z (mz), and intensity (int).
 #'
 #' @export
+#'
+#' @examples
+#' mzXML_filename <- system.file("extdata", "dummyiTRAQ.mzXML", package="MSnbase")
+#' grabMzxmlData(mzXML_filename)
 grabMzxmlData <- function(filename){
   xml_data <- xml2::read_xml(filename)
 
@@ -88,6 +97,7 @@ grabMzxmlMetadata <- function(xml_data){
   compr_type <- xml2::xml_attr(peak_metadata, "compressionType")
   compr <- switch(compr_type,
                   `zlib compression`="gzip",
+                  `no compression`="none",
                   `none`="none")
 
   enc_type <- xml2::xml_attr(peak_metadata, "precision")
