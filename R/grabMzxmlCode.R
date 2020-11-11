@@ -16,11 +16,6 @@ NULL
 #' and intensity (int) corresponding to the TIC or BPC for a given file.
 #'
 #' @export
-#'
-#' @examples
-#' mzXML_filename <- system.file("extdata", "190715_Poo_TruePooFK180310_Full2.mzXML", package = "RaMS")
-#' grabMzxmlBPC(mzXML_filename)
-#' grabMzxmlBPC(mzXML_filename, TIC=TRUE)
 grabMzxmlBPC <- function(filename, TIC=FALSE){
   mz_xml <- xml2::read_xml(filename)
 
@@ -51,10 +46,6 @@ grabMzxmlBPC <- function(filename, TIC=FALSE){
 #' m/z (mz), and intensity (int).
 #'
 #' @export
-#'
-#' @examples
-#' mzXML_filename <- system.file("extdata", "190715_Poo_TruePooFK180310_Full2.mzXML", package = "RaMS")
-#' grabMzxmlData(mzXML_filename)
 grabMzxmlData <- function(filename){
   xml_data <- xml2::read_xml(filename)
 
