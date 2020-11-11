@@ -22,3 +22,8 @@ and intensity (int) corresponding to the TIC or BPC for a given file.
 \description{
 Grab the BPC or TIC for a given mzXML file
 }
+\examples{
+mzXML_filename <- system.file("extdata", "dummyiTRAQ.mzXML", package="MSnbase")
+grabMzxmlBPC(mzXML_filename)
+grabMzxmlBPC(mzXML_filename, TIC=TRUE)
+}

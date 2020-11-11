@@ -7,10 +7,10 @@
 grabMzmlMetadata(xml_data)
 }
 \arguments{
-\item{xml_data}{mzML data parsed by xml2}
+\item{xml_data}{mzML data as parsed by xml2}
 }
 \value{
-A list of values used by other parsing functions, such as
+A list of values used by other parsing functions, currently
 compression, mz_precision, int_precision
 }
 \description{

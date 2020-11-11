@@ -24,3 +24,7 @@ Retention time information can be read directly, while *m/z* and intensity
 information must be decoded from binary. To read data from the mzML format
 instead, check out grabMzmlData.
 }
+\examples{
+mzXML_filename <- system.file("extdata", "dummyiTRAQ.mzXML", package="MSnbase")
+grabMzxmlData(mzXML_filename)
+}
