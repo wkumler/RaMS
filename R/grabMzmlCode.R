@@ -79,7 +79,7 @@ grabMzmlData <- function(filename){
 #' @details This function reads an mzML file's MSn data into R's working memory. mzML files
 #' are fundamentally XML documents, which allows rapid access to the data by
 #' parsing the XML. The R package `xml2::` is used for this purpose here.
-#' Retention time information can be read directly, while *m/z* and intensity
+#' Retention time and precursor mass information can be read directly, while *m/z* and intensity
 #' information must be decoded from binary.
 #'
 #' @param filename The name of the mzML file to be read.
@@ -148,7 +148,8 @@ grabSpectraRt <- function(xml_nodes){
 }
 
 grabSpectraPremz <- function(xml_nodes){
-  premz_xpath <- 'd1:scanList/d1:scan/d1:userParam'
+  premz_xpath <- paste0('d1:precursorList/d1:precursor/d1:selectedIonList',
+                        '/d1:selectedIon/d1:cvParam[@name="selected ion m/z"]')
   premz_nodes <- xml2::xml_find_all(xml_nodes, premz_xpath)
   as.numeric(xml2::xml_attr(premz_nodes, "value"))
 }
