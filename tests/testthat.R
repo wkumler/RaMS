@@ -1,5 +1,4 @@
 library(testthat)
-library(RaMS)
 library(MSnbase)
 
 mzML_filename <- system.file("proteomics", "MS3TMT11.mzML", package = "msdata")

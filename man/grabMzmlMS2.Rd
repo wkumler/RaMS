@@ -24,6 +24,7 @@ Retention time and precursor mass information can be read directly, while *m/z* 
 information must be decoded from binary.
 }
 \examples{
-mzML_MS2_filename <- system.file("proteomics", "TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.mzML.gz", package = "msdata")
+sf <- "TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.mzML.gz"
+mzML_MS2_filename <- system.file("proteomics", sf, package = "msdata")
 grabMzmlMS2(mzML_MS2_filename)
 }

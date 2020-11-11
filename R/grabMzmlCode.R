@@ -91,7 +91,8 @@ grabMzmlData <- function(filename){
 #' @export
 #'
 #' @examples
-#' mzML_MS2_filename <- system.file("proteomics", "TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.mzML.gz", package = "msdata")
+#' sf <- "TMT_Erwinia_1uLSike_Top10HCD_isol2_45stepped_60min_01.mzML.gz"
+#' mzML_MS2_filename <- system.file("proteomics", sf, package = "msdata")
 #' grabMzmlMS2(mzML_MS2_filename)
 grabMzmlMS2 <- function(filename){
   xml_data <- xml2::read_xml(filename)
