@@ -85,13 +85,13 @@ grabMzmlData <- function(filename){
 #' @param filename The name of the mzML file to be read.
 #'
 #' @return A data.frame object with columns for retention time (rt) in minutes,
-#' m/z (mz), intensity (int), and precursor mass (premz).
+#' precursor mass (premz), fragment m/z (fragmz), and intensity (int).
 #'
 #' @export
 #'
 #' @examples
 #' mzML_MS2 <- system.file("extdata", "190715_Poo_TruePooFK180310_DDApos50.mzML", package = "RaMS")
-#' grabMzmlData(mzML_MS2)
+#' grabMzmlMS2(mzML_MS2)
 grabMzmlMS2 <- function(filename){
   xml_data <- xml2::read_xml(filename)
 
@@ -100,11 +100,13 @@ grabMzmlMS2 <- function(filename){
   msn_nodes <- xml2::xml_find_all(xml_data, msn_xpath)
 
   rt_vals <- grabSpectraRt(msn_nodes)
+  premz_vals <- grabSpectraPremz(msn_nodes)
   mz_vals <- grabSpectraMz(msn_nodes, file_metadata)
   int_vals <- grabSpectraInt(msn_nodes, file_metadata)
 
   data.frame(rt=rep(rt_vals, sapply(mz_vals, length)),
-             mz=unlist(mz_vals), int=unlist(int_vals))
+             premz=rep(premz_vals, sapply(mz_vals, length)),
+             fragmz=unlist(mz_vals), int=unlist(int_vals))
 }
 
 
@@ -143,6 +145,12 @@ grabSpectraRt <- function(xml_nodes){
   rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
   rt_nodes <- xml2::xml_find_all(xml_nodes, rt_xpath)
   as.numeric(xml2::xml_attr(rt_nodes, "value"))
+}
+
+grabSpectraPremz <- function(xml_nodes){
+  premz_xpath <- 'd1:scanList/d1:scan/d1:userParam'
+  premz_nodes <- xml2::xml_find_all(xml_nodes, premz_xpath)
+  as.numeric(xml2::xml_attr(premz_nodes, "value"))
 }
 
 grabSpectraMz <- function(xml_nodes, file_metadata){
