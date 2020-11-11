@@ -62,7 +62,7 @@ grabMzmlData <- function(filename){
 
   file_metadata <- grabMzmlMetadata(xml_data)
   ms1_nodes <- xml2::xml_find_all(
-    xml_data, '//d1:cvParam[@name="MS1 spectrum"]/parent::d1:spectrum'
+    xml_data, '//d1:cvParam[@name="ms level"][@value="1"]/parent::d1:spectrum'
   )
 
   rt_vals <- grabSpectraRt(ms1_nodes)
@@ -75,9 +75,9 @@ grabMzmlData <- function(filename){
 
 
 
-#' Read an mzML file's MSn data into a data.frame
+#' Read an mzML file's MS2 data into a data.frame
 #'
-#' @details This function reads an mzML file's MSn data into R's working memory. mzML files
+#' @details This function reads an mzML file's MS2 data into R's working memory. mzML files
 #' are fundamentally XML documents, which allows rapid access to the data by
 #' parsing the XML. The R package `xml2::` is used for this purpose here.
 #' Retention time and precursor mass information can be read directly, while *m/z* and intensity
@@ -97,13 +97,13 @@ grabMzmlMS2 <- function(filename){
   xml_data <- xml2::read_xml(filename)
 
   file_metadata <- grabMzmlMetadata(xml_data)
-  msn_xpath <- '//d1:cvParam[@name="MSn spectrum"]/parent::d1:spectrum'
-  msn_nodes <- xml2::xml_find_all(xml_data, msn_xpath)
+  ms2_xpath <- '//d1:cvParam[@name="ms level"][@value="2"]/parent::d1:spectrum'
+  ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
 
-  rt_vals <- grabSpectraRt(msn_nodes)
-  premz_vals <- grabSpectraPremz(msn_nodes)
-  mz_vals <- grabSpectraMz(msn_nodes, file_metadata)
-  int_vals <- grabSpectraInt(msn_nodes, file_metadata)
+  rt_vals <- grabSpectraRt(ms2_nodes)
+  premz_vals <- grabSpectraPremz(ms2_nodes)
+  mz_vals <- grabSpectraMz(ms2_nodes, file_metadata)
+  int_vals <- grabSpectraInt(ms2_nodes, file_metadata)
 
   data.frame(rt=rep(rt_vals, sapply(mz_vals, length)),
              premz=rep(premz_vals, sapply(mz_vals, length)),
