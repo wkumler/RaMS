@@ -2,7 +2,9 @@
 
 export(grabMzmlBPC)
 export(grabMzmlData)
+export(grabMzmlMetadata)
 export(grabMzxmlBPC)
 export(grabMzxmlData)
+export(grabMzxmlMetadata)
 import(xml2)
 importFrom(base64enc,base64decode)
