@@ -24,7 +24,3 @@ Retention time information can be read directly, while *m/z* and intensity
 information must be decoded from binary. To read data from the mzML format
 instead, check out grabMzmlData.
 }
-\examples{
-mzXML_filename <- system.file("extdata", "190715_Poo_TruePooFK180310_Full2.mzXML", package = "RaMS")
-grabMzxmlData(mzXML_filename)
-}
