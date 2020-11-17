@@ -245,3 +245,7 @@ grabSpectraInt <- function(xml_nodes, file_metadata){
   })
 }
 
+grabFileRunDate <- function(filename){
+  xml_data <- xml2::read_xml(filename)
+  xml2::xml_attr(xml2::xml_find_first(xml_data, '//d1:run'), "startTimeStamp")
+}
