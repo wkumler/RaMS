@@ -185,6 +185,26 @@ grabMzmlMetadata <- function(xml_data){
 }
 
 
+#' Plus/Minus Parts Per Million
+#'
+#' @param mass The *m/z* of the molecule
+#' @param ppm The instrumental error
+#'
+#' @details Often, it's useful to convert a single *m/z* into an error range
+#' based on the accuracy (in ppm) of the instrument that collected the data.
+#' This function does so neatly and plays well with data.table's %between%
+#'
+#' @return A length-two numeric vector
+#' @export
+#'
+#' @examples
+#' pmppm(118.0865)
+#' pmppm(118.0865, ppm=50)
+#' pmppm(100)
+#' pmppm(1000)
+pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
+
+
 
 grabSpectraRt <- function(xml_nodes){
   rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
@@ -225,22 +245,3 @@ grabSpectraInt <- function(xml_nodes, file_metadata){
   })
 }
 
-
-#' Plus/Minus Parts Per Million
-#'
-#' @param mass The *m/z* of the molecule
-#' @param ppm The instrumental error
-#'
-#' @details Often, it's useful to convert a single *m/z* into an error range
-#' based on the accuracy (in ppm) of the instrument that collected the data.
-#' This function does so neatly and plays well with data.table's %between%
-#'
-#' @return A length-two numeric vector
-#' @export
-#'
-#' @examples
-#' pmppm(118.0865)
-#' pmppm(118.0865, ppm=50)
-#' pmppm(100)
-#' pmppm(1000)
-pmppm <- function(mass, ppm=4){c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))}
