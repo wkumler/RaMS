@@ -7,7 +7,7 @@
 pmppm(mass, ppm = 4)
 }
 \arguments{
-\item{mass}{The *m/z* of the molecule}
+\item{mass}{The m/z of the molecule}
 
 \item{ppm}{The instrumental error}
 }
@@ -18,9 +18,9 @@ A length-two numeric vector
 Plus/Minus Parts Per Million
 }
 \details{
-Often, it's useful to convert a single *m/z* into an error range
+Often, it's useful to convert a single m/z into an error range
 based on the accuracy (in ppm) of the instrument that collected the data.
-This function does so neatly and plays well with data.table's %between%
+This function does so neatly and plays well with data.table's `%between%`
 }
 \examples{
 pmppm(118.0865)

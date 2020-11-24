@@ -7,7 +7,7 @@
 grabMzmlEIC(mass, ppm, filenames)
 }
 \arguments{
-\item{mass}{The *m/z* of the compound of interest}
+\item{mass}{The m/z of the compound of interest}
 
 \item{ppm}{The instrument's parts-per-million accuracy}
 
@@ -16,15 +16,15 @@ those produced by system.file() or list.files(full.names=TRUE)}
 }
 \value{
 A data.frame object with columns for retention time (rt) in minutes,
-*m/z*, intensity (int), and filename.
+m/z, intensity (int), and filename.
 }
 \description{
 Simple wrapper around grabMzmlData to extract a specific mass across multiple files
 }
 \details{
-This function reads an mzML file's *m/z*, retention time, and intensity
+This function reads an mzML file's m/z, retention time, and intensity
 data into R using `grabMzmlData` and extracts a mass slice according to the user-
-provided *m/z* and ppm. It is vectorized via `sapply` across all the files in
+provided m/z and ppm. It is vectorized via `sapply` across all the files in
 the `filenames` vector.
 }
 \examples{

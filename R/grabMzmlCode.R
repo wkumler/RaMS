@@ -46,7 +46,7 @@ grabMzmlBPC <- function(filename, TIC=FALSE){
 #' @details This function reads an mzML file into R's working memory. mzML files
 #' are fundamentally XML documents, which allows rapid access to the data by
 #' parsing the XML. The R package `xml2::` is used for this purpose here.
-#' Retention time information can be read directly, while *m/z* and intensity
+#' Retention time information can be read directly, while m/z and intensity
 #' information must be decoded from binary.
 #'
 #' @param filename The name of the mzML file to be read.
@@ -82,7 +82,7 @@ grabMzmlData <- function(filename){
 #' @details This function reads an mzML file's MS2 data into R's working memory. mzML files
 #' are fundamentally XML documents, which allows rapid access to the data by
 #' parsing the XML. The R package `xml2::` is used for this purpose here.
-#' Retention time and precursor mass information can be read directly, while *m/z* and intensity
+#' Retention time and precursor mass information can be read directly, while m/z and intensity
 #' information must be decoded from binary.
 #'
 #' @param filename The name of the mzML file to be read.
@@ -116,18 +116,18 @@ grabMzmlMS2 <- function(filename){
 
 #' Simple wrapper around grabMzmlData to extract a specific mass across multiple files
 #'
-#' @details This function reads an mzML file's *m/z*, retention time, and intensity
+#' @details This function reads an mzML file's m/z, retention time, and intensity
 #' data into R using `grabMzmlData` and extracts a mass slice according to the user-
-#' provided *m/z* and ppm. It is vectorized via `sapply` across all the files in
+#' provided m/z and ppm. It is vectorized via `sapply` across all the files in
 #' the `filenames` vector.
 #'
-#' @param mass The *m/z* of the compound of interest
+#' @param mass The m/z of the compound of interest
 #' @param ppm The instrument's parts-per-million accuracy
 #' @param filenames A vector of complete paths to the mzML files to be read, i.e.
 #' those produced by system.file() or list.files(full.names=TRUE)
 #'
 #' @return A data.frame object with columns for retention time (rt) in minutes,
-#' *m/z*, intensity (int), and filename.
+#' m/z, intensity (int), and filename.
 #'
 #' @export
 #'
@@ -187,12 +187,12 @@ grabMzmlMetadata <- function(xml_data){
 
 #' Plus/Minus Parts Per Million
 #'
-#' @param mass The *m/z* of the molecule
+#' @param mass The m/z of the molecule
 #' @param ppm The instrumental error
 #'
-#' @details Often, it's useful to convert a single *m/z* into an error range
+#' @details Often, it's useful to convert a single m/z into an error range
 #' based on the accuracy (in ppm) of the instrument that collected the data.
-#' This function does so neatly and plays well with data.table's %between%
+#' This function does so neatly and plays well with data.table's `%between%`
 #'
 #' @return A length-two numeric vector
 #' @export

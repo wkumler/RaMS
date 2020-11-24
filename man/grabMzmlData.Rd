@@ -20,7 +20,7 @@ Read an mzML file into a data.frame
 This function reads an mzML file into R's working memory. mzML files
 are fundamentally XML documents, which allows rapid access to the data by
 parsing the XML. The R package `xml2::` is used for this purpose here.
-Retention time information can be read directly, while *m/z* and intensity
+Retention time information can be read directly, while m/z and intensity
 information must be decoded from binary.
 }
 \examples{
