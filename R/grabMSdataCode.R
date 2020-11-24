@@ -1,4 +1,50 @@
 
+#' Grab mass-spectrometry data from file(s)
+#'
+#' The main `RaMS` function. This function accepts a list of the files that
+#' will be read into R's working memory and returns a list of `data.table`s
+#' containing the requested information. What information is requested is
+#' determined by the `grab_what` argument, which can include MS1, MS2, BPC, TIC,
+#' or metadata information.
+#'
+#' @param files A character vector of filenames to read into R's memory. Both absolute and
+#' relative paths are acceptable.
+#' @param grab_what What data should be read from the file? Options include
+#' "MS1" for data only from the first spectrometer, "MS2" for fragmentation data,
+#' "BPC" for rapid access to the base peak chromatogram, and "TIC" for rapid
+#' access to the total ion chromatogram. These options can be combined (i.e.
+#' `grab_data=c("MS1", "MS2", "BPC")`) or this argument can be set to
+#' "everything" to extract all of the above. Option "EIC" is useful when working
+#' with files whose total size exceeds working memory - it first extracts all
+#' relevant MS1 and MS2 data, then discards data outside of the mass range(s)
+#' calculated from the provided mz and ppm.
+#' @param verbosity Three levels of processing output to the R console: "very",
+#' which provides information about each file as it's read in; "kinda", for
+#' a progress bar but no individual file information; and "none" for no output
+#' of any kind.
+#' @param mz A vector of the mass-to-charge ratio for compounds of interest.
+#' Only used when combined with `grab_what = "EIC"` (see above). Multiple masses
+#' can be provided.
+#' @param ppm A single number corresponding to the mass accuracy (in parts per
+#' million) of the instrument on which the data was collected. Only used when
+#' combined with `grab_what = "EIC"` (see above).
+#' @param rtrange A vector of length 2 containing an upper and lower bound on
+#' retention times of interest. Providing a range here can speed up load times
+#' (although not enormously, as the entire file must still be read) and reduce
+#' the final object's size.
+#'
+#' @return A list of `data.table`s, each named after the arguments requested in
+#' grab_what. $MS1 contains MS1 information, MS2 contains fragmentation info, etc.
+#' MS1 data has four columns: retention time (rt), mass-to-charge (mz),
+#' intensity (int), and filename. MS2 data has six: retention time (rt),
+#' precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
+#' collision energy (voltage), and filename. Data requested that does not exist
+#' in the provided files (such as MS2 data requested from MS1-only files) will
+#' return an empty (length zero) data.table.
+#'
+#' @export
+#'
+#' @examples
 grabMSdata <- function(files, grab_what=c("MS1", "MS2"),
                        verbosity=c("very", "kinda", "none"),
                        mz=NULL, ppm=NULL, rtrange=NULL){
@@ -36,6 +82,14 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"),
   checkOutputQuality(all_file_data_output, grab_what)
 }
 
+#' Check that filenames are acceptable.
+#'
+#' @param files The vector of files provided to grabMSdata.
+#'
+#' @return NULL (invisibly). The goal of this function is its side effects, i.e.
+#' throwing errors and providing info when the files are not found.
+#'
+#' @examples
 checkFiles <- function(files){
   # Check that files were actually provided
   if(!length(files))stop("No files provided")
@@ -53,8 +107,25 @@ checkFiles <- function(files){
     }
     stopQuietly()
   }
+  return(invisible(NULL))
 }
 
+#' Check that the output data is properly formatted.
+#'
+#' This function checks that data produced by repeated calls to the
+#' `grabMzmlData()` and `grabMzxmlData()` functions is formatted properly before
+#' it's provided to the user. It checks that all of the requested data has been
+#' obtained and warns if data is found to be empty, misnamed, or has columns
+#' of the wrong type.
+#'
+#' @param output_data The collected data resulting from repeated calls to
+#' `grabMzmlData()`, after being bound together.
+#' @param grab_what The names of the data requested by the user.
+#'
+#' @return NULL (invisibly). The goal of this function is its side effects, i.e.
+#' throwing errors and providing info when the files are not found.
+#'
+#' @examples
 checkOutputQuality <- function(output_data, grab_what){
   missing_data <- !grab_what%in%names(output_data)
   if(any(missing_data)){
@@ -117,6 +188,7 @@ checkOutputQuality <- function(output_data, grab_what){
       }
     }, wrong_coltype, names(wrong_coltype)))
   }
+  return(invisible(NULL))
 }
 
 stopQuietly <- function(){
