@@ -42,7 +42,10 @@
 #'
 #' @examples
 grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
-                         mz=NULL, ppm=NULL){
+                          rtrange=NULL, mz=NULL, ppm=NULL){
+  if(!is.null(rtrange)){
+    message("`rtrange` argument not supported for mzXML files, ignoring")
+  }
   if(verbose){
     start_time <- Sys.time()
     last_time <- Sys.time()
@@ -215,7 +218,7 @@ grabMzxmlBPC <- function(xml_data, TIC=FALSE){
   int_attr <- ifelse(TIC, "totIonCurrent", "basePeakIntensity")
   int_vals <- as.numeric(xml2::xml_attr(scan_nodes, int_attr))
 
-  return(data.frame(rt=rt_vals, int=int_vals))
+  return(data.table(rt=rt_vals, int=int_vals))
 }
 
 

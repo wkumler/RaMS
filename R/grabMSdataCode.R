@@ -9,9 +9,9 @@ files <- "180205_Poo_TruePoo_Full2.mzML"
 #                     full.names = TRUE, pattern = "180205")
 files <- list.files("G:/My Drive/FalkorFactor/mzMLs/pos",
                     full.names = TRUE, pattern = "1907.*Smp")
-filename <- "threonine_i2_e35_pH_tree.mzXML"
+files <- "threonine_i2_e35_pH_tree.mzXML"
 
-# v <- grabMSdata(files, grab_what = c("everything"), verbosity = "kinda")
+v <- grabMSdata(files, grab_what = c("everything"), verbosity = "kinda")
 
 
 # grabMSdata ----
@@ -81,9 +81,13 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
 
     verbose <- ifelse(verbosity=="very", TRUE, FALSE)
     if(grepl("mzML", basename(filename), ignore.case = TRUE)){
-      out_data <- grabMzmlData(filename, grab_what, verbose, mz, ppm, rtrange)
+      out_data <- grabMzmlData(filename = filename, grab_what = grab_what,
+                               verbose = verbose, mz = mz, ppm = ppm,
+                               rtrange = rtrange)
     } else if(grepl("mzXML", basename(filename), ignore.case = TRUE)){
-      out_data <- grabMzxmlData(filename, grab_what, verbose, mz, ppm, rtrange)
+      out_data <- grabMzxmlData(filename = filename, grab_what = grab_what,
+                                verbose = verbose, mz = mz, ppm = ppm,
+                                rtrange = rtrange)
     } else {
       message(paste("Unable to determine file type for", filename))
       stopQuietly()
@@ -104,7 +108,7 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
 
   # Bind all the similar pieces together (e.g. stack MS1, MS2 from different files)
   all_file_data_output <- Reduce(function(x,y) Map(rbind, x, y), all_file_data)
-  invisible(checkOutputQuality(all_file_data_output, grab_what))
+  invisible(checkOutputQuality(output_data = all_file_data_output, grab_what = grab_what))
 
   all_file_data_output
 }
@@ -260,3 +264,6 @@ checkProvidedMzPpm <- function(mz, ppm){
     stop("ppm must be positive")
   }
 }
+
+pmppm <- function(mass, ppm=4)c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
+
