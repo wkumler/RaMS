@@ -1,8 +1,5 @@
 # Welcome to RaMS!
 
-files <- list.files("inst/extdata/", full.names = TRUE)
-v <- grabMSdata(files, grab_what = "everything", verbosity = "very")
-
 # grabMSdata ----
 
 #' Grab mass-spectrometry data from file(s)
