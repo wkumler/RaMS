@@ -1,8 +1,5 @@
 # Welcome to RaMS!
 
-# filename <- "180205_Poo_TruePoo_Full2.mzML"
-# filename <- "180205_Poo_TruePooPos_dda1.mzML"
-
 # grabMzmlData ----
 
 #' Get mass-spectrometry data from an mzML file
@@ -24,7 +21,7 @@
 #'   extracts all relevant MS1 and MS2 data, then discards data outside of the
 #'   mass range(s) calculated from the provided mz and ppm.
 #' @param verbose Boolean. If TRUE, R will print information about timing to the
-#' console as the file is read in.
+#'   console as the file is read in.
 #' @param mz A vector of the mass-to-charge ratio for compounds of interest.
 #'   Only used when combined with `grab_what = "EIC"` (see above). Multiple
 #'   masses can be provided.
@@ -38,12 +35,12 @@
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. $MS1 contains MS1 information, MS2 contains fragmentation info,
-#'   etc. MS1 data has four columns: retention time (rt), mass-to-charge (mz),
-#'   intensity (int), and filename. MS2 data has six: retention time (rt),
-#'   precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
-#'   collision energy (voltage), and filename. Data requested that does not
-#'   exist in the provided files (such as MS2 data requested from MS1-only
-#'   files) will return an empty (length zero) data.table.
+#'   etc. MS1 data has three columns: retention time (rt), mass-to-charge (mz),
+#'   and intensity (int). MS2 data has five: retention time (rt), precursor m/z
+#'   (premz), fragment m/z (fragmz), fragment intensity (int), and collision
+#'   energy (voltage). Data requested that does not exist in the provided files
+#'   (such as MS2 data requested from MS1-only files) will return an empty
+#'   (length zero) data.table.
 #'
 #' @export
 #'
@@ -53,7 +50,7 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
   if(verbose){
     start_time <- Sys.time()
     last_time <- Sys.time()
-    cat("Reading file... ")
+    cat("\nReading file", basename(filename), "... ")
   }
   xml_data <- read_xml(filename)
 
@@ -64,8 +61,8 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
   output_data <- list()
 
   if("everything"%in%grab_what){
-    if(length(setdiff("everything", grab_what))){
-      message("grab_what = `everything` includes MS1, MS2, BPC, and TIC data")
+    if(length(setdiff(grab_what, "everything"))&&verbose){
+      message("Heads-up: grab_what = `everything` includes MS1, MS2, BPC, and TIC data")
       message("Ignoring additional grabs")
     }
     grab_what <- c("MS1", "MS2", "BPC", "TIC")
@@ -104,7 +101,7 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
       last_time <- Sys.time()
       cat("Reading TIC... ")
     }
-    output_data$BPC <- grabMzmlBPC(xml_data, rtrange, TIC = TRUE)
+    output_data$TIC <- grabMzmlBPC(xml_data, rtrange, TIC = TRUE)
   }
 
   if("EIC"%in%grab_what){
@@ -177,7 +174,7 @@ grabMzmlMS1 <- function(xml_data, rtrange, file_metadata){
   int_vals <- grabSpectraInt(ms1_nodes, file_metadata)
 
   data.table(rt=rep(rt_vals, sapply(mz_vals, length)),
-             mz=unlist(mz_vals), int=unlist(int_vals))
+             mz=unlist(mz_vals), int=as.numeric(unlist(int_vals)))
 
 }
 
@@ -205,8 +202,8 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
   ms2_xpath <- '//d1:cvParam[@name="ms level" and @value="2"]/parent::d1:spectrum'
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   if(!length(ms2_nodes)){
-    return(data.table(rt=numeric(0), premz=numeric(0), fragmz=numeric(0),
-                      int=numeric(0), voltages=numeric(0)))
+    return(data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
+                      int=numeric(), voltages=numeric()))
   }
   if(!is.null(rtrange)){
     ms2_nodes <- shrinkRTrange(ms2_nodes, rtrange)
@@ -220,7 +217,7 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
 
   data.table(rt=rep(rt_vals, sapply(mz_vals, length)),
              premz=rep(premz_vals, sapply(mz_vals, length)),
-             fragmz=unlist(mz_vals), int=unlist(int_vals),
+             fragmz=unlist(mz_vals), int=as.numeric(unlist(int_vals)),
              voltages=rep(premz_vals, sapply(mz_vals, length)))
 }
 
@@ -237,8 +234,7 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
 #'   retention times of interest. Providing a range here can speed up load times
 #'   (although not enormously, as the entire file must still be read) and reduce
 #'   the final object's size.
-#' @param file_metadata Information about the file used to decode the binary
-#'   arrays containing m/z and intensity information.
+#' @param TIC Boolean. If TRUE, the TIC is extracted rather than the BPC.
 #'
 #' @return A `data.table` with columns for retention time (rt), and intensity (int).
 #'
@@ -278,6 +274,7 @@ grabSpectraRt <- function(xml_nodes){
   as.numeric(xml2::xml_attr(rt_nodes, "value"))
 }
 
+
 #' Extract the precursor mass from the spectra of an mzML nodeset
 #'
 #' @param xml_nodes An xml_nodeset object corresponding to the spectra collected
@@ -293,6 +290,7 @@ grabSpectraPremz <- function(xml_nodes){
   premz_nodes <- xml2::xml_find_all(xml_nodes, premz_xpath)
   as.numeric(xml2::xml_attr(premz_nodes, "value"))
 }
+
 
 #' Extract the collison energies from the spectra of an mzML nodeset
 #'
@@ -313,6 +311,7 @@ grabSpectraVoltage <- function(xml_nodes){
   volt_nodes <- xml2::xml_find_all(xml_nodes, volt_xpath)
   as.numeric(xml2::xml_attr(volt_nodes, "value"))
 }
+
 
 #' Extract the mass-to-charge data from the spectra of an mzML nodeset
 #'
@@ -343,6 +342,7 @@ grabSpectraMz <- function(xml_nodes, file_metadata){
                             size = file_metadata$mz_precision)
   })
 }
+
 
 #' Extract the intensity information from the spectra of an mzML nodeset
 #'

@@ -1,5 +1,18 @@
 # Welcome to RaMS!
 
+files <- "180205_Poo_TruePoo_Full2.mzML"
+# files <- "180205_Poo_TruePooPos_dda1.mzML"
+# files <- c("180205_Poo_TruePooPos_dda1.mzML",
+#            "180205_Poo_TruePooPos_dda2.mzML",
+#            "180205_Poo_TruePooPos_dda3.mzML")
+# files <- list.files("G:/My Drive/FalkorFactor/mzMLs/pos/MSMS",
+#                     full.names = TRUE, pattern = "180205")
+files <- list.files("G:/My Drive/FalkorFactor/mzMLs/pos",
+                    full.names = TRUE, pattern = "1907.*Smp")
+
+v <- grabMSdata(files, grab_what = c("everything"), verbosity = "kinda")
+
+
 # grabMSdata ----
 
 #' Grab mass-spectrometry data from file(s)
@@ -74,7 +87,12 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
       message(paste("Unable to determine file type for", filename))
       stopQuietly()
     }
-    all_file_data[[i]] <- out_data
+    out_data_filenamed <- lapply(out_data, function(dt, filename){
+      dt$filename <- ifelse(nrow(dt), filename, character())
+      return(dt)
+    }, filename=basename(filename))
+    all_file_data[[i]] <- out_data_filenamed
+    names(all_file_data)[[i]] <- basename(filename)
     if(verbosity=="very"|verbosity=="kinda"){
       setTxtProgressBar(pb, i)
     }
@@ -84,8 +102,10 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
   }
 
   # Bind all the similar pieces together (e.g. stack MS1, MS2 from different files)
-  all_file_data_output <- mapply(rbindlist, all_file_data)
-  checkOutputQuality(all_file_data_output, grab_what)
+  all_file_data_output <- Reduce(function(x,y) Map(rbind, x, y), all_file_data)
+  invisible(checkOutputQuality(all_file_data_output, grab_what))
+
+  all_file_data_output
 }
 
 # checkFiles ----
@@ -111,7 +131,7 @@ checkFiles <- function(files){
       message(paste("Couldn't find file", head(files[!files_exist]), "\n"))
       message(paste("... and", sum(!files_exist)-6, "others"))
     } else {
-      message(paste("Couldn't find file", files[!files_exist]), "\n")
+      message(paste("Couldn't find file", files[!files_exist], "\n"))
     }
     stopQuietly()
   }
@@ -137,6 +157,9 @@ checkFiles <- function(files){
 #'
 #' @examples
 checkOutputQuality <- function(output_data, grab_what){
+  if("everything"%in%grab_what){
+    grab_what <- c("MS1", "MS2", "BPC", "TIC")
+  }
   missing_data <- !grab_what%in%names(output_data)
   if(any(missing_data)){
     message(paste("Not all data collected; missing",
@@ -157,7 +180,7 @@ checkOutputQuality <- function(output_data, grab_what){
                   paste(names(output_data)[missing_data], collapse = ", ")))
   }
 
-  weird_classes <- !sapply(output_data, class)=="data.frame" # Change to data.table later
+  weird_classes <- !as.logical(colSums(sapply(output_data, class)=="data.table"))
   if(any(weird_classes)){
     message(paste("Some data aren't data frames:",
                   paste(names(output_data)[weird_classes], collapse = ", ")))
@@ -185,7 +208,7 @@ checkOutputQuality <- function(output_data, grab_what){
 
   wrong_coltype <- sapply(output_data, function(dt){
     col_classes <- sapply(dt, class)
-    proper_class <- c(rt="numeric", mz="numeric", int="integer",
+    proper_class <- c(rt="numeric", mz="numeric", int="numeric",
                       filename="character", premz="numeric", fragmz="numeric",
                       voltage="numeric")
     which(proper_class[names(col_classes)] != col_classes)
