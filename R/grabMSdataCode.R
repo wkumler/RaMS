@@ -1,20 +1,7 @@
 # Welcome to RaMS!
 
-# files <- "180205_Poo_TruePoo_Full2.mzML"
-files <- "180205_Poo_TruePooPos_dda1.mzML"
-# files <- c("180205_Poo_TruePooPos_dda1.mzML",
-#            "180205_Poo_TruePooPos_dda2.mzML",
-#            "180205_Poo_TruePooPos_dda3.mzML")
-# files <- list.files("G:/My Drive/FalkorFactor/mzMLs/pos/MSMS",
-#                     full.names = TRUE, pattern = "180205")
-# files <- list.files("G:/My Drive/FalkorFactor/mzMLs/pos",
-#                     full.names = TRUE, pattern = "1907.*Smp")
-# files <- "threonine_i2_e35_pH_tree.mzXML"
-
-# v <- grabMSdata(files, grab_what = c("everything"), verbosity = "very")
-v <- grabMSdata(files, grab_what = c("EIC", "EIC_MS2"), verbosity = "very",
-                mz = 118.0865, ppm = 5)
-
+files <- list.files("inst/extdata/", full.names = TRUE)
+v <- grabMSdata(files, grab_what = "everything", verbosity = "very")
 
 # grabMSdata ----
 
@@ -40,7 +27,7 @@ v <- grabMSdata(files, grab_what = c("EIC", "EIC_MS2"), verbosity = "very",
 #'   extracts all relevant MS1 and MS2 data, then discards data outside of the
 #'   mass range(s) calculated from the provided mz and ppm.
 #' @param verbosity Three levels of processing output to the R console: "very",
-#'   which provides information about each file as it's read in; "kinda", for a
+#'   which provides information about each file as it's read in; "minimal", for a
 #'   progress bar but no individual file information; and "none" for no output
 #'   of any kind.
 #' @param mz A vector of the mass-to-charge ratio for compounds of interest.
@@ -75,7 +62,7 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
 
   # Define outer control loop so multiple files can be read in simultaneously
   all_file_data <- list()
-  if(verbosity=="very"|verbosity=="kinda"){
+  if(verbosity=="very"|verbosity=="minimal"){
     pb <- txtProgressBar(min = 0, max = length(files), style = 3)
   }
   for(i in seq_along(files)){
@@ -100,11 +87,11 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
     }, filename=basename(filename))
     all_file_data[[i]] <- out_data_filenamed
     names(all_file_data)[[i]] <- basename(filename)
-    if(verbosity=="very"|verbosity=="kinda"){
+    if(verbosity=="very"|verbosity=="minimal"){
       setTxtProgressBar(pb, i)
     }
   }
-  if(verbosity=="very"|verbosity=="kinda"){
+  if(verbosity=="very"|verbosity=="minimal"){
     close(pb)
   }
 
@@ -246,7 +233,7 @@ stopQuietly <- function(){
 checkFileType <- function(xml_data, node_to_check){
   # Check for mzML node
   # Length works because external pointer has length 2
-  if(!length(xml_find_first(xml_data, paste0("//d1:", node_to_check)))){
+  if(!length(xml2::xml_find_first(xml_data, paste0("//d1:", node_to_check)))){
     stop(paste0("No ", node_to_check, " node found in this file"))
   }
 }

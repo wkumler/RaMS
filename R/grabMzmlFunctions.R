@@ -51,7 +51,7 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
     cat(paste0("\nReading file ", basename(filename), "... "))
     last_time <- start_time <- Sys.time()
   }
-  xml_data <- read_xml(filename)
+  xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzML")
   rtrange <- checkRTrange(rtrange)
@@ -137,17 +137,18 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
 #' @return A list of values used by other parsing functions, currently
 #' compression, mz_precision, int_precision
 grabMzmlEncodingData <- function(xml_data){
-  init_node <- xml_find_first(xml_data, xpath = "//d1:spectrum")
+  init_node <- xml2::xml_find_first(xml_data, xpath = "//d1:spectrum")
   compr_xpath <- paste0('//d1:cvParam[@accession="MS:1000574"]|',
                         '//d1:cvParam[@accession="MS:1000576"]')
   compr_type <- xml2::xml_attr(xml2::xml_find_first(init_node, compr_xpath), "name")
   compr <- switch(compr_type,
+                  `zlib`="gzip",
                   `zlib compression`="gzip",
                   `no compression`="none",
                   `none`="none")
 
   mz_precision_xpath <- '//d1:cvParam[@accession="MS:1000523"]'
-  mz_bit_type <- xml_attr(xml_find_first(init_node, mz_precision_xpath), "name")
+  mz_bit_type <- xml2::xml_attr(xml2::xml_find_first(init_node, mz_precision_xpath), "name")
   mz_precision <- sub(mz_bit_type, pattern = "-bit float", replacement = "")
   mz_precision <- as.numeric(mz_precision)/8
 
@@ -155,6 +156,8 @@ grabMzmlEncodingData <- function(xml_data){
   int_bit_type <- xml2::xml_attr(xml2::xml_find_first(init_node, int_bit_xpath), "name")
   int_precision <- sub(int_bit_type, pattern = "-bit float", replacement = "")
   int_precision <- as.numeric(int_precision)/8
+
+  if(is.na(int_precision))int_precision <- mz_precision
 
   list(compression=compr, mz_precision=mz_precision, int_precision=int_precision)
 }

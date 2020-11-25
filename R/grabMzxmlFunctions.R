@@ -48,9 +48,9 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
   }
   if(verbose){
     cat(paste0("\nReading file ", basename(filename), "... "))
-    last_time <- Sys.time()
+    last_time <- start_time <- Sys.time()
   }
-  xml_data <- read_xml(filename)
+  xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzXML")
   file_metadata <- grabMzxmlEncodingData(xml_data)
@@ -135,6 +135,7 @@ grabMzxmlEncodingData <- function(xml_data){
   peak_metadata <- xml2::xml_find_first(xml_data, '//d1:peaks')
   compr_type <- xml2::xml_attr(peak_metadata, "compressionType")
   compr <- switch(compr_type,
+                  `zlib`="gzip",
                   `zlib compression`="gzip",
                   `no compression`="none",
                   `none`="none")
@@ -223,7 +224,7 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
 grabMzxmlBPC <- function(xml_data, TIC=FALSE){
   scan_nodes <- xml2::xml_find_all(xml_data, '//d1:scan[@msLevel="1"]')
   rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
-  rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))/60
+  rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
 
   int_attr <- ifelse(TIC, "totIonCurrent", "basePeakIntensity")
   int_vals <- as.numeric(xml2::xml_attr(scan_nodes, int_attr))
@@ -259,7 +260,7 @@ grabMzxmlSpectraRt <- function(xml_nodes){
 #'
 #' @examples
 grabMzxmlSpectraPremz <- function(xml_nodes){
-  premz_nodes <- xml_find_all(xml_nodes, xpath = "d1:precursorMz")
+  premz_nodes <- xml2::xml_find_all(xml_nodes, xpath = "d1:precursorMz")
   as.numeric(xml_text(premz_nodes))
 }
 
@@ -278,7 +279,7 @@ grabMzxmlSpectraPremz <- function(xml_nodes){
 #'
 #' @examples
 grabMzxmlSpectraVoltage <- function(xml_nodes){
-  filterline_data <- xml_attr(xml_nodes, "filterLine")
+  filterline_data <- xml2::xml_attr(xml_nodes, "filterLine")
   as.integer(gsub(".*cid| .*", "", filterline_data))
 }
 
@@ -302,7 +303,7 @@ grabMzxmlSpectraVoltage <- function(xml_nodes){
 #'
 #' @examples
 grabMzxmlSpectraMzInt <- function(xml_nodes, file_metadata){
-  all_peak_nodes <- xml_text(xml_find_all(xml_nodes, xpath = "d1:peaks"))
+  all_peak_nodes <- xml2::xml_text(xml2::xml_find_all(xml_nodes, xpath = "d1:peaks"))
   vals <- lapply(all_peak_nodes, function(binary){
     decoded_binary <- base64enc::base64decode(binary)
     raw_binary <- as.raw(decoded_binary)
