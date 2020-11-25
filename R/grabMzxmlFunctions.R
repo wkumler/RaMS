@@ -47,9 +47,8 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
     message("`rtrange` argument not supported for mzXML files, ignoring")
   }
   if(verbose){
-    start_time <- Sys.time()
+    cat(paste0("\nReading file ", basename(filename), "... "))
     last_time <- Sys.time()
-    cat("\nReading file", basename(filename), "... ")
   }
   xml_data <- read_xml(filename)
 
@@ -67,45 +66,55 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
   }
 
   if("MS1"%in%grab_what){
-    if(verbose){
-      cat(Sys.time()-last_time, "s\n")
-      last_time <- Sys.time()
-      cat("Reading MS1 data... ")
-    }
-    output_data$MS1 <- grabMzxmlMS1(xml_data, file_metadata)
+    if(verbose)last_time <- timeReport(last_time, announcement = "Reading MS1 data...")
+    output_data$MS1 <- grabMzxmlMS1(xml_data = xml_data, file_metadata = file_metadata)
   }
 
   if("MS2"%in%grab_what){
-    if(verbose){
-      cat(Sys.time()-last_time, "s\n")
-      last_time <- Sys.time()
-      cat("Reading MS2 data... ")
-    }
-    output_data$MS2 <- grabMzxmlMS2(xml_data, file_metadata)
+    if(verbose)last_time <- timeReport(last_time, announcement = "Reading MS2 data...")
+    output_data$MS2 <- grabMzxmlMS2(xml_data = xml_data, file_metadata = file_metadata)
   }
 
   if("BPC"%in%grab_what){
-    if(verbose){
-      cat(Sys.time()-last_time, "s\n")
-      last_time <- Sys.time()
-      cat("Reading BPC... ")
-    }
-    output_data$BPC <- grabMzxmlBPC(xml_data)
+    if(verbose)last_time <- timeReport(last_time, announcement = "Reading BPC...")
+    output_data$BPC <- grabMzxmlBPC(xml_data = xml_data)
   }
 
   if("TIC"%in%grab_what){
-    if(verbose){
-      cat(Sys.time()-last_time, "s\n")
-      last_time <- Sys.time()
-      cat("Reading TIC... ")
-    }
-    output_data$TIC <- grabMzxmlBPC(xml_data, TIC = TRUE)
+    if(verbose)last_time <- timeReport(last_time, announcement = "Reading TIC...")
+    output_data$TIC <- grabMzxmlBPC(xml_data = xml_data, TIC = TRUE)
   }
 
-  # if("EIC"%in%grab_what){
-  #   checkProvidedMzPpm(mz, ppm)
-  #
-  # }
+  if("EIC"%in%grab_what){
+    checkProvidedMzPpm(mz, ppm)
+    if(verbose)last_time <- timeReport(last_time, announcement = "Extracting EIC...")
+    if(!"MS1"%in%grab_what){
+      init_dt <- grabMzxmlMS1(xml_data, rtrange, file_metadata)
+    } else {
+      init_dt <- output_data$MS1
+      if(!nrow(init_dt))stop("Something weird - can't find MS1 data to subset")
+    }
+    EIC_list <- lapply(mz, function(mass){
+      init_dt[mz%between%pmppm(mass = mass, ppm = ppm)]
+    })
+    output_data$EIC <- rbindlist(EIC_list)
+  }
+
+  if("EIC_MS2"%in%grab_what){
+    checkProvidedMzPpm(mz, ppm)
+    if(verbose)last_time <- timeReport(last_time, announcement = "Extracting EIC MS2...")
+    if(!"MS2"%in%grab_what){
+      init_dt <- grabMzxmlMS2(xml_data = xml_data, rtrange = rtrange,
+                              file_metadata = file_metadata)
+    } else {
+      init_dt <- output_data$MS2
+    }
+    EIC_MS2_list <- lapply(mz, function(mass){
+      init_dt[premz%between%pmppm(mass = mass, ppm = ppm)]
+    })
+    output_data$EIC_MS2 <- rbindlist(EIC_MS2_list)
+  }
+
   if(verbose){
     cat(Sys.time()-last_time, "s\n")
     cat("Total time:", Sys.time()-start_time, "\n")
@@ -181,7 +190,7 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   if(!length(ms2_nodes)){
     return(data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
-                      int=numeric(), voltages=numeric()))
+                      int=numeric(), voltages=integer()))
   }
 
   rt_vals <- grabMzxmlSpectraRt(ms2_nodes)
@@ -193,6 +202,7 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
                     voltage_vals, SIMPLIFY = FALSE)
   dt <- as.data.table(do.call(what=rbind, dt_data))
   names(dt) <- c("rt", "premz", "fragmz", "int", "voltages")
+  dt$voltages <- as.integer(dt$voltages)
   dt
 }
 
@@ -269,7 +279,7 @@ grabMzxmlSpectraPremz <- function(xml_nodes){
 #' @examples
 grabMzxmlSpectraVoltage <- function(xml_nodes){
   filterline_data <- xml_attr(xml_nodes, "filterLine")
-  as.numeric(gsub(".*cid| .*", "", filterline_data))
+  as.integer(gsub(".*cid| .*", "", filterline_data))
 }
 
 

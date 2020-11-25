@@ -48,9 +48,8 @@
 grabMzmlData <- function(filename, grab_what, verbose=FALSE,
                          mz=NULL, ppm=NULL, rtrange=NULL){
   if(verbose){
-    start_time <- Sys.time()
-    last_time <- Sys.time()
-    cat("\nReading file", basename(filename), "... ")
+    cat(paste0("\nReading file ", basename(filename), "... "))
+    last_time <- start_time <- Sys.time()
   }
   xml_data <- read_xml(filename)
 
@@ -69,45 +68,58 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
   }
 
   if("MS1"%in%grab_what){
-    if(verbose){
-      cat(Sys.time()-last_time, "s\n")
-      last_time <- Sys.time()
-      cat("Reading MS1 data... ")
-    }
-    output_data$MS1 <- grabMzmlMS1(xml_data, rtrange, file_metadata)
+    if(verbose)last_time <- timeReport(last_time, announcement = "Reading MS1 data...")
+    output_data$MS1 <- grabMzmlMS1(xml_data = xml_data, rtrange = rtrange,
+                                   file_metadata = file_metadata)
   }
 
   if("MS2"%in%grab_what){
-    if(verbose){
-      cat(Sys.time()-last_time, "s\n")
-      last_time <- Sys.time()
-      cat("Reading MS2 data... ")
-    }
-    output_data$MS2 <- grabMzmlMS2(xml_data, rtrange, file_metadata)
+    if(verbose)last_time <- timeReport(last_time, announcement = "Reading MS2 data...")
+    output_data$MS2 <- grabMzmlMS2(xml_data = xml_data, rtrange = rtrange,
+                                   file_metadata = file_metadata)
   }
 
   if("BPC"%in%grab_what){
-    if(verbose){
-      cat(Sys.time()-last_time, "s\n")
-      last_time <- Sys.time()
-      cat("Reading BPC... ")
-    }
-    output_data$BPC <- grabMzmlBPC(xml_data, rtrange)
+    if(verbose)last_time <- timeReport(last_time, announcement = "Reading BPC...")
+    output_data$BPC <- grabMzmlBPC(xml_data = xml_data, rtrange = rtrange)
   }
 
   if("TIC"%in%grab_what){
-    if(verbose){
-      cat(Sys.time()-last_time, "s\n")
-      last_time <- Sys.time()
-      cat("Reading TIC... ")
-    }
-    output_data$TIC <- grabMzmlBPC(xml_data, rtrange, TIC = TRUE)
+    if(verbose)last_time <- timeReport(last_time, announcement = "Reading TIC...")
+    output_data$TIC <- grabMzmlBPC(xml_data = xml_data, rtrange = rtrange, TIC = TRUE)
   }
 
   if("EIC"%in%grab_what){
     checkProvidedMzPpm(mz, ppm)
-
+    if(verbose)last_time <- timeReport(last_time, announcement = "Extracting EIC...")
+    if(!"MS1"%in%grab_what){
+      init_dt <- grabMzmlMS1(xml_data = xml_data, rtrange = rtrange,
+                             file_metadata = file_metadata)
+    } else {
+      init_dt <- output_data$MS1
+      if(!nrow(init_dt))stop("Something weird - can't find MS1 data to subset")
+    }
+    EIC_list <- lapply(mz, function(mass){
+      init_dt[mz%between%pmppm(mass = mass, ppm = ppm)]
+    })
+    output_data$EIC <- rbindlist(EIC_list)
   }
+
+  if("EIC_MS2"%in%grab_what){
+    checkProvidedMzPpm(mz, ppm)
+    if(verbose)last_time <- timeReport(last_time, announcement = "Extracting EIC MS2...")
+    if(!"MS2"%in%grab_what){
+      init_dt <- grabMzmlMS2(xml_data = xml_data, rtrange = rtrange,
+                             file_metadata = file_metadata)
+    } else {
+      init_dt <- output_data$MS2
+    }
+    EIC_MS2_list <- lapply(mz, function(mass){
+      init_dt[premz%between%pmppm(mass = mass, ppm = ppm)]
+    })
+    output_data$EIC_MS2 <- rbindlist(EIC_MS2_list)
+  }
+
   if(verbose){
     cat(Sys.time()-last_time, "s\n")
     cat("Total time:", Sys.time()-start_time, "\n")
@@ -199,7 +211,7 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   if(!length(ms2_nodes)){
     return(data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
-                      int=numeric(), voltages=numeric()))
+                      int=numeric(), voltages=integer()))
   }
   if(!is.null(rtrange)){
     ms2_nodes <- shrinkRTrange(ms2_nodes, rtrange)
@@ -214,7 +226,7 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
   data.table(rt=rep(rt_vals, sapply(mz_vals, length)),
              premz=rep(premz_vals, sapply(mz_vals, length)),
              fragmz=unlist(mz_vals), int=as.numeric(unlist(int_vals)),
-             voltages=rep(premz_vals, sapply(mz_vals, length)))
+             voltages=rep(voltages, sapply(mz_vals, length)))
 }
 
 
@@ -305,7 +317,7 @@ grabSpectraVoltage <- function(xml_nodes){
   volt_xpath <- paste0('d1:precursorList/d1:precursor/d1:activation',
                        '/d1:cvParam[@name="collision energy"]')
   volt_nodes <- xml2::xml_find_all(xml_nodes, volt_xpath)
-  as.numeric(xml2::xml_attr(volt_nodes, "value"))
+  as.integer(xml2::xml_attr(volt_nodes, "value"))
 }
 
 

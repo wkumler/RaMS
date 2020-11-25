@@ -1,17 +1,19 @@
 # Welcome to RaMS!
 
-files <- "180205_Poo_TruePoo_Full2.mzML"
-# files <- "180205_Poo_TruePooPos_dda1.mzML"
+# files <- "180205_Poo_TruePoo_Full2.mzML"
+files <- "180205_Poo_TruePooPos_dda1.mzML"
 # files <- c("180205_Poo_TruePooPos_dda1.mzML",
 #            "180205_Poo_TruePooPos_dda2.mzML",
 #            "180205_Poo_TruePooPos_dda3.mzML")
 # files <- list.files("G:/My Drive/FalkorFactor/mzMLs/pos/MSMS",
 #                     full.names = TRUE, pattern = "180205")
-files <- list.files("G:/My Drive/FalkorFactor/mzMLs/pos",
-                    full.names = TRUE, pattern = "1907.*Smp")
-files <- "threonine_i2_e35_pH_tree.mzXML"
+# files <- list.files("G:/My Drive/FalkorFactor/mzMLs/pos",
+#                     full.names = TRUE, pattern = "1907.*Smp")
+# files <- "threonine_i2_e35_pH_tree.mzXML"
 
-v <- grabMSdata(files, grab_what = c("everything"), verbosity = "kinda")
+# v <- grabMSdata(files, grab_what = c("everything"), verbosity = "very")
+v <- grabMSdata(files, grab_what = c("EIC", "EIC_MS2"), verbosity = "very",
+                mz = 118.0865, ppm = 5)
 
 
 # grabMSdata ----
@@ -106,9 +108,11 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
     close(pb)
   }
 
-  # Bind all the similar pieces together (e.g. stack MS1, MS2 from different files)
+  # Bind all the similar pieces together (e.g. stack MS1 from different files)
   all_file_data_output <- Reduce(function(x,y) Map(rbind, x, y), all_file_data)
-  invisible(checkOutputQuality(output_data = all_file_data_output, grab_what = grab_what))
+  invisible(checkOutputQuality(
+    output_data = all_file_data_output, grab_what = grab_what
+  ))
 
   all_file_data_output
 }
@@ -167,10 +171,8 @@ checkOutputQuality <- function(output_data, grab_what){
   }
   missing_data <- !grab_what%in%names(output_data)
   if(any(missing_data)){
-    message(paste("Not all data collected; missing",
+    stop(paste("Not all data collected; missing",
                   paste(grab_what[missing_data], collapse = ", ")))
-    # Maybe convert above message into full stop?
-    stopQuietly()
   }
 
   missing_data <- !as.logical(sapply(output_data, length))
@@ -187,7 +189,7 @@ checkOutputQuality <- function(output_data, grab_what){
 
   weird_classes <- !as.logical(colSums(sapply(output_data, class)=="data.table"))
   if(any(weird_classes)){
-    message(paste("Some data aren't data frames:",
+    message(paste("Some data aren't data tables:",
                   paste(names(output_data)[weird_classes], collapse = ", ")))
   }
 
@@ -199,9 +201,14 @@ checkOutputQuality <- function(output_data, grab_what){
     } else if(nms=="MS2"){
       proper_names <- c("rt", "premz", "fragmz", "int", "voltage", "filename")
     } else if(nms=="metadata"){
-      stop("Update the proper names for metadata in checkQualityOutput")
+      message("Update the proper names for metadata in checkQualityOutput")
+    } else if (nms=="EIC"){
+      proper_names <- c("rt", "mz", "int", "filename")
+    } else if (nms=="EIC_MS2"){
+      proper_names <- c("rt", "premz", "fragmz", "int", "voltage", "filename")
     } else {
-      message("Unexpected data subset name in checkQualityOutput, may be malformed")
+      message(paste0("Unexpected data subset name in ",
+                     "checkQualityOutput, may be malformed"))
       proper_names <- nms
     }
     !all(proper_names%in%names(dt))&all(names(dt)%in%proper_names)
@@ -215,7 +222,7 @@ checkOutputQuality <- function(output_data, grab_what){
     col_classes <- sapply(dt, class)
     proper_class <- c(rt="numeric", mz="numeric", int="numeric",
                       filename="character", premz="numeric", fragmz="numeric",
-                      voltage="numeric")
+                      voltage="integer")
     which(proper_class[names(col_classes)] != col_classes)
   })
   if(any(sapply(wrong_coltype, length))){
@@ -251,9 +258,13 @@ checkProvidedMzPpm <- function(mz, ppm){
   if(class(mz)!="numeric"&&class(mz)!="integer"){
     stop("Please provide a numeric m/z value")
   }
-  if(mz<0){
+  if(any(is.na(mz))){
+    stop("It looks like you have an NA among your m/z input")
+  }
+  if(any(mz<0)){
     stop("m/z must be positive")
   }
+
   if(is.null(ppm)){
     stop("Please provide a ppm value when using grab_what = EIC")
   }
@@ -267,3 +278,8 @@ checkProvidedMzPpm <- function(mz, ppm){
 
 pmppm <- function(mass, ppm=4)c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
 
+timeReport <- function(last_time, announcement=NULL){
+  cat(Sys.time()-last_time, "s\n")
+  cat(announcement)
+  Sys.time()
+}
