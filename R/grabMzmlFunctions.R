@@ -34,7 +34,7 @@
 #'   the final object's size.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
-#'   grab_what. $MS1 contains MS1 information, MS2 contains fragmentation info,
+#'   grab_what. $MS1 contains MS1 information, $MS2 contains fragmentation info,
 #'   etc. MS1 data has three columns: retention time (rt), mass-to-charge (mz),
 #'   and intensity (int). MS2 data has five: retention time (rt), precursor m/z
 #'   (premz), fragment m/z (fragmz), fragment intensity (int), and collision
@@ -54,7 +54,7 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
   }
   xml_data <- read_xml(filename)
 
-  checkMzmlType(xml_data)
+  checkFileType(xml_data, "mzML")
   rtrange <- checkRTrange(rtrange)
   file_metadata <- grabMzmlEncodingData(xml_data)
 
@@ -181,10 +181,6 @@ grabMzmlMS1 <- function(xml_data, rtrange, file_metadata){
 
 #' Extract the MS2 data from an mzML nodeset
 #'
-#' @param xml_data
-#' @param rtrange
-#' @param file_metadata
-#'
 #' @param xml_data An `xml2` nodeset, usually created by applying `read_xml` to
 #'   an mzML file.
 #' @param rtrange A vector of length 2 containing an upper and lower bound on
@@ -195,7 +191,7 @@ grabMzmlMS1 <- function(xml_data, rtrange, file_metadata){
 #'   arrays containing m/z and intensity information.
 #'
 #' @return A `data.table` with columns for retention time (rt),  precursor m/z (mz),
-#' fragment m/z (fragmz), collison energy (voltage), and intensity (int).
+#' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
 #'
 #' @examples
 grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
@@ -410,19 +406,6 @@ checkProvidedMzPpm <- function(mz, ppm){
   }
   if(ppm<0){
     stop("ppm must be positive")
-  }
-}
-
-checkMzmlType <- function(xml_data){
-  # Check for mzML node
-  # Length works because external pointer has length 2
-  if(!length(xml_find_first(xml_data, "//d1:mzML"))){
-    stop("No mzML node found in this file")
-  }
-
-  # Check for absence of mzXML node
-  if(length(xml_find_first(xml_data, "//d1:mzXML"))){
-    stop("This file contains an mzXML node and shouldn't")
   }
 }
 

@@ -9,8 +9,9 @@ files <- "180205_Poo_TruePoo_Full2.mzML"
 #                     full.names = TRUE, pattern = "180205")
 files <- list.files("G:/My Drive/FalkorFactor/mzMLs/pos",
                     full.names = TRUE, pattern = "1907.*Smp")
+filename <- "threonine_i2_e35_pH_tree.mzXML"
 
-v <- grabMSdata(files, grab_what = c("everything"), verbosity = "kinda")
+# v <- grabMSdata(files, grab_what = c("everything"), verbosity = "kinda")
 
 
 # grabMSdata ----
@@ -46,10 +47,10 @@ v <- grabMSdata(files, grab_what = c("everything"), verbosity = "kinda")
 #' @param ppm A single number corresponding to the mass accuracy (in parts per
 #'   million) of the instrument on which the data was collected. Only used when
 #'   combined with `grab_what = "EIC"` (see above).
-#' @param rtrange A vector of length 2 containing an upper and lower bound on
-#'   retention times of interest. Providing a range here can speed up load times
-#'   (although not enormously, as the entire file must still be read) and reduce
-#'   the final object's size.
+#' @param rtrange Only available when parsing mzML files. A vector of length 2
+#'   containing an upper and lower bound on retention times of interest.
+#'   Providing a range here can speed up load times (although not enormously, as
+#'   the entire file must still be read) and reduce the final object's size.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. $MS1 contains MS1 information, MS2 contains fragmentation info,
@@ -79,9 +80,9 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
     filename <- files[i]
 
     verbose <- ifelse(verbosity=="very", TRUE, FALSE)
-    if(grepl("mzML", filename, ignore.case = TRUE)){
+    if(grepl("mzML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzmlData(filename, grab_what, verbose, mz, ppm, rtrange)
-    } else if(grepl("mzXML", filename, ignore.case = TRUE)){
+    } else if(grepl("mzXML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzxmlData(filename, grab_what, verbose, mz, ppm, rtrange)
     } else {
       message(paste("Unable to determine file type for", filename))
