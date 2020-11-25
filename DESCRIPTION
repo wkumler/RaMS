@@ -12,10 +12,11 @@ Description: R access to mass-spectrometry (MS) data. While many packages exist
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Depends:
+    data.table
 Imports: 
     xml2, 
-    base64enc,
-    data.table
+    base64enc
 RoxygenNote: 7.1.1
 Suggests: 
     testthat, 
