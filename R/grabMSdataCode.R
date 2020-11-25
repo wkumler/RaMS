@@ -78,10 +78,14 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
       message(paste("Unable to determine file type for", filename))
       stopQuietly()
     }
-    out_data_filenamed <- lapply(out_data, function(dt, filename){
-      dt$filename <- ifelse(nrow(dt), filename, character())
-      return(dt)
-    }, filename=basename(filename))
+    out_data_filenamed <- mapply(function(dt_i, fname_i){
+      if(nrow(dt_i)){
+        dt_i$filename <- fname_i
+      } else {
+        dt_i$filename <- character()
+      }
+      dt_i
+    }, dt_i=out_data, fname_i=basename(filename))
     all_file_data[[i]] <- out_data_filenamed
     names(all_file_data)[[i]] <- basename(filename)
     if(verbosity=="very"|verbosity=="minimal"){
