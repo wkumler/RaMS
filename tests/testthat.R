@@ -1,15 +1,16 @@
 library(testthat)
-library(MSnbase)
 library(data.table)
+library(RaMS)
 
-mzML_filename <- system.file("proteomics", "MS3TMT11.mzML", package = "msdata")
-mzXML_filename <- system.file("threonine", "threonine_i2_e35_pH_tree.mzXML",
-                              package = "msdata")
+mzML_filenames <- list.files(system.file("extdata", package = "RaMS"),
+                             pattern = "mzML", full.names = TRUE)
+mzXML_filenames <- list.files(system.file("extdata", package = "RaMS"),
+                              pattern = "mzXML", full.names = TRUE)
 
-mzML_data <- grabMSdata(files = mzML_filename, grab_what = "everything", verbosity = "none")
-mzML_EICs <- grabMSdata(files = mzML_filename, grab_what = c("EIC", "EIC_MS2"),
+mzML_data <- grabMSdata(files = mzML_filenames, grab_what = "everything", verbosity = "none")
+mzML_EICs <- grabMSdata(files = mzML_filenames, grab_what = c("EIC", "EIC_MS2"),
                         verbosity = "none", mz = 118.0865, ppm=5)
-mzML_trimmed <- grabMSdata(files = mzML_filename, grab_what = "everything",
+mzML_trimmed <- grabMSdata(files = mzML_filenames, grab_what = "everything",
                            verbosity = "none", rtrange = c(45, 46))
 
 test_check("RaMS")

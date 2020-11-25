@@ -19,9 +19,9 @@
 #'   data, "BPC" for rapid access to the base peak chromatogram, and "TIC" for
 #'   rapid access to the total ion chromatogram. These options can be combined
 #'   (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or this argument can be set to
-#'   "everything" to extract all of the above. Option "EIC" is useful when
-#'   working with files whose total size exceeds working memory - it first
-#'   extracts all relevant MS1 and MS2 data, then discards data outside of the
+#'   "everything" to extract all of the above. Options "EIC" and "EIC_MS2" are useful when
+#'   working with files whose total size exceeds working memory - they first
+#'   extracts all relevant MS1 and MS2 data, then discard data outside of the
 #'   mass range(s) calculated from the provided mz and ppm.
 #' @param verbosity Three levels of processing output to the R console: "very",
 #'   which provides information about each file as it's read in; "minimal", for a
