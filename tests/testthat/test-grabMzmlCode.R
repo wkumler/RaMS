@@ -1,9 +1,17 @@
-test_that("file can be read", {
-  mzML_data <- grabMzmlData(mzML_filename)
-  expect_s3_class(mzML_data, class = "data.frame")
-  expect_identical(names(mzML_data), c("rt", "mz", "int"))
-  expect_gt(nrow(mzML_data), 0)
+
+test_that("MS1 extraction", {
+  expect_s3_class(mzML_data$MS1, class = "data.table")
+  expect_identical(names(mzML_data$MS1), c("rt", "mz", "int", "filename"))
+  expect_gt(nrow(mzML_data$MS1), 0)
 })
+
+test_that("MS1 extraction", {
+  mzML_data <- grabMSdata(files = mzML_filename, grab_what = "MS1", verbosity = "none")
+  expect_s3_class(mzML_data$MS1, class = "data.table")
+  expect_identical(names(mzML_data$MS1), c("rt", "mz", "int", "filename"))
+  expect_gt(nrow(mzML_data$MS1), 0)
+})
+
 
 test_that("BPC can be read", {
   BPC <- grabMzmlBPC(mzML_filename)
