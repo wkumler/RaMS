@@ -60,6 +60,7 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
   # Define outer control loop so multiple files can be read in simultaneously
   all_file_data <- list()
   if(verbosity=="very"|verbosity=="minimal"){
+    start_time <- Sys.time()
     pb <- txtProgressBar(min = 0, max = length(files), style = 3)
   }
   for(i in seq_along(files)){
@@ -94,6 +95,7 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
   }
   if(verbosity=="very"|verbosity=="minimal"){
     close(pb)
+    cat("Total time:", round(Sys.time()-start_time), " s\n")
   }
 
   # Bind all the similar pieces together (e.g. stack MS1 from different files)

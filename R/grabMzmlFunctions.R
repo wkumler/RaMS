@@ -49,7 +49,7 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
                          mz=NULL, ppm=NULL, rtrange=NULL){
   if(verbose){
     cat(paste0("\nReading file ", basename(filename), "... "))
-    last_time <- start_time <- Sys.time()
+    last_time <- Sys.time()
   }
   xml_data <- xml2::read_xml(filename)
 
@@ -122,7 +122,6 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
 
   if(verbose){
     cat(Sys.time()-last_time, "s\n")
-    cat("Total time:", Sys.time()-start_time, "\n")
   }
 
   output_data
