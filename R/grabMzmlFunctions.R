@@ -388,27 +388,6 @@ checkRTrange <- function(rtrange){
   rtrange
 }
 
-checkProvidedMzPpm <- function(mz, ppm){
-  if(is.null(mz)){
-    stop("Please provide an m/z value when using grab_what = EIC")
-  }
-  if(class(mz)!="numeric"&&class(mz)!="integer"){
-    stop("Please provide a numeric m/z value")
-  }
-  if(mz<0){
-    stop("m/z must be positive")
-  }
-  if(is.null(ppm)){
-    stop("Please provide a ppm value when using grab_what = EIC")
-  }
-  if(class(ppm)!="numeric"&&class(ppm)!="integer"){
-    stop("Please provide a numeric ppm value")
-  }
-  if(ppm<0){
-    stop("ppm must be positive")
-  }
-}
-
 shrinkRTrange <- function(xml_nodes, rtrange){
   # Xpath is magic. Basically we walk down from each spectrum node to find its
   # "scan start time" node and can filter directly on that.

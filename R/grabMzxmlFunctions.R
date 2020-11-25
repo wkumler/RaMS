@@ -96,7 +96,7 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
       last_time <- Sys.time()
       cat("Reading TIC... ")
     }
-    output_data$TIC <- grabMzmlBPC(xml_data, TIC = TRUE)
+    output_data$TIC <- grabMzxmlBPC(xml_data, TIC = TRUE)
   }
 
   # if("EIC"%in%grab_what){
@@ -138,10 +138,10 @@ grabMzxmlEncodingData <- function(xml_data){
 }
 
 
-#' Extract the MS1 data from an mzML nodeset
+#' Extract the MS1 data from an mzXML nodeset
 #'
 #' @param xml_data An `xml2` nodeset, usually created by applying `read_xml` to
-#'   an mzML file.
+#'   an mzXML file.
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information.
 #'
@@ -197,7 +197,7 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
 #' Grab the BPC or TIC from a file
 #'
 #' The base peak intensity and total ion current are actually written into the
-#' mzML files and aren't encoded, making retrieval of BPC and TIC information
+#' mzXML files and aren't encoded, making retrieval of BPC and TIC information
 #' blazingly fast if parsed correctly.
 #'
 #' @param xml_data An `xml2` nodeset, usually created by applying `read_xml` to
@@ -221,7 +221,7 @@ grabMzxmlBPC <- function(xml_data, TIC=FALSE){
 
 # Get spectrum things (functions of xml_nodes) ----
 
-#' Extract the retention time from the spectra of an mzML nodeset
+#' Extract the retention time from the spectra of an mzXML nodeset
 #'
 #' @param xml_nodes An xml_nodeset object corresponding to the spectra collected
 #' by the mass spectrometer, usually produced by applying `xml_find_all` to an
@@ -236,7 +236,7 @@ grabMzxmlSpectraRt <- function(xml_nodes){
 }
 
 
-#' Extract the precursor mass from the spectra of an mzML nodeset
+#' Extract the precursor mass from the spectra of an mzXML nodeset
 #'
 #' @param xml_nodes An xml_nodeset object corresponding to the spectra collected
 #' by the mass spectrometer, usually produced by applying `xml_find_all` to an
@@ -251,7 +251,7 @@ grabMzxmlSpectraPremz <- function(xml_nodes){
 }
 
 
-#' Extract the collison energies from the spectra of an mzML nodeset
+#' Extract the collison energies from the spectra of an mzXML nodeset
 #'
 #' Although the collision energy is typically fixed per file, it's equally
 #' fast (afaik) to just grab them all individually here. Also, I'm worried about
@@ -273,14 +273,14 @@ grabMzxmlSpectraVoltage <- function(xml_nodes){
 
 #' Extract the mass-to-charge data from the spectra of an mzXML nodeset
 #'
-#' The mz and intensity information of mzXML files are encoded as binary arrays,
-#' sometimes compressed via gzip or zlib or numpress. This code finds all the m/z
-#' binary arrays and converts them back to the original measurements. See
-#' https://github.com/ProteoWizard/pwiz/issues/1301
+#' The mz and intensity information of mzXML files are encoded as a binary
+#' array, sometimes compressed via gzip or zlib or numpress. This code finds all
+#' the m/z-int binary arrays and converts them back to the original
+#' measurements. See https://github.com/ProteoWizard/pwiz/issues/1301
 #'
 #' @param xml_nodes An xml_nodeset object corresponding to the spectra collected
-#' by the mass spectrometer, usually produced by applying `xml_find_all` to an
-#' MS1 or MS2 nodeset.
+#'   by the mass spectrometer, usually produced by applying `xml_find_all` to an
+#'   MS1 or MS2 nodeset.
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information. Here, the compression and
 #'   mz precision information is relevant.
@@ -303,25 +303,6 @@ grabMzxmlSpectraMzInt <- function(xml_nodes, file_metadata){
 }
 
 
-
 # Other helper functions ----
-checkProvidedMzPpm <- function(mz, ppm){
-  if(is.null(mz)){
-    stop("Please provide an m/z value when using grab_what = EIC")
-  }
-  if(class(mz)!="numeric"&&class(mz)!="integer"){
-    stop("Please provide a numeric m/z value")
-  }
-  if(mz<0){
-    stop("m/z must be positive")
-  }
-  if(is.null(ppm)){
-    stop("Please provide a ppm value when using grab_what = EIC")
-  }
-  if(class(ppm)!="numeric"&&class(ppm)!="integer"){
-    stop("Please provide a numeric ppm value")
-  }
-  if(ppm<0){
-    stop("ppm must be positive")
-  }
-}
+
+

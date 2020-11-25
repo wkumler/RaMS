@@ -231,3 +231,32 @@ stopQuietly <- function(){
   on.exit(options(opt))
   stop()
 }
+
+checkFileType <- function(xml_data, node_to_check){
+  # Check for mzML node
+  # Length works because external pointer has length 2
+  if(!length(xml_find_first(xml_data, paste0("//d1:", node_to_check)))){
+    stop(paste0("No ", node_to_check, " node found in this file"))
+  }
+}
+
+checkProvidedMzPpm <- function(mz, ppm){
+  if(is.null(mz)){
+    stop("Please provide an m/z value when using grab_what = EIC")
+  }
+  if(class(mz)!="numeric"&&class(mz)!="integer"){
+    stop("Please provide a numeric m/z value")
+  }
+  if(mz<0){
+    stop("m/z must be positive")
+  }
+  if(is.null(ppm)){
+    stop("Please provide a ppm value when using grab_what = EIC")
+  }
+  if(class(ppm)!="numeric"&&class(ppm)!="integer"){
+    stop("Please provide a numeric ppm value")
+  }
+  if(ppm<0){
+    stop("ppm must be positive")
+  }
+}
