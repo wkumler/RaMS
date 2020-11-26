@@ -19,13 +19,13 @@
 #'   data, "BPC" for rapid access to the base peak chromatogram, and "TIC" for
 #'   rapid access to the total ion chromatogram. These options can be combined
 #'   (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or this argument can be set to
-#'   "everything" to extract all of the above. Options "EIC" and "EIC_MS2" are useful when
-#'   working with files whose total size exceeds working memory - they first
-#'   extracts all relevant MS1 and MS2 data, then discard data outside of the
-#'   mass range(s) calculated from the provided mz and ppm.
+#'   "everything" to extract all of the above. Options "EIC" and "EIC_MS2" are
+#'   useful when working with files whose total size exceeds working memory -
+#'   they first extracts all relevant MS1 and MS2 data, then discard data
+#'   outside of the mass range(s) calculated from the provided mz and ppm.
 #' @param verbosity Three levels of processing output to the R console: "very",
-#'   which provides information about each file as it's read in; "minimal", for a
-#'   progress bar but no individual file information; and "none" for no output
+#'   which provides information about each file as it's read in; "minimal", for
+#'   a progress bar but no individual file information; and "none" for no output
 #'   of any kind.
 #' @param mz A vector of the mass-to-charge ratio for compounds of interest.
 #'   Only used when combined with `grab_what = "EIC"` (see above). Multiple
@@ -52,7 +52,35 @@
 #' @export
 #'
 #' @examples
-grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
+#' # Operations on a single file
+#' sample_file <- system.file("extdata",
+#'                            "190715_Poo_TruePooFK180310_Full1.mzML.gz",
+#'                            package = "RaMS")
+#' file_data <- grabMSdata(sample_file, grab_what="MS1")
+#' # Extract MS1 data and a base peak chromatogram
+#' file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"))
+#' # Extract data from a retention time subset
+#' file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"), rtrange=c(5, 7))
+#'
+#' # Get timing data
+#' file_data <- grabMSdata(sample_file, verbosity="very")
+#'
+#' # Extract data from multiple files simultaneously
+#' sample_dir <- system.file("extdata", package = "RaMS")
+#' sample_files <- list.files(sample_dir, pattern="Full1", full.names=TRUE)
+#' multifile_data <- grabMSdata(sample_files, grab_what="MS1")
+#'
+#' # Extract an EIC for glycine betaine from several files
+#' sample_files <- list.files(sample_dir, pattern="mzML", full.names=TRUE)
+#' bet_EIC <- grabMSdata(sample_files, grab_what="EIC", mz=118.0865, ppm=5)
+#' # Or speed it up even more because you already know betaine's retention time
+#' bet_EIC <- grabMSdata(sample_files, grab_what="EIC", rtrange=c(5, 7),
+#'                       mz=118.0865, ppm=5)
+#'
+#' # Extract EIC for multiple masses simultaneously, from multiple files
+#' file_data <- grabMSdata(sample_files, grab_what="EIC", ppm=5,
+#'                         mz=c(118.0865, 146.118104, 189.123918))
+grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="minimal",
                        mz=NULL, ppm=NULL, rtrange=NULL){
   # Check file quality
   checkFiles(files)
@@ -86,7 +114,7 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
         dt_i$filename <- character()
       }
       dt_i
-    }, dt_i=out_data, fname_i=basename(filename))
+    }, dt_i=out_data, fname_i=basename(filename), SIMPLIFY = FALSE)
     all_file_data[[i]] <- out_data_filenamed
     names(all_file_data)[[i]] <- basename(filename)
     if(verbosity=="very"|verbosity=="minimal"){
@@ -95,7 +123,7 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
   }
   if(verbosity=="very"|verbosity=="minimal"){
     close(pb)
-    cat("Total time:", round(Sys.time()-start_time), " s\n")
+    cat("Total time:", round(Sys.time()-start_time, digits = 2), " s\n")
   }
 
   # Bind all the similar pieces together (e.g. stack MS1 from different files)
@@ -116,7 +144,7 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="very",
 #' @return NULL (invisibly). The goal of this function is its side effects, i.e.
 #'   throwing errors and providing info when the files are not found.
 #'
-#' @examples
+
 checkFiles <- function(files){
   # Check that files were actually provided
   if(!length(files))stop("No files provided")
@@ -154,7 +182,7 @@ checkFiles <- function(files){
 #' @return NULL (invisibly). The goal of this function is its side effects, i.e.
 #'   throwing errors and providing info when the files are not found.
 #'
-#' @examples
+
 checkOutputQuality <- function(output_data, grab_what){
   if("everything"%in%grab_what){
     grab_what <- c("MS1", "MS2", "BPC", "TIC")
@@ -266,10 +294,38 @@ checkProvidedMzPpm <- function(mz, ppm){
   }
 }
 
+
+#' Plus/minus parts per million
+#'
+#' It shouldn't be hard to translate a point mass into a mass window bounded by
+#' spectrometer accuracy.
+#'
+#' @param mass A length-1 numeric representing the mass of
+#' interest for which a mass range is desired.
+#' @param ppm The parts-per-million accuracy of the mass spectrometer on which
+#' the data was collected.
+#'
+#' @export
+#'
+#' @examples
+#' pmppm(100, 5)
+#' pmppm(1000000, 5)
+#' pmppm(118.0865, 2.5)
+#' pmppm(892.535313, 10)
 pmppm <- function(mass, ppm=4)c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
+
 
 timeReport <- function(last_time, announcement=NULL){
   cat(Sys.time()-last_time, "s\n")
   cat(announcement)
   Sys.time()
 }
+
+
+# Import area ----
+
+#' @import utils
+#' @import xml2
+#' @import data.table
+#' @importFrom base64enc base64decode
+NULL

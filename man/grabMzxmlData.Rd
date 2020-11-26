@@ -30,6 +30,9 @@ mass range(s) calculated from the provided mz and ppm.}
 \item{verbose}{Boolean. If TRUE, R will print information about timing to the
 console as the file is read in.}
 
+\item{rtrange}{Not supported for mzXML data. Only provided here so as to throw
+a friendly warning rather than an unexpected error.}
+
 \item{mz}{A vector of the mass-to-charge ratio for compounds of interest.
 Only used when combined with `grab_what = "EIC"` (see above). Multiple
 masses can be provided.}
@@ -53,4 +56,17 @@ This function handles the mzXML side of things, reading in files that are
 written in the mzXML format. Much of the code is similar to the mzXML format,
 but the xpath handles are different and the mz/int array is encoded
 simultaneously rather than as two separate entries.
+}
+\examples{
+sample_file <- system.file("extdata",
+                           "190715_Poo_TruePooFK180310_Full1.mzXML.gz",
+                           package = "RaMS")
+file_data <- grabMzxmlData(sample_file, grab_what="MS1")
+# Extract MS1 data and a base peak chromatogram
+file_data <- grabMzxmlData(sample_file, grab_what=c("MS1", "BPC"))
+# Extract EIC for a specific mass
+file_data <- grabMzxmlData(sample_file, grab_what="EIC", mz=118.0865, ppm=5)
+# Extract EIC for several masses simultaneously
+file_data <- grabMzxmlData(sample_file, grab_what="EIC", ppm=5,
+                           mz=c(118.0865, 146.118104, 189.123918))
 }

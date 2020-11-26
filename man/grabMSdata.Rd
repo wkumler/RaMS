@@ -7,7 +7,7 @@
 grabMSdata(
   files,
   grab_what = c("MS1", "MS2"),
-  verbosity = "very",
+  verbosity = "minimal",
   mz = NULL,
   ppm = NULL,
   rtrange = NULL
@@ -22,14 +22,14 @@ absolute and relative paths are acceptable.}
 data, "BPC" for rapid access to the base peak chromatogram, and "TIC" for
 rapid access to the total ion chromatogram. These options can be combined
 (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or this argument can be set to
-"everything" to extract all of the above. Options "EIC" and "EIC_MS2" are useful when
-working with files whose total size exceeds working memory - they first
-extracts all relevant MS1 and MS2 data, then discard data outside of the
-mass range(s) calculated from the provided mz and ppm.}
+"everything" to extract all of the above. Options "EIC" and "EIC_MS2" are
+useful when working with files whose total size exceeds working memory -
+they first extracts all relevant MS1 and MS2 data, then discard data
+outside of the mass range(s) calculated from the provided mz and ppm.}
 
 \item{verbosity}{Three levels of processing output to the R console: "very",
-which provides information about each file as it's read in; "minimal", for a
-progress bar but no individual file information; and "none" for no output
+which provides information about each file as it's read in; "minimal", for
+a progress bar but no individual file information; and "none" for no output
 of any kind.}
 
 \item{mz}{A vector of the mass-to-charge ratio for compounds of interest.
@@ -65,4 +65,34 @@ determined by the `grab_what` argument, which can include MS1, MS2, BPC, TIC,
 or metadata information. This function serves as a wrapper around both
 `grabMzmlData` and `grabMzxmlData` and handles multiple files, but those two
 have also been exposed to the user in case super-simple handling is desired.
+}
+\examples{
+# Operations on a single file
+sample_file <- system.file("extdata",
+                           "190715_Poo_TruePooFK180310_Full1.mzML.gz",
+                           package = "RaMS")
+file_data <- grabMSdata(sample_file, grab_what="MS1")
+# Extract MS1 data and a base peak chromatogram
+file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"))
+# Extract data from a retention time subset
+file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"), rtrange=c(5, 7))
+
+# Get timing data
+file_data <- grabMSdata(sample_file, verbosity="very")
+
+# Extract data from multiple files simultaneously
+sample_dir <- system.file("extdata", package = "RaMS")
+sample_files <- list.files(sample_dir, pattern="Full1", full.names=TRUE)
+multifile_data <- grabMSdata(sample_files, grab_what="MS1")
+
+# Extract an EIC for glycine betaine from several files
+sample_files <- list.files(sample_dir, pattern="mzML", full.names=TRUE)
+bet_EIC <- grabMSdata(sample_files, grab_what="EIC", mz=118.0865, ppm=5)
+# Or speed it up even more because you already know betaine's retention time
+bet_EIC <- grabMSdata(sample_files, grab_what="EIC", rtrange=c(5, 7),
+                      mz=118.0865, ppm=5)
+
+# Extract EIC for multiple masses simultaneously, from multiple files
+file_data <- grabMSdata(sample_files, grab_what="EIC", ppm=5,
+                        mz=c(118.0865, 146.118104, 189.123918))
 }

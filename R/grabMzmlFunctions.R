@@ -45,6 +45,20 @@
 #' @export
 #'
 #' @examples
+#' sample_file <- system.file("extdata",
+#'                            "190715_Poo_TruePooFK180310_Full1.mzML.gz",
+#'                            package = "RaMS")
+#' file_data <- grabMzmlData(sample_file, grab_what="MS1")
+#' # Extract MS1 data and a base peak chromatogram
+#' file_data <- grabMzmlData(sample_file, grab_what=c("MS1", "BPC"))
+#' # Extract data from a retention time subset
+#' file_data <- grabMzmlData(sample_file, grab_what=c("MS1", "BPC"),
+#'                           rtrange=c(5, 7))
+#' # Extract EIC for a specific mass
+#' file_data <- grabMzmlData(sample_file, grab_what="EIC", mz=118.0865, ppm=5)
+#' # Extract EIC for several masses simultaneously
+#' file_data <- grabMzmlData(sample_file, grab_what="EIC", ppm=5,
+#'                           mz=c(118.0865, 146.118104, 189.123918))
 grabMzmlData <- function(filename, grab_what, verbose=FALSE,
                          mz=NULL, ppm=NULL, rtrange=NULL){
   if(verbose){
@@ -114,6 +128,7 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
     } else {
       init_dt <- output_data$MS2
     }
+    premz <- NULL #To prevent R CMD check "notes"
     EIC_MS2_list <- lapply(mz, function(mass){
       init_dt[premz%between%pmppm(mass = mass, ppm = ppm)]
     })
@@ -174,14 +189,16 @@ grabMzmlEncodingData <- function(xml_data){
 #'   arrays containing m/z and intensity information.
 #'
 #' @return A `data.table` with columns for retention time (rt), m/z (mz), and intensity (int).
-#'
-#' @examples
 grabMzmlMS1 <- function(xml_data, rtrange, file_metadata){
   ms1_xpath <- '//d1:cvParam[@name="ms level" and @value="1"]/parent::d1:spectrum'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
   if(!is.null(rtrange)){
     ms1_nodes <- shrinkRTrange(ms1_nodes, rtrange)
   }
+  if(!length(ms1_nodes)){
+    return(data.table(rt=numeric(), mz=numeric(), int=numeric()))
+  }
+
 
   rt_vals <- grabSpectraRt(ms1_nodes)
   mz_vals <- grabSpectraMz(ms1_nodes, file_metadata)
@@ -206,17 +223,15 @@ grabMzmlMS1 <- function(xml_data, rtrange, file_metadata){
 #'
 #' @return A `data.table` with columns for retention time (rt),  precursor m/z (mz),
 #' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
-#'
-#' @examples
 grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
   ms2_xpath <- '//d1:cvParam[@name="ms level" and @value="2"]/parent::d1:spectrum'
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
+  if(!is.null(rtrange)){
+    ms2_nodes <- shrinkRTrange(ms2_nodes, rtrange)
+  }
   if(!length(ms2_nodes)){
     return(data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
                       int=numeric(), voltages=integer()))
-  }
-  if(!is.null(rtrange)){
-    ms2_nodes <- shrinkRTrange(ms2_nodes, rtrange)
   }
 
   rt_vals <- grabSpectraRt(ms2_nodes)
@@ -247,8 +262,6 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
 #' @param TIC Boolean. If TRUE, the TIC is extracted rather than the BPC.
 #'
 #' @return A `data.table` with columns for retention time (rt), and intensity (int).
-#'
-#' @examples
 grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE){
   ms1_xpath <- '//d1:cvParam[@name="ms level"][@value="1"]/parent::d1:spectrum'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
@@ -276,8 +289,6 @@ grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE){
 #' MS1 or MS2 nodeset.
 #'
 #' @return A numeric vector of retention times, one for each scan
-#'
-#' @examples
 grabSpectraRt <- function(xml_nodes){
   rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
   rt_nodes <- xml2::xml_find_all(xml_nodes, rt_xpath)
@@ -292,8 +303,6 @@ grabSpectraRt <- function(xml_nodes){
 #' MS1 or MS2 nodeset.
 #'
 #' @return A numeric vector of precursor masses, one for each scan
-#'
-#' @examples
 grabSpectraPremz <- function(xml_nodes){
   premz_xpath <- paste0('d1:precursorList/d1:precursor/d1:selectedIonList',
                         '/d1:selectedIon/d1:cvParam[@name="selected ion m/z"]')
@@ -313,8 +322,6 @@ grabSpectraPremz <- function(xml_nodes){
 #' MS1 or MS2 nodeset.
 #'
 #' @return A numeric vector of collision energies, one for each scan.
-#'
-#' @examples
 grabSpectraVoltage <- function(xml_nodes){
   volt_xpath <- paste0('d1:precursorList/d1:precursor/d1:activation',
                        '/d1:cvParam[@name="collision energy"]')
@@ -338,8 +345,6 @@ grabSpectraVoltage <- function(xml_nodes){
 #'   mz precision information is relevant.
 #'
 #' @return A numeric vector of masses, many for each scan.
-#'
-#' @examples
 grabSpectraMz <- function(xml_nodes, file_metadata){
   mz_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[1]/d1:binary'
   mz_vals <- xml2::xml_text(xml2::xml_find_all(xml_nodes, mz_xpath))
@@ -369,8 +374,6 @@ grabSpectraMz <- function(xml_nodes, file_metadata){
 #'   int precision information is relevant.
 #'
 #' @return A numeric vector of intensities, many for each scan.
-#'
-#' @examples
 grabSpectraInt <- function(xml_nodes, file_metadata){
   int_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[2]/d1:binary'
   int_vals <- xml2::xml_text(xml2::xml_find_all(xml_nodes, int_xpath))

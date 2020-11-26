@@ -28,6 +28,8 @@
 #' @param ppm A single number corresponding to the mass accuracy (in parts per
 #'   million) of the instrument on which the data was collected. Only used when
 #'   combined with `grab_what = "EIC"` (see above).
+#' @param rtrange Not supported for mzXML data. Only provided here so as to throw
+#' a friendly warning rather than an unexpected error.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. $MS1 contains MS1 information, $MS2 contains fragmentation info,
@@ -41,10 +43,21 @@
 #' @export
 #'
 #' @examples
+#' sample_file <- system.file("extdata",
+#'                            "190715_Poo_TruePooFK180310_Full1.mzXML.gz",
+#'                            package = "RaMS")
+#' file_data <- grabMzxmlData(sample_file, grab_what="MS1")
+#' # Extract MS1 data and a base peak chromatogram
+#' file_data <- grabMzxmlData(sample_file, grab_what=c("MS1", "BPC"))
+#' # Extract EIC for a specific mass
+#' file_data <- grabMzxmlData(sample_file, grab_what="EIC", mz=118.0865, ppm=5)
+#' # Extract EIC for several masses simultaneously
+#' file_data <- grabMzxmlData(sample_file, grab_what="EIC", ppm=5,
+#'                            mz=c(118.0865, 146.118104, 189.123918))
 grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
                           rtrange=NULL, mz=NULL, ppm=NULL){
   if(!is.null(rtrange)){
-    message("`rtrange` argument not supported for mzXML files, ignoring")
+    message("\n`rtrange` argument not supported for mzXML files, ignoring")
   }
   if(verbose){
     cat(paste0("\nReading file ", basename(filename), "... "))
@@ -89,7 +102,7 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
     checkProvidedMzPpm(mz, ppm)
     if(verbose)last_time <- timeReport(last_time, announcement = "Extracting EIC...")
     if(!"MS1"%in%grab_what){
-      init_dt <- grabMzxmlMS1(xml_data, rtrange, file_metadata)
+      init_dt <- grabMzxmlMS1(xml_data = xml_data, file_metadata = file_metadata)
     } else {
       init_dt <- output_data$MS1
       if(!nrow(init_dt))stop("Something weird - can't find MS1 data to subset")
@@ -104,11 +117,11 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
     checkProvidedMzPpm(mz, ppm)
     if(verbose)last_time <- timeReport(last_time, announcement = "Extracting EIC MS2...")
     if(!"MS2"%in%grab_what){
-      init_dt <- grabMzxmlMS2(xml_data = xml_data, rtrange = rtrange,
-                              file_metadata = file_metadata)
+      init_dt <- grabMzxmlMS2(xml_data = xml_data, file_metadata = file_metadata)
     } else {
       init_dt <- output_data$MS2
     }
+    premz <- NULL #To prevent R CMD check "notes"
     EIC_MS2_list <- lapply(mz, function(mass){
       init_dt[premz%between%pmppm(mass = mass, ppm = ppm)]
     })
@@ -158,8 +171,6 @@ grabMzxmlEncodingData <- function(xml_data){
 #'   arrays containing m/z and intensity information.
 #'
 #' @return A `data.table` with columns for retention time (rt), m/z (mz), and intensity (int).
-#'
-#' @examples
 grabMzxmlMS1 <- function(xml_data, file_metadata){
   ms1_xpath <- '//d1:scan[@msLevel="1"]'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
@@ -183,8 +194,6 @@ grabMzxmlMS1 <- function(xml_data, file_metadata){
 #'
 #' @return A `data.table` with columns for retention time (rt),  precursor m/z (mz),
 #' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
-#'
-#' @examples
 grabMzxmlMS2 <- function(xml_data, file_metadata){
   ms2_xpath <- '//d1:scan[@msLevel="2"]'
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
@@ -218,8 +227,6 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
 #' @param TIC Boolean. If TRUE, the TIC is extracted rather than the BPC.
 #'
 #' @return A `data.table` with columns for retention time (rt), and intensity (int).
-#'
-#' @examples
 grabMzxmlBPC <- function(xml_data, TIC=FALSE){
   scan_nodes <- xml2::xml_find_all(xml_data, '//d1:scan[@msLevel="1"]')
   rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
@@ -242,7 +249,7 @@ grabMzxmlBPC <- function(xml_data, TIC=FALSE){
 #'
 #' @return A numeric vector of retention times, one for each scan
 #'
-#' @examples
+
 grabMzxmlSpectraRt <- function(xml_nodes){
   rt_attrs <- xml2::xml_attr(xml_nodes, "retentionTime")
   as.numeric(gsub("PT|S", "", rt_attrs))
@@ -257,7 +264,7 @@ grabMzxmlSpectraRt <- function(xml_nodes){
 #'
 #' @return A numeric vector of precursor masses, one for each scan
 #'
-#' @examples
+
 grabMzxmlSpectraPremz <- function(xml_nodes){
   premz_nodes <- xml2::xml_find_all(xml_nodes, xpath = "d1:precursorMz")
   as.numeric(xml_text(premz_nodes))
@@ -276,7 +283,7 @@ grabMzxmlSpectraPremz <- function(xml_nodes){
 #'
 #' @return A numeric vector of collision energies, one for each scan.
 #'
-#' @examples
+
 grabMzxmlSpectraVoltage <- function(xml_nodes){
   filterline_data <- xml2::xml_attr(xml_nodes, "filterLine")
   as.integer(gsub(".*cid| .*", "", filterline_data))
@@ -300,7 +307,7 @@ grabMzxmlSpectraVoltage <- function(xml_nodes){
 #'
 #' @return A numeric vector of masses, many for each scan.
 #'
-#' @examples
+
 grabMzxmlSpectraMzInt <- function(xml_nodes, file_metadata){
   all_peak_nodes <- xml2::xml_text(xml2::xml_find_all(xml_nodes, xpath = "d1:peaks"))
   vals <- lapply(all_peak_nodes, function(binary){

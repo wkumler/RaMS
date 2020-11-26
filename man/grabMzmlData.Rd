@@ -59,3 +59,19 @@ written in the mzML format. Much of the code is similar to the mzXML format,
 but the xpath handles are different and the mz/int array is encoded as two
 separate entries rather than simultaneously.
 }
+\examples{
+sample_file <- system.file("extdata",
+                           "190715_Poo_TruePooFK180310_Full1.mzML.gz",
+                           package = "RaMS")
+file_data <- grabMzmlData(sample_file, grab_what="MS1")
+# Extract MS1 data and a base peak chromatogram
+file_data <- grabMzmlData(sample_file, grab_what=c("MS1", "BPC"))
+# Extract data from a retention time subset
+file_data <- grabMzmlData(sample_file, grab_what=c("MS1", "BPC"),
+                          rtrange=c(5, 7))
+# Extract EIC for a specific mass
+file_data <- grabMzmlData(sample_file, grab_what="EIC", mz=118.0865, ppm=5)
+# Extract EIC for several masses simultaneously
+file_data <- grabMzmlData(sample_file, grab_what="EIC", ppm=5,
+                          mz=c(118.0865, 146.118104, 189.123918))
+}

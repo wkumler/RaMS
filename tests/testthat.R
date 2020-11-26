@@ -1,5 +1,4 @@
 library(testthat)
-library(data.table)
 library(RaMS)
 
 mzML_filenames <- list.files(system.file("extdata", package = "RaMS"),
@@ -7,10 +6,12 @@ mzML_filenames <- list.files(system.file("extdata", package = "RaMS"),
 mzXML_filenames <- list.files(system.file("extdata", package = "RaMS"),
                               pattern = "mzXML", full.names = TRUE)
 
-mzML_data <- grabMSdata(files = mzML_filenames, grab_what = "everything", verbosity = "minimal")
+mzML_data <- grabMSdata(files = mzML_filenames, grab_what = "everything", verbosity = "none")
 mzML_EICs <- grabMSdata(files = mzML_filenames, grab_what = c("EIC", "EIC_MS2"),
-                        verbosity = "minimal", mz = 118.0865, ppm=5)
-mzML_trimmed <- grabMSdata(files = mzML_filenames, grab_what = "everything",
-                           verbosity = "minimal", rtrange = c(5, 6))
+                        verbosity = "none", mz = 118.0865, ppm=5)
+
+mzXML_data <- grabMSdata(files = mzXML_filenames, grab_what = "everything", verbosity = "none")
+mzXML_EICs <- grabMSdata(files = mzXML_filenames, c("EIC", "EIC_MS2"),
+                         verbosity = "none", mz = 118.0865, ppm=5)
 
 test_check("RaMS")

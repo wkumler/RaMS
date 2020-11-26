@@ -3,3 +3,8 @@
 export(grabMSdata)
 export(grabMzmlData)
 export(grabMzxmlData)
+export(pmppm)
+import(data.table)
+import(utils)
+import(xml2)
+importFrom(base64enc,base64decode)
