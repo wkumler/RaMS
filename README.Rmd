@@ -108,4 +108,3 @@ reducing file sizes.
 Currently, `RaMS` also handles only MS<sup>1</sup> and MS<sup>2</sup> data. This should be easy enough
 to expand in the future, but right now I haven't observed a demonstrated need
 for higher fragmentation level data collection.
-
