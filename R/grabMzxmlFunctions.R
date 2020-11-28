@@ -107,7 +107,7 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
       init_dt <- output_data$MS1
       if(!nrow(init_dt))stop("Something weird - can't find MS1 data to subset")
     }
-    EIC_list <- lapply(mz, function(mass){
+    EIC_list <- lapply(unique(mz), function(mass){
       init_dt[mz%between%pmppm(mass = mass, ppm = ppm)]
     })
     output_data$EIC <- rbindlist(EIC_list)
@@ -122,7 +122,7 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
       init_dt <- output_data$MS2
     }
     premz <- NULL #To prevent R CMD check "notes"
-    EIC_MS2_list <- lapply(mz, function(mass){
+    EIC_MS2_list <- lapply(unique(mz), function(mass){
       init_dt[premz%between%pmppm(mass = mass, ppm = ppm)]
     })
     output_data$EIC_MS2 <- rbindlist(EIC_MS2_list)
