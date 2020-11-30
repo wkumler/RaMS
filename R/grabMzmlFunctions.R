@@ -349,6 +349,7 @@ grabSpectraMz <- function(xml_nodes, file_metadata){
   mz_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[1]/d1:binary'
   mz_vals <- xml2::xml_text(xml2::xml_find_all(xml_nodes, mz_xpath))
   lapply(mz_vals, function(binary){
+    if(!nchar(binary))return(numeric(0))
     decoded_binary <- base64enc::base64decode(binary)
     raw_binary <- as.raw(decoded_binary)
     decomp_binary <- memDecompress(raw_binary, type = file_metadata$compression)
@@ -378,6 +379,7 @@ grabSpectraInt <- function(xml_nodes, file_metadata){
   int_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[2]/d1:binary'
   int_vals <- xml2::xml_text(xml2::xml_find_all(xml_nodes, int_xpath))
   int_vals <- lapply(int_vals, function(binary){
+    if(!nchar(binary))return(numeric(0))
     decoded_binary <- base64enc::base64decode(binary)
     raw_binary <- as.raw(decoded_binary)
     decomp_binary <- memDecompress(raw_binary, type = file_metadata$compression)

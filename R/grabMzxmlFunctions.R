@@ -311,6 +311,7 @@ grabMzxmlSpectraVoltage <- function(xml_nodes){
 grabMzxmlSpectraMzInt <- function(xml_nodes, file_metadata){
   all_peak_nodes <- xml2::xml_text(xml2::xml_find_all(xml_nodes, xpath = "d1:peaks"))
   vals <- lapply(all_peak_nodes, function(binary){
+    if(!nchar(binary))return(matrix(ncol = 2, nrow = 0))
     decoded_binary <- base64enc::base64decode(binary)
     raw_binary <- as.raw(decoded_binary)
     decomp_binary <- memDecompress(raw_binary, type = file_metadata$compression)
