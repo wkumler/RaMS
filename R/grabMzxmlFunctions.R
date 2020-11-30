@@ -267,7 +267,7 @@ grabMzxmlSpectraRt <- function(xml_nodes){
 
 grabMzxmlSpectraPremz <- function(xml_nodes){
   premz_nodes <- xml2::xml_find_all(xml_nodes, xpath = "d1:precursorMz")
-  as.numeric(xml_text(premz_nodes))
+  as.numeric(xml2::xml_text(premz_nodes))
 }
 
 
@@ -285,8 +285,7 @@ grabMzxmlSpectraPremz <- function(xml_nodes){
 #'
 
 grabMzxmlSpectraVoltage <- function(xml_nodes){
-  filterline_data <- xml2::xml_attr(xml_nodes, "filterLine")
-  as.integer(gsub(".*cid| .*", "", filterline_data))
+  as.numeric(xml2::xml_attr(xml_nodes, "collisionEnergy"))
 }
 
 
