@@ -7,7 +7,9 @@
 #' This function handles the mzML side of things, reading in files that are
 #' written in the mzML format. Much of the code is similar to the mzXML format,
 #' but the xpath handles are different and the mz/int array is encoded as two
-#' separate entries rather than simultaneously.
+#' separate entries rather than simultaneously. This function has been exposed
+#' to the user in case per-file optimization (such as peakpicking or additional
+#' filtering) is desired before the full data object is returned.
 #'
 #' @param filename A single filename to read into R's memory. Both absolute and
 #'   relative paths are acceptable.
@@ -45,8 +47,7 @@
 #' @export
 #'
 #' @examples
-#' sample_file <- system.file("extdata",
-#'                            "190715_Poo_TruePooFK180310_Full1.mzML.gz",
+#' sample_file <- system.file("extdata", "FK180310_Full1.mzML.gz",
 #'                            package = "RaMS")
 #' file_data <- grabMzmlData(sample_file, grab_what="MS1")
 #' # Extract MS1 data and a base peak chromatogram
@@ -59,6 +60,11 @@
 #' # Extract EIC for several masses simultaneously
 #' file_data <- grabMzmlData(sample_file, grab_what="EIC", ppm=5,
 #'                           mz=c(118.0865, 146.118104, 189.123918))
+#'
+#' # Extract MS2 data
+#' sample_file <- system.file("extdata", "FK180310_DDApos100.mzML.gz",
+#'                            package = "RaMS")
+#' MS2_data <- grabMzmlData(sample_file, grab_what="MS2")
 grabMzmlData <- function(filename, grab_what, verbose=FALSE,
                          mz=NULL, ppm=NULL, rtrange=NULL){
   if(verbose){
@@ -78,7 +84,7 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
       message("Heads-up: grab_what = `everything` includes MS1, MS2, BPC, and TIC data")
       message("Ignoring additional grabs")
     }
-    grab_what <- c("MS1", "MS2", "BPC", "TIC")
+    grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
   }
 
   if("MS1"%in%grab_what){
@@ -135,6 +141,11 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
     output_data$EIC_MS2 <- rbindlist(EIC_MS2_list)
   }
 
+  if("metadata"%in%grab_what){
+    if(verbose)last_time <- timeReport(last_time, announcement = "Reading file metadata...")
+    output_data$metadata <- grabMzmlMetadata(xml_data = xml_data)
+  }
+
   if(verbose){
     cat(Sys.time()-last_time, "s\n")
   }
@@ -145,6 +156,44 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
 # Get mzML specifics (functions of xml_data) ----
 
 #' Helper function to extract mzML file metadata
+#'
+#' @param xml_data mzML data as parsed by xml2
+#'
+#' @return A list of values corresponding to various pieces of metadata
+#' for each file
+grabMzmlMetadata <- function(xml_data){
+  source_node <- xml_find_all(xml_data, xpath = "//d1:sourceFile")
+  source_file <- xml_attr(source_node, "name")
+  inst_nodes <- xml_find_all(xml_data, xpath = "//d1:referenceableParamGroup/d1:cvParam")
+  inst_names <- xml_attr(inst_nodes, "name")
+  inst_vals <- xml_attr(inst_nodes, "value")
+  names(inst_vals) <- inst_names
+
+  config_nodes <- xml_find_all(xml_data, xpath = "//d1:componentList/child::node()")
+  config_types <- xml_name(config_nodes)
+  config_order <- xml_attr(config_nodes, "order")
+  config_names <- xml_attr(xml_find_first(config_nodes, "d1:cvParam"), "name")
+
+  time_node <- xml_attr(xml_find_first(xml_data, xpath = "//d1:run"), "startTimeStamp")
+  time_stamp <- as.POSIXct(strptime(time_node, "%Y-%m-%dT%H:%M:%SZ"))
+
+  mslevel_nodes <- xml_find_first(xml_data, xpath = "//d1:fileContent/child::node()")
+  mslevels <- gsub(" spectrum", "", xml_attr(mslevel_nodes, "name"))
+
+  metadata <- data.table(
+    source_file=list(source_file),
+    inst_data=list(inst_vals),
+    config_data=list(data.frame(
+      order=config_order,
+      type=config_types,
+      name=config_names
+    )),
+    timestamp = time_stamp,
+    mslevels=list(mslevels)
+  )
+}
+
+#' Helper function to extract mzML file encoding data
 #'
 #' @param xml_data mzML data as parsed by xml2
 #'

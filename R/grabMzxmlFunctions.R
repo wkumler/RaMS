@@ -7,7 +7,9 @@
 #' This function handles the mzXML side of things, reading in files that are
 #' written in the mzXML format. Much of the code is similar to the mzXML format,
 #' but the xpath handles are different and the mz/int array is encoded
-#' simultaneously rather than as two separate entries.
+#' simultaneously rather than as two separate entries. This function has been exposed
+#' to the user in case per-file optimization (such as peakpicking or additional
+#' filtering) is desired before the full data object is returned.
 #'
 #' @param filename A single filename to read into R's memory. Both absolute and
 #'   relative paths are acceptable.
@@ -43,8 +45,7 @@
 #' @export
 #'
 #' @examples
-#' sample_file <- system.file("extdata",
-#'                            "190715_Poo_TruePooFK180310_Full1.mzXML.gz",
+#' sample_file <- system.file("extdata", "FK180310_Full1.mzXML.gz",
 #'                            package = "RaMS")
 #' file_data <- grabMzxmlData(sample_file, grab_what="MS1")
 #' # Extract MS1 data and a base peak chromatogram
@@ -54,6 +55,11 @@
 #' # Extract EIC for several masses simultaneously
 #' file_data <- grabMzxmlData(sample_file, grab_what="EIC", ppm=5,
 #'                            mz=c(118.0865, 146.118104, 189.123918))
+#'
+#' # Extract MS2 data
+#' sample_file <- system.file("extdata", "FK180310_DDApos100.mzML.gz",
+#'                            package = "RaMS")
+#' MS2_data <- grabMzmlData(sample_file, grab_what="MS2")
 grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
                           rtrange=NULL, mz=NULL, ppm=NULL){
   if(!is.null(rtrange)){
@@ -128,6 +134,11 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
     output_data$EIC_MS2 <- rbindlist(EIC_MS2_list)
   }
 
+  if("metadata"%in%grab_what){
+    if(verbose)last_time <- timeReport(last_time, announcement = "Reading file metadata...")
+    output_data$metadata <- grabMzxmlMetadata(xml_data = xml_data)
+  }
+
   if(verbose){
     cat(Sys.time()-last_time, "s\n")
   }
@@ -135,7 +146,31 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
   output_data
 }
 
+
+
 # Get mzXML specifics (functions of xml_data) ----
+
+#' Helper function to extract mzXML file metadata
+#'
+#' @param xml_data mzXML data as parsed by xml2
+#'
+#' @return A list of values corresponding to various pieces of metadata
+#' for each file
+grabMzxmlMetadata <- function(xml_data){
+  source_node <- xml_find_all(xml_data, xpath = "//d1:parentFile")
+  source_file <- basename(xml_attr(source_node, "fileName"))
+
+  inst_nodes <- xml_find_all(xml_data, xpath = "//d1:msInstrument/child::node()[starts-with(name(), 'ms')]")
+  inst_names <- xml_attr(inst_nodes, "category")
+  inst_vals <- xml_attr(inst_nodes, "value")
+  names(inst_vals) <- inst_names
+
+  metadata <- data.table(
+    source_file=list(source_file),
+    inst_data=list(inst_vals),
+  )
+}
+
 
 #' Helper function to extract mzXML file metadata
 #'
