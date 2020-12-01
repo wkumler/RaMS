@@ -1,5 +1,5 @@
 test_rtrange <- c(5, 6)
-mzML_trimmed <- grabMSdata(files = mzML_filenames, grab_what = "everything",
+mzML_trimmed <- grabMSdata(files = mzML_filenames, grab_what = c("MS1", "MS2", "TIC", "BPC"),
                            verbosity = "none", rtrange = test_rtrange)
 
 test_that("trim edges within data", {
@@ -18,7 +18,7 @@ test_that("edges properly trimmed", {
 })
 
 test_rtrange <- c(5, 5)
-mzML_trimmed <- grabMSdata(files = mzML_filenames, grab_what = "everything",
+mzML_trimmed <- grabMSdata(files = mzML_filenames, grab_what = c("MS1", "MS2", "TIC", "BPC"),
                            verbosity = "none", rtrange = test_rtrange)
 test_that("zero-length trim returns nothing", {
   expect_equal(mean(sapply(mzML_trimmed, nrow)), 0)

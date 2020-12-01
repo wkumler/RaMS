@@ -81,7 +81,7 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
       message("Heads-up: grab_what = `everything` includes MS1, MS2, BPC, and TIC data")
       message("Ignoring additional grabs")
     }
-    grab_what <- c("MS1", "MS2", "BPC", "TIC")
+    grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
   }
 
   if("MS1"%in%grab_what){
@@ -157,7 +157,7 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
 #' @return A list of values corresponding to various pieces of metadata
 #' for each file
 grabMzxmlMetadata <- function(xml_data){
-  source_node <- xml_find_all(xml_data, xpath = "//d1:parentFile")
+  source_node <- xml_find_first(xml_data, xpath = "//d1:parentFile")
   source_file <- basename(xml_attr(source_node, "fileName"))
 
   inst_nodes <- xml_find_all(xml_data, xpath = "//d1:msInstrument/child::node()[starts-with(name(), 'ms')]")
@@ -166,8 +166,8 @@ grabMzxmlMetadata <- function(xml_data){
   names(inst_vals) <- inst_names
 
   metadata <- data.table(
-    source_file=list(source_file),
-    inst_data=list(inst_vals),
+    source_file=source_file,
+    inst_data=list(inst_vals)
   )
 }
 

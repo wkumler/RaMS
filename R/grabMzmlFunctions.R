@@ -162,12 +162,10 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
 #' @return A list of values corresponding to various pieces of metadata
 #' for each file
 grabMzmlMetadata <- function(xml_data){
-  source_node <- xml_find_all(xml_data, xpath = "//d1:sourceFile")
+  source_node <- xml_find_first(xml_data, xpath = "//d1:sourceFile")
   source_file <- xml_attr(source_node, "name")
-  inst_nodes <- xml_find_all(xml_data, xpath = "//d1:referenceableParamGroup/d1:cvParam")
-  inst_names <- xml_attr(inst_nodes, "name")
-  inst_vals <- xml_attr(inst_nodes, "value")
-  names(inst_vals) <- inst_names
+  inst_nodes <- xml_find_first(xml_data, xpath = "//d1:referenceableParamGroup/d1:cvParam")
+  inst_val <- xml_attr(inst_nodes, "name")
 
   config_nodes <- xml_find_all(xml_data, xpath = "//d1:componentList/child::node()")
   config_types <- xml_name(config_nodes)
@@ -177,19 +175,19 @@ grabMzmlMetadata <- function(xml_data){
   time_node <- xml_attr(xml_find_first(xml_data, xpath = "//d1:run"), "startTimeStamp")
   time_stamp <- as.POSIXct(strptime(time_node, "%Y-%m-%dT%H:%M:%SZ"))
 
-  mslevel_nodes <- xml_find_first(xml_data, xpath = "//d1:fileContent/child::node()")
+  mslevel_nodes <- xml_find_all(xml_data, xpath = "//d1:fileContent/child::node()")
   mslevels <- gsub(" spectrum", "", xml_attr(mslevel_nodes, "name"))
 
   metadata <- data.table(
-    source_file=list(source_file),
-    inst_data=list(inst_vals),
+    source_file=source_file,
+    inst_data=inst_val,
     config_data=list(data.frame(
       order=config_order,
       type=config_types,
       name=config_names
     )),
     timestamp = time_stamp,
-    mslevels=list(mslevels)
+    mslevels=paste0(mslevels, collapse = ", ")
   )
 }
 
