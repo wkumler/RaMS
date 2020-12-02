@@ -1,0 +1,282 @@
+---
+title: "Intro to RaMS"
+output: html_document
+vignette: >
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  out.width = "80%",
+  fig.align = 'center',
+  fig.height = 3
+)
+```
+
+Welcome to RaMS! This vignette is designed to provide a slew of examples using 
+the package at various levels of complexity. Let's jump right in.
+
+If you have your own data, feel free to load it here. If not, there's a couple
+example small files you're welcome to use in the "inst" folder. I'll be using
+these throughout, and more information is available in the addendum below.
+
+```{r findfiles, message=FALSE}
+library(RaMS)
+library(data.table)
+library(tidyverse)
+library(plotly)
+
+# Locate the file directory
+msdata_dir <- system.file("extdata", package = "RaMS")
+
+# Identify the files of interest
+data_files <- list.files(msdata_dir, pattern = "Full.*mzML", full.names = TRUE)
+
+# Check that the files identified are the ones expected
+basename(data_files)
+```
+
+There's only one function to worry about in RaMS: the aptly named `grabMSdata`.
+This function has a couple arguments with sensible defaults, but you'll always
+need to tell it two things: one, which files you'd like to process; and two,
+the data you'd like to obtain from those files.
+
+Let's start simple, with a single file and the most basic information about it.
+
+## Basic RaMS usage
+
+### TICs, BPCs, and metadata
+
+A TIC reports the total intensity measured by the mass analyzer during each 
+scan, so the data is parsed into two columns: retention time (rt) and intensity
+(int). This makes it easy to read and simple to plot:
+
+```{r loadTIC}
+single_file <- data_files[1]
+
+file_data <- grabMSdata(single_file, grab_what = "TIC")
+
+knitr::kable(head(file_data$TIC, 3))
+```
+
+Since we asked for a single thing, the TIC, our `file_data` object is a list
+with a single entry: the TIC. Let's plot that data:
+
+```{r headerTIC}
+par(mar=c(4.1, 4.1, 0.1, 0.1))
+plot(file_data$TIC$rt, file_data$TIC$int, type = "l")
+```
+
+Simple enough!
+
+A BPC is just like a TIC except that it records the *maximum* intensity measured,
+rather than the sum of all intensities. This data is also collected by the mass
+analyzer and doesn't need to be calculated.
+
+```{r loadBPC}
+file_data <- grabMSdata(single_file, grab_what = "BPC")
+```
+
+Since the data is parsed in a ["tidy" format](https://r4ds.had.co.nz/tidy-data.html), 
+it plays nicely with popular packages such as `ggplot2`. Let's use that to plot
+our BPC instead of the base R plotting system:
+
+```{r plotBPC}
+ggplot(file_data$BPC) + geom_line(aes(x=rt, y=int))
+```
+
+The advantages of tidy data and `ggplot` become clear when we load more than
+one file at a time because we can group and color by the third column, the
+name of the file from which the data was read. Here I've also enabled a progress
+bar with the argument `verbosity="minimal"` because it's nice to see progress
+when multiple files are being read.
+
+```{r loadmultiBPC}
+file_data <- grabMSdata(data_files, grab_what = "BPC", verbosity = "minimal")
+
+ggplot(file_data$BPC) + geom_line(aes(x=rt, y=int, color=filename))
+```
+
+And of course, this means that all of `ggplot`'s aesthetic power can be brought
+to your chromatograms as well, so customize away!
+
+```{r ggplotRaMS, dev.args=list(png  = list(type = "cairo"))}
+ggplot(file_data$BPC) + 
+  geom_line(aes(x=rt, y=int, color=filename), lwd=1.2) +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        axis.text = element_text(color = "#AA0000"),
+        axis.title = element_text(family = "serif"),
+        plot.title = element_text(face = "bold")) +
+  scale_colour_brewer(palette = "Dark2") +
+  labs(x="Retention time (min)", y="Intensity", 
+       title = "My chromatogram", color="File names:")
+```
+
+`RaMS` also provides some basic file metadata extraction capability, although
+the focus for this package is on the actual data and other MS packages handle
+file metadata much more elegantly. This is one area where there are major
+differences between mzML and mzXML file types - the mzXML file type simply
+doesn't encode as much metadata as the mzML filetype, so `RaMS` can't extract
+it.
+
+```{r}
+mzML_file <- list.files(msdata_dir, pattern = "Full.*mzML", full.names = TRUE)[1]
+grabMSdata(mzML_file, grab_what = "metadata")
+
+mzXML_file <- list.files(msdata_dir, pattern = "Full.*mzXML", full.names = TRUE)[1]
+grabMSdata(mzXML_file, grab_what = "metadata")
+```
+
+### Adding a column: MS1 data
+
+MS1 data can be extracted just as easily, by supplying "MS1" to the `grab_what`
+argument of `grabMSdata` function.
+
+```{r}
+file_data <- grabMSdata(data_files, grab_what = "MS1")
+
+knitr::kable(head(file_data$MS1, 3))
+```
+
+So we've now got the *mz* column, corresponding to the mass-to-charge ratio 
+(*m/z*) of an ion. This means that we can now filter our data for specific
+masses and separate out molecules with different masses.
+
+Note that this also makes the data much larger in R's memory - so don't go
+loading hundreds of files simultaneously. If that's necessary, check out the
+section below on saving space.
+
+Because `RaMS` returns [data.tables](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-intro.html) rather than normal `data.frame`s, indexing
+is super-fast and a bit more intuitive than with base R. Below, I also use the
+`pmppm` function from `RaMS` to produce a mass range from an initial mass and
+spectrometer accuracy (here, 5 parts-per-million).
+
+```{r}
+adenine_mz <- 136.06232
+
+adenine_data <- file_data$MS1[mz%between%pmppm(adenine_mz, ppm=5)]
+
+ggplot(adenine_data) + geom_line(aes(x=rt, y=int, color=filename))
+```
+
+This makes it easy to grab the data for multiple compounds of interest with a
+simple loop, provided here by the `purrr` package of the tidyverse:
+
+```{r}
+masses_of_interest <- c(adenine=136.06232, valine=118.0865, homarine=138.055503)
+
+mass_data <- imap(masses_of_interest, function(mz_i, name){
+  cbind(file_data$MS1[mz%between%pmppm(mz_i, ppm=5)], name)
+}) %>% rbindlist()
+
+ggplot(mass_data) + 
+  geom_line(aes(x=rt, y=int, color=filename)) + 
+  facet_wrap(~name, ncol = 1, scales = "free_y")
+```
+
+### Moving along: MS2 data
+
+`RaMS` also handles MS<sup>2</sup> data elegantly. Request it with the "MS2" 
+option for `grab_what`, although it's often a good idea to grab the MS1 data
+alongside.
+
+```{r}
+DDA_file <- list.files(msdata_dir, pattern = "DDA.*mzML", full.names = TRUE)
+DDA_data <- grabMSdata(DDA_file, grab_what = c("MS2"))
+knitr::kable(head(DDA_data$MS2, 3))
+```
+
+DDA data can be plotted nicely with `ggplot2` as well. Typically it makes sense
+to filter for a precursor mass, then render the fragments obtained.
+
+```{r}
+betaine_mass <- 118.0865
+
+betaine_MS2 <- DDA_data$MS2[premz%between%pmppm(betaine_mass, 5)]
+betaine_MS2$int <- betaine_MS2$int/max(betaine_MS2$int)*100
+
+ggplot(betaine_MS2) +
+  geom_point(aes(x=fragmz, y=int)) +
+  geom_segment(aes(x=fragmz, xend=fragmz, y=int, yend=0)) +
+  labs(x="Fragment m/z", y="Relative intensity (%)")
+```
+
+
+This is also the perfect place to enable some interactivity with packages such
+as `plotly`, making data exploration not only simple but also enjoyable. 
+
+```{r plotly, warning=FALSE}
+data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
+file_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"))
+
+clean_MS2 <- file_data$MS2 %>% 
+  filter(premz%between%pmppm(betaine_mass)) %>%
+  group_by(rt) %>%
+  arrange(desc(int)) %>%
+  summarise(frags=paste(
+    paste(round(fragmz, digits = 3), round(int), sep = ": "), collapse = "\n"),
+    .groups="drop"
+  )
+file_data$MS1 %>% 
+  filter(mz%between%pmppm(betaine_mass)) %>%
+  filter(!str_detect(filename, "DDA")) %>%
+  plot_ly() %>%
+  add_trace(type="scatter", mode="lines", x=~rt, y=~int, color=~filename,
+            hoverinfo="none") %>%
+  add_trace(type="scatter", mode="markers", x=~rt, y=0,
+            text=~frags, hoverinfo="text", showlegend=FALSE,
+            marker=list(color="black"), data = clean_MS2) %>%
+  layout(annotations=list(x=min(clean_MS2$rt), y=0, 
+                          text="Mouse over to see\nMSMS fragments"))
+```
+
+
+
+Easy access to MS<sup>2</sup> data also allows us to rapidly perform 
+simple operations such as searching for a
+specific fragment mass. For example, if we know that glycine betaine typically
+produces a fragment with a mass of 58.0660, we simply subset the MS<sup>2</sup> data
+for fragments in a range around that mass:
+
+```{r}
+betaine_frag_mz <- 58.0660
+knitr::kable(head(DDA_data$MS2[fragmz%between%pmppm(betaine_frag_mz, ppm = 5)]))
+```
+
+We find that there's not only glycine betaine that produces that fragment,
+but also another compounds with a mass of 212.0951. Fragments like this can then
+be searched manually in online databases or, since the data is already in R,
+passed to a script that automatically searches them.
+
+Similarly, we can easily search instead for neutral losses with this method. If
+we suspect other molecules are producing a similar neutral loss as glycine
+betaine:
+
+```{r}
+betaine_mass <- 118.0865
+betaine_neutral_loss <- betaine_mass - betaine_frag_mz
+
+DDA_data$MS2 <- mutate(DDA_data$MS2, neutral_loss=premz-fragmz)
+DDA_data$MS2[neutral_loss%between%pmppm(betaine_neutral_loss, ppm = 5)] %>%
+  head() %>% knitr::kable()
+```
+
+We can again confirm our suspicions that there's another molecule with
+a similar neutral loss: one with a mass of 138.0549.
+
+## Advanced RaMS usage
+
+### Saving space: EICs
+
+### Fine control: grabMzmlData, grabMzxmlData
+
+### Speeding things up
+
+### The nitty-gritty details
+
+## Addendum: About the data
