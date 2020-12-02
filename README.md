@@ -1,4 +1,4 @@
-Rapid access to Mass-Spec data (RaMS)
+R-based access to Mass-Spec data (RaMS)
 ================
 
 ## Overview
