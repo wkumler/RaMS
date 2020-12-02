@@ -19,5 +19,10 @@ Imports:
     utils
 RoxygenNote: 7.1.1
 Suggests: 
-    testthat, 
-    MSnbase
+    testthat,
+    MSnbase,
+    knitr,
+    rmarkdown,
+    tidyverse,
+    plotly
+VignetteBuilder: knitr
