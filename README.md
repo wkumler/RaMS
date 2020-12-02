@@ -38,85 +38,76 @@ formatted tidily:
 ``` r
 demo_dir <- system.file("extdata", package = "RaMS")
 msdata_files <- list.files(demo_dir, pattern = "mzML", full.names = TRUE)
-output <- grabMSdata(files = msdata_files, grab_what = c("TIC", "MS1"))
+output <- grabMSdata(files = msdata_files, grab_what = c("TIC", "MS1", "MS2"))
 ```
-
-``` r
-knitr::kable(head(output$MS1))
-```
-
-|       rt |       mz |       int | filename                |
-| -------: | -------: | --------: | :---------------------- |
-| 2.004194 |  90.0555 |  25501.37 | FK180310\_Full1.mzML.gz |
-| 2.004194 | 104.0710 | 572123.50 | FK180310\_Full1.mzML.gz |
-| 2.004194 | 112.0509 |  50395.21 | FK180310\_Full1.mzML.gz |
-| 2.004194 | 116.0709 |  60353.67 | FK180310\_Full1.mzML.gz |
-| 2.004194 | 118.0865 | 483736.62 | FK180310\_Full1.mzML.gz |
-| 2.004194 | 122.0270 |  11133.76 | FK180310\_Full1.mzML.gz |
 
 ``` r
 knitr::kable(head(output$TIC))
 ```
 
-|       rt |     int | filename                |
-| -------: | ------: | :---------------------- |
-| 2.004194 | 2594068 | FK180310\_Full1.mzML.gz |
-| 2.021873 | 2396701 | FK180310\_Full1.mzML.gz |
-| 2.037056 | 3098733 | FK180310\_Full1.mzML.gz |
-| 2.052177 | 3416233 | FK180310\_Full1.mzML.gz |
-| 2.067364 | 3536198 | FK180310\_Full1.mzML.gz |
-| 2.082489 | 3772849 | FK180310\_Full1.mzML.gz |
-
-This means that the basic R functions work exactly as we expect them to,
-no new method definition or memorization necessary:
+|       rt |      int | filename                    |
+| -------: | -------: | :-------------------------- |
+| 4.002279 | 63075520 | FK180310\_DDApos100.mzML.gz |
+| 4.006146 | 70261912 | FK180310\_DDApos100.mzML.gz |
+| 4.009863 | 67087636 | FK180310\_DDApos100.mzML.gz |
+| 4.014958 | 65778432 | FK180310\_DDApos100.mzML.gz |
+| 4.019046 | 69721400 | FK180310\_DDApos100.mzML.gz |
+| 4.023031 | 64959804 | FK180310\_DDApos100.mzML.gz |
 
 ``` r
-str(output)
+knitr::kable(head(output$MS1))
 ```
 
-    ## List of 2
-    ##  $ MS1:Classes 'data.table' and 'data.frame':    58565 obs. of  4 variables:
-    ##   ..$ rt      : num [1:58565] 2 2 2 2 2 ...
-    ##   ..$ mz      : num [1:58565] 90.1 104.1 112.1 116.1 118.1 ...
-    ##   ..$ int     : num [1:58565] 25501 572124 50395 60354 483737 ...
-    ##   ..$ filename: chr [1:58565] "FK180310_Full1.mzML.gz" "FK180310_Full1.mzML.gz" "FK180310_Full1.mzML.gz" "FK180310_Full1.mzML.gz" ...
-    ##   ..- attr(*, ".internal.selfref")=<externalptr> 
-    ##  $ TIC:Classes 'data.table' and 'data.frame':    1573 obs. of  3 variables:
-    ##   ..$ rt      : num [1:1573] 2 2.02 2.04 2.05 2.07 ...
-    ##   ..$ int     : num [1:1573] 2594068 2396701 3098733 3416233 3536198 ...
-    ##   ..$ filename: chr [1:1573] "FK180310_Full1.mzML.gz" "FK180310_Full1.mzML.gz" "FK180310_Full1.mzML.gz" "FK180310_Full1.mzML.gz" ...
-    ##   ..- attr(*, ".internal.selfref")=<externalptr>
+|       rt |       mz |        int | filename                    |
+| -------: | -------: | ---------: | :-------------------------- |
+| 4.002279 | 60.04510 | 281799.594 | FK180310\_DDApos100.mzML.gz |
+| 4.002279 | 60.05633 |   9898.172 | FK180310\_DDApos100.mzML.gz |
+| 4.002279 | 60.05814 |  21629.547 | FK180310\_DDApos100.mzML.gz |
+| 4.002279 | 60.06444 |  71579.758 | FK180310\_DDApos100.mzML.gz |
+| 4.002279 | 60.08151 |  10134.972 | FK180310\_DDApos100.mzML.gz |
+| 4.002279 | 61.04036 |  73980.500 | FK180310\_DDApos100.mzML.gz |
 
 ``` r
-summary(output$MS1)
+knitr::kable(head(output$MS2))
 ```
 
-    ##        rt              mz              int              filename        
-    ##  Min.   :2.004   Min.   : 60.08   Min.   :     5683   Length:58565      
-    ##  1st Qu.:4.045   1st Qu.:127.05   1st Qu.:    21087   Class :character  
-    ##  Median :6.054   Median :143.08   Median :    47865   Mode  :character  
-    ##  Mean   :5.945   Mean   :152.03   Mean   :   997549                     
-    ##  3rd Qu.:7.707   3rd Qu.:166.09   3rd Qu.:   162405                     
-    ##  Max.   :9.998   Max.   :425.18   Max.   :294877088
+|       rt |    premz |   fragmz |      int | voltages | filename                    |
+| -------: | -------: | -------: | -------: | -------: | :-------------------------- |
+| 4.012270 | 757.0170 | 57.46079 | 6493.131 |      100 | FK180310\_DDApos100.mzML.gz |
+| 4.012270 | 757.0170 | 59.75748 | 6986.794 |      100 | FK180310\_DDApos100.mzML.gz |
+| 4.012270 | 757.0170 | 62.73330 | 7692.589 |      100 | FK180310\_DDApos100.mzML.gz |
+| 4.012270 | 757.0170 | 81.37758 | 6411.755 |      100 | FK180310\_DDApos100.mzML.gz |
+| 4.074476 | 493.0172 | 51.06575 | 7378.653 |      100 | FK180310\_DDApos100.mzML.gz |
+| 4.074476 | 493.0172 | 53.40517 | 6472.478 |      100 | FK180310\_DDApos100.mzML.gz |
+
+This means that basic R functions work exactly as we expect them to, no
+new functionality necessary:
 
 ``` r
 # Outputs are data.tables so we can use their intuitive indexing on column name
-first_file_data <- output$TIC[filename==basename(msdata_files[1])]
+first_file_data <- output$TIC[filename==basename(msdata_files[2])]
 plot(first_file_data$rt, first_file_data$int, type = "l")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
+-----
+
 And of course, the tidy data format means that it plays nicely with
 every other tidy data package.
 
+### Chromatograms with ggplot2
+
 ``` r
-# Plot some chromatograms with ggplot2
+output <- grabMSdata(files = msdata_files[-1], grab_what = c("TIC", "MS1"))
+```
+
+``` r
 library(ggplot2)
 ggplot(output$TIC) + geom_line(aes(x = rt, y=int, color=filename)) + theme(legend.position="top")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 ggplot(output$TIC) + geom_line(aes(x = rt, y=int)) +
@@ -124,27 +115,38 @@ ggplot(output$TIC) + geom_line(aes(x = rt, y=int)) +
   labs(x="Retention time (min)", y="Intensity")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-6-2.png)<!-- -->
+
+### Interactive MSMS with dplyr, stringr, and plotly
 
 ``` r
-# Manually calculate a BPC with dplyr
-suppressMessages(library(dplyr))
-manual_TIC <- output$MS1 %>%
-  group_by(rt, filename) %>%
-  summarise(manual_int=sum(int), .groups="drop") %>%
-  left_join(output$TIC, by = c("rt", "filename"))
+output <- grabMSdata(files = msdata_files, grab_what = c("EIC", "EIC_MS2"),
+                     mz=118.0865, ppm=5)
 
-# Return to base to plot TIC comparison
-par(pty="s")
-plot(manual_TIC$int, manual_TIC$manual_int, 
-     ylab = "Manually calculated TIC",
-     xlab = "TIC read from file")
-grid()
-corr <- cor(manual_TIC$int, manual_TIC$manual_int)
-legend("topleft", legend=paste("Correlation =", corr))
+library(dplyr)
+library(stringr)
+library(plotly)
+
+clean_EIC_MS2 <- output$EIC_MS2 %>% 
+  group_by(rt) %>%
+  arrange(desc(int)) %>%
+  summarise(frags=paste(
+    paste(round(fragmz, digits = 3), round(int), sep = ": "), collapse = "\n")
+  )
+output$EIC %>% 
+  filter(!str_detect(filename, "DDA")) %>%
+  plot_ly() %>%
+  add_trace(type="scatter", mode="lines", x=~rt, y=~int, color=~filename,
+            hoverinfo="none") %>%
+  add_trace(type="scatter", mode="markers", x=~rt, y=0,
+            text=~frags, hoverinfo="text", showlegend=FALSE,
+            marker=list(color="black"), data = clean_EIC_MS2) %>%
+  layout(annotations=list(x=min(clean_EIC_MS2$rt), y=0, 
+                          text="Mouse over to see\nMSMS fragments"),
+         title="(Run outside GitHub to enable interactivity)")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->
+![](README_files/figure-gfm/plotlyplot.png)
 
 ## File types
 
