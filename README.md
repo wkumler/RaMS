@@ -29,6 +29,8 @@ library(RaMS)
 
 ## Usage
 
+(For more usage examples, see the vignette (upcoming).)
+
 There’s only one main function in `RaMS`: the aptly named `grabMSdata`.
 This function accepts the names of mass-spectrometry files as well as
 the data you’d like to extract (e.g. MS1, MS2, BPC, etc.) and produces a
@@ -143,10 +145,16 @@ output$EIC %>%
             marker=list(color="black"), data = clean_EIC_MS2) %>%
   layout(annotations=list(x=min(clean_EIC_MS2$rt), y=0, 
                           text="Mouse over to see\nMSMS fragments"),
-         title="(Run outside GitHub to enable interactivity)")
+         title="(See vignette for interactive version)")
 ```
 
 ![](README_files/figure-gfm/plotlyplot.png)
+
+For more usage examples, see the vignette.
+
+``` r
+vignette("RaMS-vignette", package = "RaMS")
+```
 
 ## File types
 
