@@ -92,7 +92,7 @@
 #'
 #' # Just get the file's metadata
 #' metadata <- grabMSdata(MS2_file, grab_what="metadata")
-grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="minimal",
+grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="none",
                        mz=NULL, ppm=NULL, rtrange=NULL){
   # Check file quality
   checkFiles(files)

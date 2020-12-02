@@ -234,7 +234,7 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   if(!length(ms2_nodes)){
     return(data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
-                      int=numeric(), voltages=integer()))
+                      int=numeric(), voltage=integer()))
   }
 
   rt_vals <- grabMzxmlSpectraRt(ms2_nodes)
@@ -245,8 +245,8 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
   dt_data <- mapply(cbind, rt_vals, premz_vals, mz_int_vals,
                     voltage_vals, SIMPLIFY = FALSE)
   dt <- as.data.table(do.call(what=rbind, dt_data))
-  names(dt) <- c("rt", "premz", "fragmz", "int", "voltages")
-  dt$voltages <- as.integer(dt$voltages)
+  names(dt) <- c("rt", "premz", "fragmz", "int", "voltage")
+  dt$voltage <- as.integer(dt$voltage)
   dt
 }
 

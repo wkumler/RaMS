@@ -278,19 +278,19 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
   }
   if(!length(ms2_nodes)){
     return(data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
-                      int=numeric(), voltages=integer()))
+                      int=numeric(), voltage=integer()))
   }
 
   rt_vals <- grabSpectraRt(ms2_nodes)
   premz_vals <- grabSpectraPremz(ms2_nodes)
-  voltages <- grabSpectraVoltage(ms2_nodes)
+  voltage <- grabSpectraVoltage(ms2_nodes)
   mz_vals <- grabSpectraMz(ms2_nodes, file_metadata)
   int_vals <- grabSpectraInt(ms2_nodes, file_metadata)
 
   data.table(rt=rep(rt_vals, sapply(mz_vals, length)),
              premz=rep(premz_vals, sapply(mz_vals, length)),
              fragmz=unlist(mz_vals), int=as.numeric(unlist(int_vals)),
-             voltages=rep(voltages, sapply(mz_vals, length)))
+             voltage=rep(voltage, sapply(mz_vals, length)))
 }
 
 
