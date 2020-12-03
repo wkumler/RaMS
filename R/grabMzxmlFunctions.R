@@ -237,6 +237,8 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
     return(data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
                       int=numeric(), voltage=integer()))
   }
+  # Remove all nodes with zero peaks
+  ms2_nodes <- ms2_nodes[as.numeric(xml2::xml_attr(ms2_nodes, "peaksCount"))>0]
 
   rt_vals <- grabMzxmlSpectraRt(ms2_nodes)
   premz_vals <- grabMzxmlSpectraPremz(ms2_nodes)
