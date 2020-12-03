@@ -22,14 +22,15 @@ other [tidy data packages](https://www.tidyverse.org/).
 Until `RaMS` is on CRAN, the easiest way to install is via `devtools`:
 
 ``` r
-devtools::install_github("wkumler/RaMS")
+devtools::install_github("wkumler/RaMS", build_vignettes = TRUE)
 
 library(RaMS)
 ```
 
 ## Usage
 
-(For more usage examples, see the vignette (upcoming).)
+(For more usage examples, see the
+[vignette](vignettes/my-vignette.html).)
 
 There’s only one main function in `RaMS`: the aptly named `grabMSdata`.
 This function accepts the names of mass-spectrometry files as well as
@@ -44,7 +45,7 @@ output <- grabMSdata(files = msdata_files, grab_what = c("TIC", "MS1", "MS2"))
 ```
 
 ``` r
-knitr::kable(head(output$TIC))
+knitr::kable(head(output$TIC, 3))
 ```
 
 |       rt |      int | filename                    |
@@ -52,12 +53,9 @@ knitr::kable(head(output$TIC))
 | 4.002279 | 63075520 | FK180310\_DDApos100.mzML.gz |
 | 4.006146 | 70261912 | FK180310\_DDApos100.mzML.gz |
 | 4.009863 | 67087636 | FK180310\_DDApos100.mzML.gz |
-| 4.014958 | 65778432 | FK180310\_DDApos100.mzML.gz |
-| 4.019046 | 69721400 | FK180310\_DDApos100.mzML.gz |
-| 4.023031 | 64959804 | FK180310\_DDApos100.mzML.gz |
 
 ``` r
-knitr::kable(head(output$MS1))
+knitr::kable(head(output$MS1, 3))
 ```
 
 |       rt |       mz |        int | filename                    |
@@ -65,22 +63,16 @@ knitr::kable(head(output$MS1))
 | 4.002279 | 60.04510 | 281799.594 | FK180310\_DDApos100.mzML.gz |
 | 4.002279 | 60.05633 |   9898.172 | FK180310\_DDApos100.mzML.gz |
 | 4.002279 | 60.05814 |  21629.547 | FK180310\_DDApos100.mzML.gz |
-| 4.002279 | 60.06444 |  71579.758 | FK180310\_DDApos100.mzML.gz |
-| 4.002279 | 60.08151 |  10134.972 | FK180310\_DDApos100.mzML.gz |
-| 4.002279 | 61.04036 |  73980.500 | FK180310\_DDApos100.mzML.gz |
 
 ``` r
-knitr::kable(head(output$MS2))
+knitr::kable(head(output$MS2, 3))
 ```
 
-|       rt |    premz |   fragmz |      int | voltages | filename                    |
-| -------: | -------: | -------: | -------: | -------: | :-------------------------- |
-| 4.012270 | 757.0170 | 57.46079 | 6493.131 |      100 | FK180310\_DDApos100.mzML.gz |
-| 4.012270 | 757.0170 | 59.75748 | 6986.794 |      100 | FK180310\_DDApos100.mzML.gz |
-| 4.012270 | 757.0170 | 62.73330 | 7692.589 |      100 | FK180310\_DDApos100.mzML.gz |
-| 4.012270 | 757.0170 | 81.37758 | 6411.755 |      100 | FK180310\_DDApos100.mzML.gz |
-| 4.074476 | 493.0172 | 51.06575 | 7378.653 |      100 | FK180310\_DDApos100.mzML.gz |
-| 4.074476 | 493.0172 | 53.40517 | 6472.478 |      100 | FK180310\_DDApos100.mzML.gz |
+|      rt |   premz |   fragmz |      int | voltage | filename                    |
+| ------: | ------: | -------: | -------: | ------: | :-------------------------- |
+| 4.01227 | 757.017 | 57.46079 | 6493.131 |     100 | FK180310\_DDApos100.mzML.gz |
+| 4.01227 | 757.017 | 59.75748 | 6986.794 |     100 | FK180310\_DDApos100.mzML.gz |
+| 4.01227 | 757.017 | 62.73330 | 7692.589 |     100 | FK180310\_DDApos100.mzML.gz |
 
 This means that basic R functions work exactly as we expect them to, no
 new functionality necessary:
@@ -150,7 +142,7 @@ output$EIC %>%
 
 ![](README_files/figure-gfm/plotlyplot.png)
 
-For more usage examples, see the vignette.
+For more usage examples, see [the vignette](vignettes/my-vignette.html).
 
 ``` r
 vignette("RaMS-vignette", package = "RaMS")

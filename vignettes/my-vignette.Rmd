@@ -22,7 +22,7 @@ the package at various levels of complexity. Let's jump right in.
 
 If you have your own data, feel free to load it here. If not, there's a couple
 example small files you're welcome to use in the "inst" folder. I'll be using
-these throughout, and more information is available in the addendum below.
+these throughout.
 
 ```{r findfiles, message=FALSE}
 library(RaMS)
@@ -212,7 +212,7 @@ as `plotly`, making data exploration not only simple but also enjoyable.
 
 ```{r plotly, warning=FALSE}
 data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
-file_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"))
+file_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2", "BPC"))
 
 clean_MS2 <- file_data$MS2 %>% 
   filter(premz%between%pmppm(betaine_mass)) %>%
@@ -245,7 +245,7 @@ for fragments in a range around that mass:
 
 ```{r}
 betaine_frag_mz <- 58.0660
-knitr::kable(head(DDA_data$MS2[fragmz%between%pmppm(betaine_frag_mz, ppm = 5)]))
+knitr::kable(head(file_data$MS2[fragmz%between%pmppm(betaine_frag_mz, ppm = 5)]))
 ```
 
 We find that there's not only glycine betaine that produces that fragment,
@@ -261,8 +261,9 @@ betaine:
 betaine_mass <- 118.0865
 betaine_neutral_loss <- betaine_mass - betaine_frag_mz
 
-DDA_data$MS2 <- mutate(DDA_data$MS2, neutral_loss=premz-fragmz)
-DDA_data$MS2[neutral_loss%between%pmppm(betaine_neutral_loss, ppm = 5)] %>%
+file_data$MS2 <- mutate(file_data$MS2, neutral_loss=premz-fragmz) %>%
+  select("rt", "premz", "fragmz", "neutral_loss", "int", "voltage", "filename")
+file_data$MS2[neutral_loss%between%pmppm(betaine_neutral_loss, ppm = 5)] %>%
   head() %>% knitr::kable()
 ```
 
@@ -271,12 +272,226 @@ a similar neutral loss: one with a mass of 138.0549.
 
 ## Advanced RaMS usage
 
-### Saving space: EICs
+### Saving space: EICs and rtrange
 
-### Fine control: grabMzmlData, grabMzxmlData
+Mass-spec files are typically tens or hundreds of megabytes in size, which means
+that the simultaneous analysis of many files can easily exceed a computer's
+memory. Since `RaMS` stores all data in R's working memory, this can become a
+problem for large analyses.
+
+However, much of the usage envisioned for `RaMS` on this scale doesn't require
+access to the entire file, the entire time. Instead, users are typically 
+interested in a few masses of interest or a specific time window. This means
+that while each file still needs to be read into R in full to find the data
+of interest, extraneous data can be discarded before the next file is loaded.
+
+This functionality can be enabled by passing "EIC" and/or "EIC_MS2" to the
+`grab_what` argument of `grabMSdata`, along with a vector of masses to extract
+(mz) and the instrument's ppm accuracy. When this is enabled, files are read
+into R's memory sequentially, the mass window is extracted, and the rest of
+the data is discarded.
+
+```{r}
+data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
+all_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"))
+
+masses_of_interest <- c(adenine=136.06232, valine=118.0865, homarine=138.055503)
+small_data <- grabMSdata(data_files, grab_what = c("EIC", "EIC_MS2"),
+                         mz=masses_of_interest, ppm = 5)
+
+all_data$MS1 %>%
+  mutate(type="All data") %>%
+  rbind(small_data$EIC %>% mutate(type="Extracted data only")) %>%
+  filter(!str_detect(filename, "DDA")) %>%
+  group_by(rt, filename, type) %>%
+  summarise(TIC=sum(int), .groups="drop") %>%
+  ggplot() +
+  geom_line(aes(x=rt, y=TIC, color=filename)) +
+  facet_wrap(~type, ncol = 1) +
+  theme(legend.position = "top")
+
+# Size reduction factor:
+as.numeric(object.size(all_data)/object.size(small_data))
+```
+
+As expected, the size of the `small_data` object is much smaller than the
+`all_data` object, here by a factor of nearly 30x. For files that haven't 
+already been "minified", that size reduction will be even 
+more significant. Of course, this comes with the cost of needing to re-load
+the data a second time if a new mass feature becomes of interest but this 
+shrinkage is expecially valuable for targeted analyses where the analytes of
+interest are known in advance.
+
+A second way of reducing file size is to constrain the retention time dimension
+rather than the m/z dimension. This can be done with the `rtrange` argument,
+which expects a length-two vector corresponding to the upper and lower bounds
+on retention time. This is useful when a small time window is of interest, and
+only the data between those bounds is relevant.
+
+```{r}
+small_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), rtrange = c(5, 6))
+
+all_data$MS1 %>%
+  mutate(type="All data") %>%
+  rbind(small_data$MS1 %>% mutate(type="Extracted data only")) %>%
+  filter(!str_detect(filename, "DDA")) %>%
+  group_by(rt, filename, type) %>%
+  summarise(TIC=sum(int), .groups="drop") %>%
+  ggplot() +
+  geom_line(aes(x=rt, y=TIC, color=filename)) +
+  facet_wrap(~type, ncol = 1) +
+  theme(legend.position = "top")
+
+# Size reduction factor:
+as.numeric(object.size(all_data)/object.size(small_data))
+```
+
+The savings are more modest here, but constraining
+the retention time actually speeds up data retrieval slightly. Since *m/z* and
+intensity data is encoded in mzML and mzXML files while retention time 
+information is not, eliminating scans with a retention time window removes
+the need to decode the intensity and *m/z* information in those scans. 
+
+However, decoding is rarely the rate-limiting step and for more information 
+about speeding things up, continue to the next section.
 
 ### Speeding things up
 
+So, `RaMS` isn't fast enough for you? Let's see what we can do to improve that.
+The first step in speeding things up is discovering what's slow. Typically,
+this is the process of reading in the mzML/mzXML file rather than any processing 
+that occurs afterward, but this is not always the case. To examine bottlenecks,
+`RaMS` includes timing information that's produced if the `verbosity` argument
+is set to "very".
+
+```{r}
+all_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), verbosity = "very")
+```
+
+These minified demo files are pretty quick to load, but it looks like reading
+the file in takes about as long as extracting MS<sup>1</sup> information, with
+MS<sup>2</sup> extraction taking a fraction of that time.
+
+In general, slow file read times can be improved by compressing the data. mzML
+files are highly compressible, with options to compress both the data itself
+using the `zlib` method and the files as a whole using `gzip`. 
+
+`gzip` is the simplest one to use, as a plethora of methods exist to compress
+files this way, including online sites. `RaMS` can read the data directly
+from a gzipped file, no decompression necessary, so this is an easy way to
+reduce file size and read times. Sharp-eyed users will have noticed that the
+demo files are already gzipped, which is part of the reason they are so small.
+
+`zlib` compression is slightly trickier, and is most often performed with tools
+such as [Proteowizard](http://proteowizard.sourceforge.net/doc_users.html)'s 
+`msconvert` tool with the option "-z". 
+
+Read times may also be slow if files are being accessed via the Internet, either
+through a VPN or network drive. If your files are stored elsewhere,
+consider first moving those files somewhere more local before reading data from
+them.
+
+If the bottleneck appears when reading MS<sup>1</sup> data, consider restricting
+the retention time range with the `rtrange` argument or using more detailed
+profiling tools such as RStudio's "Profile" options or the `profvis` package.
+Pull requests that improve data processing speed are always welcome!
+
+While the package is not currently set up for parallel processing, this is
+a potential future feature if a strong need is demonstrated.
+
+### Finer control: grabMzmlData, grabMzxmlData
+
+While there's only one main function (`grabMSdata`) in `RaMS`, you may have noticed that two
+other functions have been exposed that perform similar tasks: `grabMzmlData`
+and `grabMzxmlData`. The main function `grabMSdata` serves as a wrapper around
+these two functions, which detects the file type, adds the "filename"
+column to the data, and loops over multiple files if provided. However, there's
+often reason to use these internal functions separately.
+
+For one, the objects themselves are smaller because they don't have the filename
+column attached yet. You as the user will need to keep track of which data
+belongs to which files in this case.
+
+Another use case might be applying functions to each file individually, perhaps
+aligning to a reference chromatogram or identifying peaks. Rather than spending
+the time to bind the files together and immediately separate them again, these
+functions have been exposed to skip that step.
+
+Finally, these functions are useful for parallelization. Because iterating
+over each mass-spec file is often the largest reasonable chunk, these functions
+can be passed directly to parallel processes like `mclapply` or `doParallel`.
+However, parallelization is a beast best handled by individual users because
+its actual implementation often differs wildly and its utility depends strongly
+on individual setups (remember that parallelization won't help with slow I/O
+times, so it may not always improve data processing speed.)
+
+```{r, eval=FALSE}
+## Not run:
+data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
+
+library(parallel)
+output_data <- mclapply(data_files, grabMzmlData, mc.cores = detectCores()-1)
+
+library(foreach)
+library(doParallel)
+registerDoParallel(numCores)
+output_data <- foreach (i=data_files) %dopar% {
+  grabMzmlData(i)
+}
+stopImplicitCluster()
+```
+
 ### The nitty-gritty details
 
-## Addendum: About the data
+Wow, you really made it this far through the vignette? Well, your reward is some
+very dry information about what `RaMS` does under the hood.
+
+`RaMS` is possible because mzML and mzXML documents are fundamentally
+[XML](https://en.wikipedia.org/wiki/XML)-based. This means that we can leverage
+speedy and robust XML parsing packages such as `xml2` to extract the data.
+Fundamentally, `RaMS` relies on [XPath](https://www.w3schools.com/xml/xpath_intro.asp)
+navigation to collect various bits of mass-spec data, and the format of mzML
+and mzXML files provides the tags necessary. That means a lot of `RaMS` code
+consists of lines like the following:
+
+```{r, eval=FALSE}
+## Not run:
+data_nodes <- xml2::xml_find_all(mzML_nodes, xpath="//d1:precursorMz")
+raw_data <- xml2::xml_attr(data_nodes, "value")
+```
+
+...plus a lot of data handling to get the output into the tidy format.
+
+The other tricky bit of data extraction is converting the (possibly compressed)
+binary data into R-friendly objects. This is usually handled with code like that
+shown below. Many of the settings can be deduced from the file, but sometimes
+compression types need to be guessed at and will throw a warning if so.
+
+```{r, eval=FALSE}
+## Not run:
+decoded_binary <- base64enc::base64decode(binary)
+raw_binary <- as.raw(decoded_binary)
+decomp_binary <- memDecompress(raw_binary, type = file_metadata$compression)
+final_binary <- readBin(decomp_binary, what = "double",
+                        n=length(decomp_binary)/file_metadata$mz_precision,
+                        size = file_metadata$mz_precision)
+
+# See https://github.com/ProteoWizard/pwiz/issues/1301
+```
+
+Fundamentally, mass-spectrometry data is formatted as a 
+[ragged array](https://en.wikipedia.org/wiki/Jagged_array), with an unknown
+number of *m/z* and intensity values for a given scan. This makes it difficult
+to encode neatly without interpolating, but tidy data provides a solution by
+stacking those arrays rather than aligning them into some sort of matrix.
+
+This ragged shape is also the reason that subsetting mass-spec data by retention
+time is trivial - grab the scans that correspond to the desired retention times
+and you're done. Subsetting by mass, on the other hand, requires decoding each
+and every scan's *m/z* and intensity data. If you're reading a book and only
+want a couple chapters, it's easy to flip to those sections. If you're looking
+instead for every time a specific word shows up, you've gotta read the whole
+thing.
+
+For more information about the mzML data format and its history, check out the
+specification at http://www.psidev.info/mzML.

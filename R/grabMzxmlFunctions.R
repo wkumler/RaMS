@@ -157,12 +157,13 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
 #' @return A list of values corresponding to various pieces of metadata
 #' for each file
 grabMzxmlMetadata <- function(xml_data){
-  source_node <- xml_find_first(xml_data, xpath = "//d1:parentFile")
-  source_file <- basename(xml_attr(source_node, "fileName"))
+  source_node <- xml2::xml_find_first(xml_data, xpath = "//d1:parentFile")
+  source_file <- basename(xml2::xml_attr(source_node, "fileName"))
 
-  inst_nodes <- xml_find_all(xml_data, xpath = "//d1:msInstrument/child::node()[starts-with(name(), 'ms')]")
-  inst_names <- xml_attr(inst_nodes, "category")
-  inst_vals <- xml_attr(inst_nodes, "value")
+  inst_xpath <- "//d1:msInstrument/child::node()[starts-with(name(), 'ms')]"
+  inst_nodes <- xml2::xml_find_all(xml_data, xpath = inst_xpath)
+  inst_names <- xml2::xml_attr(inst_nodes, "category")
+  inst_vals <- xml2::xml_attr(inst_nodes, "value")
   names(inst_vals) <- inst_names
 
   metadata <- data.table(
