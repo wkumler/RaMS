@@ -1,5 +1,5 @@
 test_that("mzML_MS1 matches mzXML_MS1", {
-  expect_equal(mzML_data$MS1$rt, mzXML_data$MS1$rt, tolerance = 0.001)
+  expect_equal(mzML_data$MS1$rt, mzXML_data$MS1$rt/60, tolerance = 0.001)
   expect_equal(mzML_data$MS1$mz, mzXML_data$MS1$mz)
   expect_equal(mzML_data$MS1$int, mzXML_data$MS1$int, tolerance = 1)
 

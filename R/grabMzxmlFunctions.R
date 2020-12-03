@@ -158,13 +158,22 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
 #' for each file
 grabMzxmlMetadata <- function(xml_data){
   source_node <- xml2::xml_find_first(xml_data, xpath = "//d1:parentFile")
-  source_file <- basename(xml2::xml_attr(source_node, "fileName"))
+  if(length(source_node)>0){
+    source_file <- basename(xml2::xml_attr(source_node, "fileName"))
+  } else {
+    source_file <- "None found"
+  }
 
   inst_xpath <- "//d1:msInstrument/child::node()[starts-with(name(), 'ms')]"
   inst_nodes <- xml2::xml_find_all(xml_data, xpath = inst_xpath)
-  inst_names <- xml2::xml_attr(inst_nodes, "category")
-  inst_vals <- xml2::xml_attr(inst_nodes, "value")
-  names(inst_vals) <- inst_names
+  if(length(inst_nodes)>0){
+    inst_names <- xml2::xml_attr(inst_nodes, "category")
+    inst_vals <- xml2::xml_attr(inst_nodes, "value")
+    names(inst_vals) <- inst_names
+  } else {
+    inst_vals <- "None found"
+    names(inst_vals) <- "Instrument data"
+  }
 
   metadata <- data.table(
     source_file=source_file,
