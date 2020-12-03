@@ -57,11 +57,12 @@ A list of `data.table`s, each named after the arguments requested in
 This function handles the mzML side of things, reading in files that are
 written in the mzML format. Much of the code is similar to the mzXML format,
 but the xpath handles are different and the mz/int array is encoded as two
-separate entries rather than simultaneously.
+separate entries rather than simultaneously. This function has been exposed
+to the user in case per-file optimization (such as peakpicking or additional
+filtering) is desired before the full data object is returned.
 }
 \examples{
-sample_file <- system.file("extdata",
-                           "190715_Poo_TruePooFK180310_Full1.mzML.gz",
+sample_file <- system.file("extdata", "FK180310_Full1.mzML.gz",
                            package = "RaMS")
 file_data <- grabMzmlData(sample_file, grab_what="MS1")
 # Extract MS1 data and a base peak chromatogram
@@ -74,4 +75,9 @@ file_data <- grabMzmlData(sample_file, grab_what="EIC", mz=118.0865, ppm=5)
 # Extract EIC for several masses simultaneously
 file_data <- grabMzmlData(sample_file, grab_what="EIC", ppm=5,
                           mz=c(118.0865, 146.118104, 189.123918))
+
+# Extract MS2 data
+sample_file <- system.file("extdata", "FK180310_DDApos100.mzML.gz",
+                           package = "RaMS")
+MS2_data <- grabMzmlData(sample_file, grab_what="MS2")
 }

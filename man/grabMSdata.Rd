@@ -7,7 +7,7 @@
 grabMSdata(
   files,
   grab_what = c("MS1", "MS2"),
-  verbosity = "minimal",
+  verbosity = "none",
   mz = NULL,
   ppm = NULL,
   rtrange = NULL
@@ -68,14 +68,14 @@ have also been exposed to the user in case super-simple handling is desired.
 }
 \examples{
 # Operations on a single file
-sample_file <- system.file("extdata",
-                           "190715_Poo_TruePooFK180310_Full1.mzML.gz",
+sample_file <- system.file("extdata", "FK180310_Full1.mzML.gz",
                            package = "RaMS")
 file_data <- grabMSdata(sample_file, grab_what="MS1")
 # Extract MS1 data and a base peak chromatogram
 file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"))
 # Extract data from a retention time subset
-file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"), rtrange=c(5, 7))
+file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"),
+                        rtrange=c(5, 7))
 
 # Get timing data
 file_data <- grabMSdata(sample_file, verbosity="very")
@@ -95,4 +95,17 @@ bet_EIC <- grabMSdata(sample_files, grab_what="EIC", rtrange=c(5, 7),
 # Extract EIC for multiple masses simultaneously, from multiple files
 file_data <- grabMSdata(sample_files, grab_what="EIC", ppm=5,
                         mz=c(118.0865, 146.118104, 189.123918))
+
+# Extract MS2 data and search for specific fragment masses
+MS2_file <- list.files(sample_dir, pattern="DDA.*mzML", full.names=TRUE)
+file_data <- grabMSdata(MS2_file, grab_what=c("MS1", "MS2"))
+fragment_mass <- 59.0739
+frags <- file_data$MS2[fragmz\%between\%pmppm(fragment_mass, ppm=5)]
+
+# Or search for neutral losses
+neutral_loss <- 60.0205
+frags <- file_data$MS2[(premz-fragmz)\%between\%pmppm(neutral_loss, ppm=5)]
+
+# Just get the file's metadata
+metadata <- grabMSdata(MS2_file, grab_what="metadata")
 }

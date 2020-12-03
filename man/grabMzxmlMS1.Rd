@@ -14,7 +14,8 @@ an mzXML file.}
 arrays containing m/z and intensity information.}
 }
 \value{
-A `data.table` with columns for retention time (rt), m/z (mz), and intensity (int).
+A `data.table` with columns for retention time (rt), m/z (mz),
+and intensity (int).
 }
 \description{
 Extract the MS1 data from an mzXML nodeset

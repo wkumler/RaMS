@@ -20,7 +20,7 @@ A numeric vector of masses, many for each scan.
 }
 \description{
 The mz and intensity information of mzML files are encoded as binary arrays,
-sometimes compressed via gzip or zlib or numpress. This code finds all the m/z
-binary arrays and converts them back to the original measurements. See
+sometimes compressed via gzip or zlib or numpress. This code finds all the
+m/z binary arrays and converts them back to the original measurements. See
 https://github.com/ProteoWizard/pwiz/issues/1301
 }

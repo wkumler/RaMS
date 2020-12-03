@@ -2,7 +2,7 @@
 % Please edit documentation in R/grabMzmlFunctions.R
 \name{grabMzmlEncodingData}
 \alias{grabMzmlEncodingData}
-\title{Helper function to extract mzML file metadata}
+\title{Helper function to extract mzML file encoding data}
 \usage{
 grabMzmlEncodingData(xml_data)
 }
@@ -14,5 +14,5 @@ A list of values used by other parsing functions, currently
 compression, mz_precision, int_precision
 }
 \description{
-Helper function to extract mzML file metadata
+Helper function to extract mzML file encoding data
 }

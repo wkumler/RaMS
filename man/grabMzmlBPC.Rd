@@ -18,7 +18,8 @@ the final object's size.}
 \item{TIC}{Boolean. If TRUE, the TIC is extracted rather than the BPC.}
 }
 \value{
-A `data.table` with columns for retention time (rt), and intensity (int).
+A `data.table` with columns for retention time (rt), and intensity
+  (int).
 }
 \description{
 The base peak intensity and total ion current are actually written into the

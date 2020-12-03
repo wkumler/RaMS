@@ -15,7 +15,7 @@ MS1 or MS2 nodeset.}
 A numeric vector of collision energies, one for each scan.
 }
 \description{
-Although the collision energy is typically fixed per file, it's equally
-fast (afaik) to just grab them all individually here. Also, I'm worried about
+Although the collision energy is typically fixed per file, it's equally fast
+(afaik) to just grab them all individually here. Also, I'm worried about
 these rumors of "ramped" collision energies
 }

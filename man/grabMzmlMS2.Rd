@@ -19,8 +19,9 @@ the final object's size.}
 arrays containing m/z and intensity information.}
 }
 \value{
-A `data.table` with columns for retention time (rt),  precursor m/z (mz),
-fragment m/z (fragmz), collision energy (voltage), and intensity (int).
+A `data.table` with columns for retention time (rt),  precursor m/z
+  (mz), fragment m/z (fragmz), collision energy (voltage), and intensity
+  (int).
 }
 \description{
 Extract the MS2 data from an mzML nodeset
