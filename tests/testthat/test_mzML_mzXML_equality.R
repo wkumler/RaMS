@@ -1,5 +1,5 @@
 test_that("mzML_MS1 matches mzXML_MS1", {
-  expect_equal(mzML_data$MS1$rt, mzXML_data$MS1$rt/60, tolerance = 0.001)
+  expect_equal(mzML_data$MS1$rt, mzXML_data$MS1$rt, tolerance = 0.001)
   expect_equal(mzML_data$MS1$mz, mzXML_data$MS1$mz)
   expect_equal(mzML_data$MS1$int, mzXML_data$MS1$int, tolerance = 1)
 
@@ -51,23 +51,5 @@ test_that("mzML_EIC_MS2 matches mzXML_EIC_MS2", {
 
   mzML_filenames <- gsub("mzML", "", unique(mzML_data$EIC_MS2$filename))
   mzXML_filenames <- gsub("mzXML", "", unique(mzXML_data$EIC_MS2$filename))
-  expect_equal(mzML_filenames, mzXML_filenames)
-})
-
-test_that("mzML_EIC matches mzXML_EIC", {
-  expect_equal(mzML_EICs$EIC$rt, mzXML_EICs$EIC$rt, tolerance = 0.001)
-  expect_equal(mzML_EICs$EIC$int, mzXML_EICs$EIC$int, tolerance = 0.1)
-
-  mzML_filenames <- gsub("mzML", "", unique(mzML_EICs$EIC$filename))
-  mzXML_filenames <- gsub("mzXML", "", unique(mzXML_EICs$EIC$filename))
-  expect_equal(mzML_filenames, mzXML_filenames)
-})
-
-test_that("mzML_EIC_MS2 matches mzXML_EIC_MS2", {
-  expect_equal(mzML_EICs$EIC_MS2$rt, mzXML_EICs$EIC_MS2$rt, tolerance = 0.001)
-  expect_equal(mzML_EICs$EIC_MS2$int, mzXML_EICs$EIC_MS2$int, tolerance = 0.1)
-
-  mzML_filenames <- gsub("mzML", "", unique(mzML_EICs$EIC_MS2$filename))
-  mzXML_filenames <- gsub("mzXML", "", unique(mzXML_EICs$EIC_MS2$filename))
   expect_equal(mzML_filenames, mzXML_filenames)
 })
