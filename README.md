@@ -83,7 +83,7 @@ first_file_data <- output$TIC[filename==basename(msdata_files[2])]
 plot(first_file_data$rt, first_file_data$int, type = "l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](man/figures/README-unnamed-chunk-4-1.png)<!-- -->
 
 -----
 
@@ -101,7 +101,7 @@ library(ggplot2)
 ggplot(output$TIC) + geom_line(aes(x = rt, y=int, color=filename)) + theme(legend.position="top")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](man/figures/README-unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 ggplot(output$TIC) + geom_line(aes(x = rt, y=int)) +
@@ -109,7 +109,7 @@ ggplot(output$TIC) + geom_line(aes(x = rt, y=int)) +
   labs(x="Retention time (min)", y="Intensity")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-6-2.png)<!-- -->
+![](man/figures/README-unnamed-chunk-6-2.png)<!-- -->
 
 ### Interactive MSMS with dplyr, stringr, and plotly
 
@@ -140,7 +140,7 @@ output$EIC %>%
          title="(See vignette for interactive version)")
 ```
 
-![](README_files/figure-gfm/plotlyplot.png)
+![](man/figures/plotlyplot.png)
 
 For more usage examples, see [the vignette](vignettes/my-vignette.html).
 
