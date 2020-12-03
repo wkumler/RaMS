@@ -194,7 +194,7 @@ grabMzmlMetadata <- function(xml_data){
   time_node <- xml2::xml_find_first(xml_data, xpath = "//d1:run")
   time_val <- xml2::xml_attr(time_node, "startTimeStamp")
   if(!is.na(time_val)){
-    time_stamp <- as.POSIXct(strptime(time_node, "%Y-%m-%dT%H:%M:%SZ"))
+    time_stamp <- as.POSIXct(strptime(time_val, "%Y-%m-%dT%H:%M:%SZ"))
   } else {
     time_stamp <- "None found"
   }

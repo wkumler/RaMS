@@ -139,7 +139,7 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="none",
   }
 
   # Bind all the similar pieces together (e.g. stack MS1 from different files)
-  all_file_data_output <- Reduce(function(x,y) Map(rbind, x, y), all_file_data)
+  all_file_data_output <- Reduce(function(x,y) Map(rbind, x, y, fill=TRUE), all_file_data)
   invisible(checkOutputQuality(
     output_data = all_file_data_output, grab_what = grab_what
   ))

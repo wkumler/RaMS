@@ -175,9 +175,18 @@ grabMzxmlMetadata <- function(xml_data){
     names(inst_vals) <- "Instrument data"
   }
 
+  mslevel_nodes <- xml2::xml_find_all(xml_data, xpath = "//d1:scan")
+  if(length(mslevel_nodes)>0){
+    mslevels <- paste0("MS", unique(xml_attr(mslevel_nodes, "msLevel")), collapse = ", ")
+  } else {
+    mslevels <- "None found"
+  }
+
+
   metadata <- data.table(
     source_file=source_file,
-    inst_data=list(inst_vals)
+    inst_data=list(inst_vals),
+    mslevels=mslevels
   )
 }
 
@@ -215,7 +224,8 @@ grabMzxmlEncodingData <- function(xml_data){
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information.
 #'
-#' @return A `data.table` with columns for retention time (rt), m/z (mz), and intensity (int).
+#' @return A `data.table` with columns for retention time (rt), m/z (mz),
+#' and intensity (int).
 grabMzxmlMS1 <- function(xml_data, file_metadata){
   ms1_xpath <- '//d1:scan[@msLevel="1"]'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
