@@ -7,9 +7,9 @@
 #' This function handles the mzXML side of things, reading in files that are
 #' written in the mzXML format. Much of the code is similar to the mzXML format,
 #' but the xpath handles are different and the mz/int array is encoded
-#' simultaneously rather than as two separate entries. This function has been exposed
-#' to the user in case per-file optimization (such as peakpicking or additional
-#' filtering) is desired before the full data object is returned.
+#' simultaneously rather than as two separate entries. This function has been
+#' exposed to the user in case per-file optimization (such as peakpicking or
+#' additional filtering) is desired before the full data object is returned.
 #'
 #' @param filename A single filename to read into R's memory. Both absolute and
 #'   relative paths are acceptable.
@@ -30,8 +30,8 @@
 #' @param ppm A single number corresponding to the mass accuracy (in parts per
 #'   million) of the instrument on which the data was collected. Only used when
 #'   combined with `grab_what = "EIC"` (see above).
-#' @param rtrange Not supported for mzXML data. Only provided here so as to throw
-#' a friendly warning rather than an unexpected error.
+#' @param rtrange Not supported for mzXML data. Only provided here so as to
+#'   throw a friendly warning rather than an unexpected error.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. $MS1 contains MS1 information, $MS2 contains fragmentation info,
@@ -78,37 +78,40 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
 
   if("everything"%in%grab_what){
     if(length(setdiff(grab_what, "everything"))&&verbose){
-      message("Heads-up: grab_what = `everything` includes MS1, MS2, BPC, and TIC data")
+      message(paste("Heads-up: grab_what = `everything` includes",
+                    "MS1, MS2, BPC, and TIC data"))
       message("Ignoring additional grabs")
     }
     grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
   }
 
   if("MS1"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, announcement = "Reading MS1 data...")
-    output_data$MS1 <- grabMzxmlMS1(xml_data = xml_data, file_metadata = file_metadata)
+    if(verbose)last_time <- timeReport(last_time, text = "Reading MS1 data...")
+    output_data$MS1 <- grabMzxmlMS1(xml_data = xml_data,
+                                    file_metadata = file_metadata)
   }
 
   if("MS2"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, announcement = "Reading MS2 data...")
-    output_data$MS2 <- grabMzxmlMS2(xml_data = xml_data, file_metadata = file_metadata)
+    if(verbose)last_time <- timeReport(last_time, text = "Reading MS2 data...")
+    output_data$MS2 <- grabMzxmlMS2(xml_data = xml_data,
+                                    file_metadata = file_metadata)
   }
 
   if("BPC"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, announcement = "Reading BPC...")
+    if(verbose)last_time <- timeReport(last_time, text = "Reading BPC...")
     output_data$BPC <- grabMzxmlBPC(xml_data = xml_data)
   }
 
   if("TIC"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, announcement = "Reading TIC...")
+    if(verbose)last_time <- timeReport(last_time, text = "Reading TIC...")
     output_data$TIC <- grabMzxmlBPC(xml_data = xml_data, TIC = TRUE)
   }
 
   if("EIC"%in%grab_what){
     checkProvidedMzPpm(mz, ppm)
-    if(verbose)last_time <- timeReport(last_time, announcement = "Extracting EIC...")
+    if(verbose)last_time <- timeReport(last_time, text = "Extracting EIC...")
     if(!"MS1"%in%grab_what){
-      init_dt <- grabMzxmlMS1(xml_data = xml_data, file_metadata = file_metadata)
+      init_dt <- grabMzxmlMS1(xml_data=xml_data, file_metadata = file_metadata)
     } else {
       init_dt <- output_data$MS1
       if(!nrow(init_dt))stop("Something weird - can't find MS1 data to subset")
@@ -121,9 +124,11 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
 
   if("EIC_MS2"%in%grab_what){
     checkProvidedMzPpm(mz, ppm)
-    if(verbose)last_time <- timeReport(last_time, announcement = "Extracting EIC MS2...")
+    if(verbose){
+      last_time <- timeReport(last_time, text = "Extracting EIC MS2...")
+      }
     if(!"MS2"%in%grab_what){
-      init_dt <- grabMzxmlMS2(xml_data = xml_data, file_metadata = file_metadata)
+      init_dt <- grabMzxmlMS2(xml_data=xml_data, file_metadata = file_metadata)
     } else {
       init_dt <- output_data$MS2
     }
@@ -135,7 +140,9 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
   }
 
   if("metadata"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, announcement = "Reading file metadata...")
+    if(verbose){
+      last_time <- timeReport(last_time, text = "Reading file metadata...")
+    }
     output_data$metadata <- grabMzxmlMetadata(xml_data = xml_data)
   }
 

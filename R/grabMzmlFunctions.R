@@ -81,37 +81,41 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
 
   if("everything"%in%grab_what){
     if(length(setdiff(grab_what, "everything"))&&verbose){
-      message("Heads-up: grab_what = `everything` includes MS1, MS2, BPC, and TIC data")
+      message(paste("Heads-up: grab_what = `everything` includes",
+                    "MS1, MS2, BPC, and TIC data"))
       message("Ignoring additional grabs")
     }
     grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
   }
 
   if("MS1"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, announcement = "Reading MS1 data...")
+    if(verbose)last_time <- timeReport(last_time, text = "Reading MS1 data...")
     output_data$MS1 <- grabMzmlMS1(xml_data = xml_data, rtrange = rtrange,
                                    file_metadata = file_metadata)
   }
 
   if("MS2"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, announcement = "Reading MS2 data...")
+    if(verbose)last_time <- timeReport(last_time, text = "Reading MS2 data...")
     output_data$MS2 <- grabMzmlMS2(xml_data = xml_data, rtrange = rtrange,
                                    file_metadata = file_metadata)
   }
 
   if("BPC"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, announcement = "Reading BPC...")
+    if(verbose)last_time <- timeReport(last_time, text = "Reading BPC...")
     output_data$BPC <- grabMzmlBPC(xml_data = xml_data, rtrange = rtrange)
   }
 
   if("TIC"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, announcement = "Reading TIC...")
-    output_data$TIC <- grabMzmlBPC(xml_data = xml_data, rtrange = rtrange, TIC = TRUE)
+    if(verbose)last_time <- timeReport(last_time, text = "Reading TIC...")
+    output_data$TIC <- grabMzmlBPC(xml_data = xml_data, rtrange = rtrange,
+                                   TIC = TRUE)
   }
 
   if("EIC"%in%grab_what){
     checkProvidedMzPpm(mz, ppm)
-    if(verbose)last_time <- timeReport(last_time, announcement = "Extracting EIC...")
+    if(verbose){
+      last_time <- timeReport(last_time, text = "Extracting EIC...")
+    }
     if(!"MS1"%in%grab_what){
       init_dt <- grabMzmlMS1(xml_data = xml_data, rtrange = rtrange,
                              file_metadata = file_metadata)
@@ -127,7 +131,9 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
 
   if("EIC_MS2"%in%grab_what){
     checkProvidedMzPpm(mz, ppm)
-    if(verbose)last_time <- timeReport(last_time, announcement = "Extracting EIC MS2...")
+    if(verbose){
+      last_time <- timeReport(last_time, text = "Extracting EIC MS2...")
+    }
     if(!"MS2"%in%grab_what){
       init_dt <- grabMzmlMS2(xml_data = xml_data, rtrange = rtrange,
                              file_metadata = file_metadata)
@@ -142,7 +148,9 @@ grabMzmlData <- function(filename, grab_what, verbose=FALSE,
   }
 
   if("metadata"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, announcement = "Reading file metadata...")
+    if(verbose){
+      last_time <- timeReport(last_time, text = "Reading file metadata...")
+    }
     output_data$metadata <- grabMzmlMetadata(xml_data = xml_data)
   }
 
@@ -182,8 +190,8 @@ grabMzmlMetadata <- function(xml_data){
   if(length(inst_nodes)>0){
     config_types <- xml2::xml_name(config_nodes)
     config_order <- xml2::xml_attr(config_nodes, "order")
-    config_names <- xml2::xml_attr(xml2::xml_find_first(config_nodes, "d1:cvParam"),
-                                   "name")
+    config_name_nodes <- xml2::xml_find_first(config_nodes, "d1:cvParam")
+    config_names <- xml2::xml_attr(config_name_nodes, "name")
   } else {
     config_types <- "None found"
     config_order <- "None found"
@@ -196,7 +204,7 @@ grabMzmlMetadata <- function(xml_data){
   if(!is.na(time_val)){
     time_stamp <- as.POSIXct(strptime(time_val, "%Y-%m-%dT%H:%M:%SZ"))
   } else {
-    time_stamp <- "None found"
+    time_stamp <- as.POSIXct(NA)
   }
 
   mslevel_xpath <- "//d1:fileContent/child::node()"
@@ -230,7 +238,8 @@ grabMzmlEncodingData <- function(xml_data){
   init_node <- xml2::xml_find_first(xml_data, xpath = "//d1:spectrum")
   compr_xpath <- paste0('//d1:cvParam[@accession="MS:1000574"]|',
                         '//d1:cvParam[@accession="MS:1000576"]')
-  compr_type <- xml2::xml_attr(xml2::xml_find_first(init_node, compr_xpath), "name")
+  compr_node <- xml2::xml_find_first(init_node, compr_xpath)
+  compr_type <- xml2::xml_attr(compr_node, "name")
   compr <- switch(compr_type,
                   `zlib`="gzip",
                   `zlib compression`="gzip",
@@ -238,18 +247,21 @@ grabMzmlEncodingData <- function(xml_data){
                   `none`="none")
 
   mz_precision_xpath <- '//d1:cvParam[@accession="MS:1000523"]'
-  mz_bit_type <- xml2::xml_attr(xml2::xml_find_first(init_node, mz_precision_xpath), "name")
+  mz_bit_node <- xml2::xml_find_first(init_node, mz_precision_xpath)
+  mz_bit_type <- xml2::xml_attr(mz_bit_node, "name")
   mz_precision <- sub(mz_bit_type, pattern = "-bit float", replacement = "")
   mz_precision <- as.numeric(mz_precision)/8
 
   int_bit_xpath <- '//d1:cvParam[@accession="MS:1000521"]'
-  int_bit_type <- xml2::xml_attr(xml2::xml_find_first(init_node, int_bit_xpath), "name")
+  int_bit_node <- xml2::xml_find_first(init_node, int_bit_xpath)
+  int_bit_type <- xml2::xml_attr(int_bit_node, "name")
   int_precision <- sub(int_bit_type, pattern = "-bit float", replacement = "")
   int_precision <- as.numeric(int_precision)/8
 
   if(is.na(int_precision))int_precision <- mz_precision
 
-  list(compression=compr, mz_precision=mz_precision, int_precision=int_precision)
+  list(compression=compr, mz_precision=mz_precision,
+       int_precision=int_precision)
 }
 
 
@@ -264,9 +276,11 @@ grabMzmlEncodingData <- function(xml_data){
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information.
 #'
-#' @return A `data.table` with columns for retention time (rt), m/z (mz), and intensity (int).
+#' @return A `data.table` with columns for retention time (rt), m/z (mz), and
+#'   intensity (int).
 grabMzmlMS1 <- function(xml_data, rtrange, file_metadata){
-  ms1_xpath <- '//d1:cvParam[@name="ms level" and @value="1"]/parent::d1:spectrum'
+  ms1_xpath <- paste('//d1:cvParam[@name="ms level" and',
+                     '@value="1"]/parent::d1:spectrum')
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
   if(!is.null(rtrange)){
     ms1_nodes <- shrinkRTrange(ms1_nodes, rtrange)
@@ -297,10 +311,12 @@ grabMzmlMS1 <- function(xml_data, rtrange, file_metadata){
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information.
 #'
-#' @return A `data.table` with columns for retention time (rt),  precursor m/z (mz),
-#' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
+#' @return A `data.table` with columns for retention time (rt),  precursor m/z
+#'   (mz), fragment m/z (fragmz), collision energy (voltage), and intensity
+#'   (int).
 grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
-  ms2_xpath <- '//d1:cvParam[@name="ms level" and @value="2"]/parent::d1:spectrum'
+  ms2_xpath <- paste('//d1:cvParam[@name="ms level" and',
+                     '@value="2"]/parent::d1:spectrum')
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   if(!is.null(rtrange)){
     ms2_nodes <- shrinkRTrange(ms2_nodes, rtrange)
@@ -337,7 +353,8 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
 #'   the final object's size.
 #' @param TIC Boolean. If TRUE, the TIC is extracted rather than the BPC.
 #'
-#' @return A `data.table` with columns for retention time (rt), and intensity (int).
+#' @return A `data.table` with columns for retention time (rt), and intensity
+#'   (int).
 grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE){
   ms1_xpath <- '//d1:cvParam[@name="ms level"][@value="1"]/parent::d1:spectrum'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
@@ -361,8 +378,8 @@ grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE){
 #' Extract the retention time from the spectra of an mzML nodeset
 #'
 #' @param xml_nodes An xml_nodeset object corresponding to the spectra collected
-#' by the mass spectrometer, usually produced by applying `xml_find_all` to an
-#' MS1 or MS2 nodeset.
+#'   by the mass spectrometer, usually produced by applying `xml_find_all` to an
+#'   MS1 or MS2 nodeset.
 #'
 #' @return A numeric vector of retention times, one for each scan
 grabSpectraRt <- function(xml_nodes){
@@ -375,8 +392,8 @@ grabSpectraRt <- function(xml_nodes){
 #' Extract the precursor mass from the spectra of an mzML nodeset
 #'
 #' @param xml_nodes An xml_nodeset object corresponding to the spectra collected
-#' by the mass spectrometer, usually produced by applying `xml_find_all` to an
-#' MS1 or MS2 nodeset.
+#'   by the mass spectrometer, usually produced by applying `xml_find_all` to an
+#'   MS1 or MS2 nodeset.
 #'
 #' @return A numeric vector of precursor masses, one for each scan
 grabSpectraPremz <- function(xml_nodes){
@@ -389,13 +406,13 @@ grabSpectraPremz <- function(xml_nodes){
 
 #' Extract the collison energies from the spectra of an mzML nodeset
 #'
-#' Although the collision energy is typically fixed per file, it's equally
-#' fast (afaik) to just grab them all individually here. Also, I'm worried about
+#' Although the collision energy is typically fixed per file, it's equally fast
+#' (afaik) to just grab them all individually here. Also, I'm worried about
 #' these rumors of "ramped" collision energies
 #'
 #' @param xml_nodes An xml_nodeset object corresponding to the spectra collected
-#' by the mass spectrometer, usually produced by applying `xml_find_all` to an
-#' MS1 or MS2 nodeset.
+#'   by the mass spectrometer, usually produced by applying `xml_find_all` to an
+#'   MS1 or MS2 nodeset.
 #'
 #' @return A numeric vector of collision energies, one for each scan.
 grabSpectraVoltage <- function(xml_nodes){
@@ -409,13 +426,13 @@ grabSpectraVoltage <- function(xml_nodes){
 #' Extract the mass-to-charge data from the spectra of an mzML nodeset
 #'
 #' The mz and intensity information of mzML files are encoded as binary arrays,
-#' sometimes compressed via gzip or zlib or numpress. This code finds all the m/z
-#' binary arrays and converts them back to the original measurements. See
+#' sometimes compressed via gzip or zlib or numpress. This code finds all the
+#' m/z binary arrays and converts them back to the original measurements. See
 #' https://github.com/ProteoWizard/pwiz/issues/1301
 #'
 #' @param xml_nodes An xml_nodeset object corresponding to the spectra collected
-#' by the mass spectrometer, usually produced by applying `xml_find_all` to an
-#' MS1 or MS2 nodeset.
+#'   by the mass spectrometer, usually produced by applying `xml_find_all` to an
+#'   MS1 or MS2 nodeset.
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information. Here, the compression and
 #'   mz precision information is relevant.
@@ -439,13 +456,13 @@ grabSpectraMz <- function(xml_nodes, file_metadata){
 #' Extract the intensity information from the spectra of an mzML nodeset
 #'
 #' The mz and intensity information of mzML files are encoded as binary arrays,
-#' sometimes compressed via gzip or zlib or numpress. This code finds all the intensity
-#' binary arrays and converts them back to the original measurements. See
-#' https://github.com/ProteoWizard/pwiz/issues/1301
+#' sometimes compressed via gzip or zlib or numpress. This code finds all the
+#' intensity binary arrays and converts them back to the original measurements.
+#' See https://github.com/ProteoWizard/pwiz/issues/1301
 #'
 #' @param xml_nodes An xml_nodeset object corresponding to the spectra collected
-#' by the mass spectrometer, usually produced by applying `xml_find_all` to an
-#' MS1 or MS2 nodeset.
+#'   by the mass spectrometer, usually produced by applying `xml_find_all` to an
+#'   MS1 or MS2 nodeset.
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information. Here, the compression and
 #'   int precision information is relevant.
@@ -490,6 +507,7 @@ shrinkRTrange <- function(xml_nodes, rtrange){
                           '@name="scan start time"',
                           " and @value>=", min(rtrange),
                           " and @value<=", max(rtrange), "]",
-                          "/parent::d1:scan/parent::d1:scanList/parent::d1:spectrum")
+                          "/parent::d1:scan/parent::d1:scanList/",
+                          "parent::d1:spectrum")
   xml2::xml_find_all(xml_nodes, rtrange_xpath)
 }

@@ -59,7 +59,8 @@
 #' # Extract MS1 data and a base peak chromatogram
 #' file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"))
 #' # Extract data from a retention time subset
-#' file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"), rtrange=c(5, 7))
+#' file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"),
+#'                         rtrange=c(5, 7))
 #'
 #' # Get timing data
 #' file_data <- grabMSdata(sample_file, verbosity="very")
@@ -327,7 +328,7 @@ checkProvidedMzPpm <- function(mz, ppm){
 pmppm <- function(mass, ppm=4)c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
 
 
-timeReport <- function(last_time, announcement=NULL){
+timeReport <- function(last_time, text=NULL){
   cat(Sys.time()-last_time, "s\n")
   cat(announcement)
   Sys.time()
