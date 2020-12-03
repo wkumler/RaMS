@@ -287,7 +287,8 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
 grabMzxmlBPC <- function(xml_data, TIC=FALSE){
   scan_nodes <- xml2::xml_find_all(xml_data, '//d1:scan[@msLevel="1"]')
   rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
-  rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
+  rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))/60
+  if(!any(rt_vals>1))stop("Are your mzXML files in minutes or seconds? (Should be sec)")
 
   int_attr <- ifelse(TIC, "totIonCurrent", "basePeakIntensity")
   int_vals <- as.numeric(xml2::xml_attr(scan_nodes, int_attr))
@@ -309,7 +310,9 @@ grabMzxmlBPC <- function(xml_data, TIC=FALSE){
 
 grabMzxmlSpectraRt <- function(xml_nodes){
   rt_attrs <- xml2::xml_attr(xml_nodes, "retentionTime")
-  as.numeric(gsub("PT|S", "", rt_attrs))
+  rt_vals <- as.numeric(gsub("PT|S", "", rt_attrs))/60 # Convert to minutes
+  if(!any(rt_vals>1))stop("Are your mzXML files in minutes or seconds? (Should be sec)")
+  rt_vals
 }
 
 
