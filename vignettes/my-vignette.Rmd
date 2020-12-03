@@ -125,11 +125,9 @@ doesn't encode as much metadata as the mzML filetype, so `RaMS` can't extract
 it.
 
 ```{r}
-mzML_file <- list.files(msdata_dir, pattern = "Full.*mzML", full.names = TRUE)[1]
-grabMSdata(mzML_file, grab_what = "metadata")
-
-mzXML_file <- list.files(msdata_dir, pattern = "Full.*mzXML", full.names = TRUE)[1]
-grabMSdata(mzXML_file, grab_what = "metadata")
+# Since the minification process strips a lot of useful data, I use DDA here
+metadata_files <- list.files(msdata_dir, pattern = "DDA", full.names = TRUE)
+grabMSdata(metadata_files, grab_what = "metadata")
 ```
 
 ### Adding a column: MS1 data

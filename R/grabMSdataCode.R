@@ -330,7 +330,7 @@ pmppm <- function(mass, ppm=4)c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
 
 timeReport <- function(last_time, text=NULL){
   cat(Sys.time()-last_time, "s\n")
-  cat(announcement)
+  cat(text)
   Sys.time()
 }
 
