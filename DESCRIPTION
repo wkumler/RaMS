@@ -1,7 +1,7 @@
 Package: RaMS
 Type: Package
 Title: R Access To Mass-Spec data
-Version: 0.2.0
+Version: 0.3.0
 Author: William Kumler
 Maintainer: William Kumler <wkumler@uw.edu>
 Description: R access to mass-spectrometry (MS) data. While many packages exist
