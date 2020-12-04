@@ -13,11 +13,12 @@ knitr::opts_chunk$set(
   comment = "#>",
   out.width = "80%",
   fig.align = 'center',
-  fig.height = 3
+  fig.height = 3,
+  dpi = 36
 )
 ```
 
-Welcome to RaMS! This vignette is designed to provide a slew of examples using 
+Welcome to RaMS! This vignette is designed to provide examples using 
 the package at various levels of complexity. Let's jump right in.
 
 If you have your own data, feel free to load it here. If not, there's a couple
@@ -27,8 +28,6 @@ these throughout.
 ```{r findfiles, message=FALSE}
 library(RaMS)
 library(data.table)
-library(tidyverse)
-library(plotly)
 
 # Locate the file directory
 msdata_dir <- system.file("extdata", package = "RaMS")
@@ -86,6 +85,7 @@ it plays nicely with popular packages such as `ggplot2`. Let's use that to plot
 our BPC instead of the base R plotting system:
 
 ```{r plotBPC}
+library(tidyverse)
 ggplot(file_data$BPC) + geom_line(aes(x=rt, y=int))
 ```
 
@@ -208,7 +208,9 @@ ggplot(betaine_MS2) +
 This is also the perfect place to enable some interactivity with packages such
 as `plotly`, making data exploration not only simple but also enjoyable. 
 
-```{r plotly, warning=FALSE}
+```{r plotly, eval=FALSE}
+## Not run to save space in the vignette:
+library(plotly)
 data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
 file_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2", "BPC"))
 
@@ -243,7 +245,7 @@ for fragments in a range around that mass:
 
 ```{r}
 betaine_frag_mz <- 58.0660
-knitr::kable(head(file_data$MS2[fragmz%between%pmppm(betaine_frag_mz, ppm = 5)]))
+knitr::kable(head(DDA_data$MS2[fragmz%between%pmppm(betaine_frag_mz, ppm = 5)]))
 ```
 
 We find that there's not only glycine betaine that produces that fragment,
@@ -259,7 +261,7 @@ betaine:
 betaine_mass <- 118.0865
 betaine_neutral_loss <- betaine_mass - betaine_frag_mz
 
-file_data$MS2 <- mutate(file_data$MS2, neutral_loss=premz-fragmz) %>%
+file_data$MS2 <- mutate(DDA_data$MS2, neutral_loss=premz-fragmz) %>%
   select("rt", "premz", "fragmz", "neutral_loss", "int", "voltage", "filename")
 file_data$MS2[neutral_loss%between%pmppm(betaine_neutral_loss, ppm = 5)] %>%
   head() %>% knitr::kable()
