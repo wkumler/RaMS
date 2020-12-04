@@ -97,6 +97,7 @@ file_data <- grabMSdata(sample_files, grab_what="EIC", ppm=5,
                         mz=c(118.0865, 146.118104, 189.123918))
 
 # Extract MS2 data and search for specific fragment masses
+library(data.table)
 MS2_file <- list.files(sample_dir, pattern="DDA.*mzML", full.names=TRUE)
 file_data <- grabMSdata(MS2_file, grab_what=c("MS1", "MS2"))
 fragment_mass <- 59.0739
