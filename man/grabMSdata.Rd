@@ -10,7 +10,8 @@ grabMSdata(
   verbosity = "none",
   mz = NULL,
   ppm = NULL,
-  rtrange = NULL
+  rtrange = NULL,
+  check_exists = TRUE
 )
 }
 \arguments{
@@ -44,6 +45,11 @@ combined with `grab_what = "EIC"` (see above).}
 containing an upper and lower bound on retention times of interest.
 Providing a range here can speed up load times (although not enormously, as
 the entire file must still be read) and reduce the final object's size.}
+
+\item{check_exists}{Boolean, default TRUE. Whether or not to check if a file
+exists before attempting to load it. If TRUE and file cannot be found,
+provides helpful warning message and stops function. Set to FALSE if
+streaming files from internet repositories such as Metabolights.}
 }
 \value{
 A list of `data.table`s, each named after the arguments requested in

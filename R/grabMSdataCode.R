@@ -37,6 +37,10 @@
 #'   containing an upper and lower bound on retention times of interest.
 #'   Providing a range here can speed up load times (although not enormously, as
 #'   the entire file must still be read) and reduce the final object's size.
+#' @param check_exists Boolean, default TRUE. Whether or not to check if a file
+#'   exists before attempting to load it. If TRUE and file cannot be found,
+#'   provides helpful warning message and stops function. Set to FALSE if
+#'   streaming files from internet repositories such as Metabolights.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. $MS1 contains MS1 information, MS2 contains fragmentation info,
@@ -95,9 +99,9 @@
 #' # Just get the file's metadata
 #' metadata <- grabMSdata(MS2_file, grab_what="metadata")
 grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="none",
-                       mz=NULL, ppm=NULL, rtrange=NULL){
-  # Check file quality
-  checkFiles(files)
+                       mz=NULL, ppm=NULL, rtrange=NULL, check_exists=TRUE){
+  # Check that files can be found
+  if(check_exists)checkFiles(files)
 
   # Define outer control loop so multiple files can be read in simultaneously
   all_file_data <- list()
@@ -158,7 +162,6 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="none",
 #' @return NULL (invisibly). The goal of this function is its side effects, i.e.
 #'   throwing errors and providing info when the files are not found.
 #'
-
 checkFiles <- function(files){
   # Check that files were actually provided
   if(!length(files))stop("No files provided")
