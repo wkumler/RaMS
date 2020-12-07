@@ -207,12 +207,23 @@ grabMzmlMetadata <- function(xml_data){
     time_stamp <- as.POSIXct(NA)
   }
 
-  mslevel_xpath <- "//d1:fileContent/child::node()"
+  mslevel_xpath <- '//d1:spectrum/d1:cvParam[@name="ms level"]'
   mslevel_nodes <- xml2::xml_find_all(xml_data, xpath = mslevel_xpath)
   if(length(mslevel_nodes)>0){
-    mslevels <- gsub(" spectrum", "", xml2::xml_attr(mslevel_nodes, "name"))
+    mslevels <- paste("MS", unique(xml2::xml_attr(mslevel_nodes, "value")),
+                      collapse = ", ")
   } else {
     mslevels <- "None found"
+  }
+
+  polarity_xpath <- '//d1:spectrum/d1:cvParam[@accession="MS:1000130"]'
+  polarity_nodes <- xml2::xml_find_all(xml_data, polarity_xpath)
+  if(length(polarity_nodes)>0){
+    polarities <- unique(
+      gsub(" scan", "", xml2::xml_attr(polarity_nodes, "name"))
+    )
+  } else {
+    polarities <- "None found"
   }
 
   metadata <- data.table(
@@ -224,7 +235,8 @@ grabMzmlMetadata <- function(xml_data){
       name=config_names
     )),
     timestamp = time_stamp,
-    mslevels=paste0(mslevels, collapse = ", ")
+    mslevels=paste0(mslevels, collapse = ", "),
+    polarity=polarities
   )
 }
 

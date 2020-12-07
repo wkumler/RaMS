@@ -115,4 +115,17 @@ frags <- file_data$MS2[(premz-fragmz)\%between\%pmppm(neutral_loss, ppm=5)]
 
 # Just get the file's metadata
 metadata <- grabMSdata(MS2_file, grab_what="metadata")
+
+# "Stream" data from the internet (i.e. Metabolights)
+\dontrun{
+access_url <- "https://www.ebi.ac.uk/metabolights/MTBLS703/files"
+
+# URL below obtained by right-clicking site download button and copying
+# link address
+sample_url <- paste0("https://www.ebi.ac.uk/metabolights/ws/studies/",
+                     "MTBLS703/download/acefcd61-a634-4f35-9c3c-c572",
+                     "ade5acf3?file=161024_Smp_LB12HL_AB_pos.mzXML")
+file_data <- grabMSdata(sample_url, grab_what="everything",
+                        check_exists=FALSE, verbosity="very")
+}
 }

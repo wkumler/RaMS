@@ -60,6 +60,7 @@
 #' sample_file <- system.file("extdata", "FK180310_DDApos100.mzML.gz",
 #'                            package = "RaMS")
 #' MS2_data <- grabMzmlData(sample_file, grab_what="MS2")
+#'
 grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
                           rtrange=NULL, mz=NULL, ppm=NULL){
   if(!is.null(rtrange)){
@@ -184,16 +185,26 @@ grabMzxmlMetadata <- function(xml_data){
 
   mslevel_nodes <- xml2::xml_find_all(xml_data, xpath = "//d1:scan")
   if(length(mslevel_nodes)>0){
-    mslevels <- paste0("MS", unique(xml_attr(mslevel_nodes, "msLevel")), collapse = ", ")
+    mslevels <- paste0("MS", unique(xml_attr(mslevel_nodes, "msLevel")),
+                       collapse = ", ")
   } else {
     mslevels <- "None found"
+  }
+
+  polarity_nodes <- xml2::xml_find_all(xml_data, xpath = "//d1:scan")
+  if(length(polarity_nodes)>0){
+    polarities <- paste0(unique(xml2::xml_attr(polarity_nodes, "polarity")),
+                         collapse = ", ")
+  } else {
+    polarities <- "None found"
   }
 
 
   metadata <- data.table(
     source_file=source_file,
     inst_data=list(inst_vals),
-    mslevels=mslevels
+    mslevels=mslevels,
+    polarity=polarities
   )
 }
 
