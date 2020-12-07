@@ -30,7 +30,7 @@ library(RaMS)
 ## Usage
 
 (For more usage examples, see the
-[vignette](vignettes/my-vignette.html).)
+[vignette](vignettes/RaMS-vignette.html).)
 
 There’s only one main function in `RaMS`: the aptly named `grabMSdata`.
 This function accepts the names of mass-spectrometry files as well as
@@ -142,7 +142,8 @@ output$EIC %>%
 
 ![](man/figures/plotlyplot.png)
 
-For more usage examples, see [the vignette](vignettes/my-vignette.html).
+For more usage examples, see [the
+vignette](vignettes/RaMS-vignette.html).
 
 ``` r
 vignette("RaMS-vignette", package = "RaMS")
@@ -162,3 +163,22 @@ Currently, `RaMS` also handles only MS<sup>1</sup> and MS<sup>2</sup>
 data. This should be easy enough to expand in the future, but right now
 I haven’t observed a demonstrated need for higher fragmentation level
 data collection.
+
+Additionally, note that files can be streamed from the internet directly
+if a URL is provided to `grabMSdata` and the `check_exists` argument is
+set to `FALSE`, although this will usually take longer than reading a
+file from disk:
+
+``` r
+## Not run:
+# Find a file with a web browser:
+browseURL("https://www.ebi.ac.uk/metabolights/MTBLS703/files")
+
+# Copy link address by right-clicking "download" button:
+sample_url <- paste0("https://www.ebi.ac.uk/metabolights/ws/studies/MTBLS703/",
+                     "download/acefcd61-a634-4f35-9c3c-c572ade5acf3?file=",
+                     "161024_Smp_LB12HL_AB_pos.mzXML")
+file_data <- grabMSdata(sample_url, grab_what="everything",
+                       check_exists=FALSE, verbosity="very")
+file_data$metadata
+```
