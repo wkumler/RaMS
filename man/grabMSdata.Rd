@@ -74,8 +74,7 @@ have also been exposed to the user in case super-simple handling is desired.
 }
 \examples{
 # Operations on a single file
-sample_file <- system.file("extdata", "FK180310_Full1.mzML.gz",
-                           package = "RaMS")
+sample_file <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
 file_data <- grabMSdata(sample_file, grab_what="MS1")
 # Extract MS1 data and a base peak chromatogram
 file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"))
@@ -88,14 +87,14 @@ file_data <- grabMSdata(sample_file, verbosity="very")
 
 # Extract data from multiple files simultaneously
 sample_dir <- system.file("extdata", package = "RaMS")
-sample_files <- list.files(sample_dir, pattern="Full1", full.names=TRUE)
+sample_files <- list.files(sample_dir, pattern="HL", full.names=TRUE)
 multifile_data <- grabMSdata(sample_files, grab_what="MS1")
 
 # Extract an EIC for glycine betaine from several files
 sample_files <- list.files(sample_dir, pattern="mzML", full.names=TRUE)
 bet_EIC <- grabMSdata(sample_files, grab_what="EIC", mz=118.0865, ppm=5)
 # Or speed it up even more because you already know betaine's retention time
-bet_EIC <- grabMSdata(sample_files, grab_what="EIC", rtrange=c(5, 7),
+bet_EIC <- grabMSdata(sample_files, grab_what="EIC", rtrange=c(300, 420),
                       mz=118.0865, ppm=5)
 
 # Extract EIC for multiple masses simultaneously, from multiple files

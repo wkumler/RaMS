@@ -45,8 +45,7 @@
 #' @export
 #'
 #' @examples
-#' sample_file <- system.file("extdata", "FK180310_Full1.mzXML.gz",
-#'                            package = "RaMS")
+#' sample_file <- system.file("extdata", "LB12HL_AB.mzXML.gz", package = "RaMS")
 #' file_data <- grabMzxmlData(sample_file, grab_what="MS1")
 #' # Extract MS1 data and a base peak chromatogram
 #' file_data <- grabMzxmlData(sample_file, grab_what=c("MS1", "BPC"))
@@ -57,9 +56,8 @@
 #'                            mz=c(118.0865, 146.118104, 189.123918))
 #'
 #' # Extract MS2 data
-#' sample_file <- system.file("extdata", "FK180310_DDApos100.mzML.gz",
-#'                            package = "RaMS")
-#' MS2_data <- grabMzmlData(sample_file, grab_what="MS2")
+#' sample_file <- system.file("extdata", "DDApos_2.mzXML.gz", package = "RaMS")
+#' MS2_data <- grabMzxmlData(sample_file, grab_what="MS2")
 #'
 grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
                           rtrange=NULL, mz=NULL, ppm=NULL){
