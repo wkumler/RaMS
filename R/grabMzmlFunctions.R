@@ -210,7 +210,7 @@ grabMzmlMetadata <- function(xml_data){
   mslevel_xpath <- '//d1:spectrum/d1:cvParam[@name="ms level"]'
   mslevel_nodes <- xml2::xml_find_all(xml_data, xpath = mslevel_xpath)
   if(length(mslevel_nodes)>0){
-    mslevels <- paste("MS", unique(xml2::xml_attr(mslevel_nodes, "value")),
+    mslevels <- paste0("MS", unique(xml2::xml_attr(mslevel_nodes, "value")),
                       collapse = ", ")
   } else {
     mslevels <- "None found"
