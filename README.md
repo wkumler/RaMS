@@ -22,14 +22,14 @@ other [tidy data packages](https://www.tidyverse.org/).
 Until `RaMS` is on CRAN, the easiest way to install is via `devtools`:
 
 ``` r
-devtools::install_github("wkumler/RaMS", build_vignettes = TRUE)
+devtools::install_github("wkumler/RaMS")
 
 library(RaMS)
 ```
 
 ## Usage
 
-(For more usage examples, see the [vignette](doc/RaMS-vignette.pdf).)
+(For more usage examples, see the [vignette](vignettes/RaMS-vignette.pdf).)
 
 There’s only one main function in `RaMS`: the aptly named `grabMSdata`.
 This function accepts the names of mass-spectrometry files as well as
@@ -141,11 +141,8 @@ output$EIC %>%
 
 ![](man/figures/plotlyplot.png)
 
-For more usage examples, see [the vignette](doc/RaMS-vignette.pdf).
+For more usage examples, see [the vignette](vignettes/RaMS-vignette.pdf).
 
-``` r
-vignette("RaMS-vignette", package = "RaMS")
-```
 
 ## File types
 
