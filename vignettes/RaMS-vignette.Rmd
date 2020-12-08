@@ -495,3 +495,5 @@ thing.
 
 For more information about the mzML data format and its history, check out the
 specification at http://www.psidev.info/mzML.
+
+Vignette updated `r Sys.Date()`
