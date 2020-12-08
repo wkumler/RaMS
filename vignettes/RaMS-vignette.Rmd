@@ -1,6 +1,6 @@
 ---
 title: "Intro to RaMS"
-date: "Updated 12/8/2020"
+date: "Updated `r Sys.Date()`"
 output: pdf_document
 ---
 

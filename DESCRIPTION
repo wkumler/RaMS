@@ -24,5 +24,6 @@ Suggests:
     knitr,
     rmarkdown,
     tidyverse,
-    plotly
-VignetteBuilder: knitr
+    plotly,
+    R.rsp
+VignetteBuilder: R.rsp
