@@ -38,7 +38,7 @@ test_that("mzML MS2 data looks normal", {
   expect_type(mzML_data$MS2$premz, "double")
   expect_type(mzML_data$MS2$int, "double")
   expect_type(mzML_data$MS2$voltage, "integer")
-  expect_identical(unique(mzML_data$MS2$voltage), 100L)
+  expect_identical(unique(mzML_data$MS2$voltage), 35L)
   expect_type(mzML_data$MS2$filename, "character")
 
   # Check that the expected files were loaded

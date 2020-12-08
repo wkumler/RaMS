@@ -305,7 +305,7 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
 grabMzxmlBPC <- function(xml_data, TIC=FALSE){
   scan_nodes <- xml2::xml_find_all(xml_data, '//d1:scan[@msLevel="1"]')
   rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
-  as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
+  rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
 
   int_attr <- ifelse(TIC, "totIonCurrent", "basePeakIntensity")
   int_vals <- as.numeric(xml2::xml_attr(scan_nodes, int_attr))
