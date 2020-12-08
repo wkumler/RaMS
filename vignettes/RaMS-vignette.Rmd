@@ -1,13 +1,13 @@
 ---
 title: "Intro to RaMS"
-output: html_document
-vignette: >
-  %\VignetteIndexEntry{RaMS-vignette}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+date: "Updated 12/8/2020"
+output: pdf_document
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
+# RUN OUTSIDE OF PROJECT OR KNITR WILL EAT YOUR OUTPUT
+# https://stackoverflow.com/questions/62432329/in-rstudio-where-is-knitr-markdown-output-located
+
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -33,7 +33,7 @@ library(data.table)
 msdata_dir <- system.file("extdata", package = "RaMS")
 
 # Identify the files of interest
-data_files <- list.files(msdata_dir, pattern = "Full.*mzML", full.names = TRUE)
+data_files <- list.files(msdata_dir, pattern = "HL.*mzML", full.names = TRUE)
 
 # Check that the files identified are the ones expected
 basename(data_files)
@@ -85,7 +85,7 @@ it plays nicely with popular packages such as `ggplot2`. Let's use that to plot
 our BPC instead of the base R plotting system:
 
 ```{r plotBPC}
-library(tidyverse)
+suppressPackageStartupMessages(library(tidyverse))
 ggplot(file_data$BPC) + geom_line(aes(x=rt, y=int))
 ```
 
@@ -104,7 +104,7 @@ ggplot(file_data$BPC) + geom_line(aes(x=rt, y=int, color=filename))
 And of course, this means that all of `ggplot`'s aesthetic power can be brought
 to your chromatograms as well, so customize away!
 
-```{r ggplotRaMS, dev.args=list(png  = list(type = "cairo"))}
+```{r ggplotdemo, dev.args=list(png  = list(type = "cairo"))}
 ggplot(file_data$BPC) + 
   geom_line(aes(x=rt, y=int, color=filename), lwd=1.2) +
   theme_minimal() +
@@ -124,8 +124,9 @@ differences between mzML and mzXML file types - the mzXML file type simply
 doesn't encode as much metadata as the mzML filetype, so `RaMS` can't extract
 it.
 
-```{r}
-# Since the minification process strips a lot of useful data, I use DDA here
+```{r metadatademo}
+# Since the minification process strips some metadata, I use the 
+# less-minified DDA files here
 metadata_files <- list.files(msdata_dir, pattern = "DDA", full.names = TRUE)
 grabMSdata(metadata_files, grab_what = "metadata")
 ```
@@ -135,7 +136,7 @@ grabMSdata(metadata_files, grab_what = "metadata")
 MS1 data can be extracted just as easily, by supplying "MS1" to the `grab_what`
 argument of `grabMSdata` function.
 
-```{r}
+```{r MS1demo}
 file_data <- grabMSdata(data_files, grab_what = "MS1")
 
 knitr::kable(head(file_data$MS1, 3))
@@ -154,7 +155,7 @@ is super-fast and a bit more intuitive than with base R. Below, I also use the
 `pmppm` function from `RaMS` to produce a mass range from an initial mass and
 spectrometer accuracy (here, 5 parts-per-million).
 
-```{r}
+```{r adenineplot}
 adenine_mz <- 136.06232
 
 adenine_data <- file_data$MS1[mz%between%pmppm(adenine_mz, ppm=5)]
@@ -165,11 +166,11 @@ ggplot(adenine_data) + geom_line(aes(x=rt, y=int, color=filename))
 This makes it easy to grab the data for multiple compounds of interest with a
 simple loop, provided here by the `purrr` package of the tidyverse:
 
-```{r}
+```{r multicmpdplot}
 masses_of_interest <- c(adenine=136.06232, valine=118.0865, homarine=138.055503)
 
 mass_data <- imap(masses_of_interest, function(mz_i, name){
-  cbind(file_data$MS1[mz%between%pmppm(mz_i, ppm=5)], name)
+  cbind(file_data$MS1[mz%between%pmppm(mz_i, ppm=10)], name)
 }) %>% rbindlist()
 
 ggplot(mass_data) + 
@@ -183,7 +184,7 @@ ggplot(mass_data) +
 option for `grab_what`, although it's often a good idea to grab the MS1 data
 alongside.
 
-```{r}
+```{r MS2data}
 DDA_file <- list.files(msdata_dir, pattern = "DDA.*mzML", full.names = TRUE)
 DDA_data <- grabMSdata(DDA_file, grab_what = c("MS2"))
 knitr::kable(head(DDA_data$MS2, 3))
@@ -192,13 +193,13 @@ knitr::kable(head(DDA_data$MS2, 3))
 DDA data can be plotted nicely with `ggplot2` as well. Typically it makes sense
 to filter for a precursor mass, then render the fragments obtained.
 
-```{r}
-betaine_mass <- 118.0865
+```{r MS2demo}
+homarine_mass <- 137.047678+1.007276
 
-betaine_MS2 <- DDA_data$MS2[premz%between%pmppm(betaine_mass, 5)]
-betaine_MS2$int <- betaine_MS2$int/max(betaine_MS2$int)*100
+homarine_MS2 <- DDA_data$MS2[premz%between%pmppm(homarine_mass, 5)]
+homarine_MS2$int <- homarine_MS2$int/max(homarine_MS2$int)*100
 
-ggplot(betaine_MS2) +
+ggplot(homarine_MS2) +
   geom_point(aes(x=fragmz, y=int)) +
   geom_segment(aes(x=fragmz, xend=fragmz, y=int, yend=0)) +
   labs(x="Fragment m/z", y="Relative intensity (%)")
@@ -215,7 +216,7 @@ data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
 file_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2", "BPC"))
 
 clean_MS2 <- file_data$MS2 %>% 
-  filter(premz%between%pmppm(betaine_mass)) %>%
+  filter(premz%between%pmppm(homarine_mass, 10)) %>%
   group_by(rt) %>%
   arrange(desc(int)) %>%
   summarise(frags=paste(
@@ -223,7 +224,7 @@ clean_MS2 <- file_data$MS2 %>%
     .groups="drop"
   )
 file_data$MS1 %>% 
-  filter(mz%between%pmppm(betaine_mass)) %>%
+  filter(mz%between%pmppm(homarine_mass, 10)) %>%
   filter(!str_detect(filename, "DDA")) %>%
   plot_ly() %>%
   add_trace(type="scatter", mode="lines", x=~rt, y=~int, color=~filename,
@@ -239,36 +240,35 @@ file_data$MS1 %>%
 
 Easy access to MS<sup>2</sup> data also allows us to rapidly perform 
 simple operations such as searching for a
-specific fragment mass. For example, if we know that glycine betaine typically
-produces a fragment with a mass of 58.0660, we simply subset the MS<sup>2</sup> data
+specific fragment mass. For example, if we know that homarine typically
+produces a fragment with a mass of 94.06567, we simply subset the MS<sup>2</sup> data
 for fragments in a range around that mass:
 
-```{r}
-betaine_frag_mz <- 58.0660
-knitr::kable(head(DDA_data$MS2[fragmz%between%pmppm(betaine_frag_mz, ppm = 5)]))
+```{r homarine_fragsearch}
+homarine_frag_mz <- 94.06567
+DDA_data$MS2[fragmz%between%pmppm(homarine_frag_mz, ppm = 5)] %>%
+  head() %>% knitr::kable()
 ```
 
-We find that there's not only glycine betaine that produces that fragment,
-but also another compounds with a mass of 212.0951. Fragments like this can then
+We find that there's not only homarine that produces that fragment,
+but several another compounds. Precursor masses like this can then
 be searched manually in online databases or, since the data is already in R,
 passed to a script that automatically searches them.
 
 Similarly, we can easily search instead for neutral losses with this method. If
-we suspect other molecules are producing a similar neutral loss as glycine
-betaine:
+we suspect other molecules are producing a similar neutral loss as homarine:
 
-```{r}
-betaine_mass <- 118.0865
-betaine_neutral_loss <- betaine_mass - betaine_frag_mz
+```{r homarine_neutsearch}
+homarine_neutral_loss <- homarine_mass - homarine_frag_mz
 
 file_data$MS2 <- mutate(DDA_data$MS2, neutral_loss=premz-fragmz) %>%
   select("rt", "premz", "fragmz", "neutral_loss", "int", "voltage", "filename")
-file_data$MS2[neutral_loss%between%pmppm(betaine_neutral_loss, ppm = 5)] %>%
-  head() %>% knitr::kable()
+file_data$MS2[neutral_loss%between%pmppm(homarine_neutral_loss, ppm = 5)] %>%
+  arrange(desc(int)) %>% head() %>% knitr::kable()
 ```
 
-We can again confirm our suspicions that there's another molecule with
-a similar neutral loss: one with a mass of 138.0549.
+We can again confirm our suspicions that there's another signal with
+a similar neutral loss: one with a mass of 137.0470.
 
 ## Advanced RaMS usage
 
@@ -291,11 +291,11 @@ This functionality can be enabled by passing "EIC" and/or "EIC_MS2" to the
 into R's memory sequentially, the mass window is extracted, and the rest of
 the data is discarded.
 
-```{r}
+```{r EICdemo}
 data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
 all_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"))
 
-masses_of_interest <- c(adenine=136.06232, valine=118.0865, homarine=138.055503)
+masses_of_interest <- c(adenine=136.06232, valine=118.0865)
 small_data <- grabMSdata(data_files, grab_what = c("EIC", "EIC_MS2"),
                          mz=masses_of_interest, ppm = 5)
 
@@ -315,7 +315,7 @@ as.numeric(object.size(all_data)/object.size(small_data))
 ```
 
 As expected, the size of the `small_data` object is much smaller than the
-`all_data` object, here by a factor of nearly 30x. For files that haven't 
+`all_data` object, here by a factor of nearly 50x. For files that haven't 
 already been "minified", that size reduction will be even 
 more significant. Of course, this comes with the cost of needing to re-load
 the data a second time if a new mass feature becomes of interest but this 
@@ -328,8 +328,8 @@ which expects a length-two vector corresponding to the upper and lower bounds
 on retention time. This is useful when a small time window is of interest, and
 only the data between those bounds is relevant.
 
-```{r}
-small_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), rtrange = c(5, 6))
+```{r rtrangedemo}
+small_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), rtrange = c(340, 410))
 
 all_data$MS1 %>%
   mutate(type="All data") %>%
@@ -364,7 +364,7 @@ that occurs afterward, but this is not always the case. To examine bottlenecks,
 `RaMS` includes timing information that's produced if the `verbosity` argument
 is set to "very".
 
-```{r}
+```{r verbosedemo}
 all_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), verbosity = "very")
 ```
 
@@ -495,5 +495,3 @@ thing.
 
 For more information about the mzML data format and its history, check out the
 specification at http://www.psidev.info/mzML.
-
-Vignette updated `r Sys.Date()`
