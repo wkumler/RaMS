@@ -77,6 +77,13 @@ jobs:
       - name: Install MSnbase manually to avoid weird error
         run: |
           BiocManager::install("MSnbase")
+        shell: Rscript {0}
+      
+      - name: Install covr to
+        run: |
+          remotes::install_cran("covr")
+        shell: Rscript {0}
+        
       - name: Check
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
