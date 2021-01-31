@@ -1,6 +1,12 @@
 R-based access to Mass-Spec data (RaMS)
 ================
 
+<!-- badges: start -->
+
+[![R build
+status](https://github.com/wkumler/RaMS/workflows/R-CMD-check/badge.svg)](https://github.com/wkumler/RaMS/actions/)
+<!-- badges: end -->
+
 ## Overview
 
 `RaMS` is a lightweight package that provides rapid and tidy access to
@@ -29,7 +35,8 @@ library(RaMS)
 
 ## Usage
 
-(For more usage examples, see the [vignette](vignettes/RaMS-vignette.pdf).)
+(For more usage examples, see the
+[vignette](vignettes/RaMS-vignette.pdf).)
 
 There’s only one main function in `RaMS`: the aptly named `grabMSdata`.
 This function accepts the names of mass-spectrometry files as well as
@@ -47,31 +54,31 @@ output <- grabMSdata(files = msdata_files, grab_what = c("TIC", "MS1", "MS2"))
 knitr::kable(head(output$TIC, 3))
 ```
 
-|       rt |      int | filename                    |
-| -------: | -------: | :-------------------------- |
-| 4.002279 | 63075520 | FK180310\_DDApos100.mzML.gz |
-| 4.006146 | 70261912 | FK180310\_DDApos100.mzML.gz |
-| 4.009863 | 67087636 | FK180310\_DDApos100.mzML.gz |
+|      rt |       int | filename          |
+|--------:|----------:|:------------------|
+| 240.051 | 291632610 | DDApos\_2.mzML.gz |
+| 240.393 | 304016350 | DDApos\_2.mzML.gz |
+| 240.966 | 299228260 | DDApos\_2.mzML.gz |
 
 ``` r
 knitr::kable(head(output$MS1, 3))
 ```
 
-|       rt |       mz |        int | filename                    |
-| -------: | -------: | ---------: | :-------------------------- |
-| 4.002279 | 60.04510 | 281799.594 | FK180310\_DDApos100.mzML.gz |
-| 4.002279 | 60.05633 |   9898.172 | FK180310\_DDApos100.mzML.gz |
-| 4.002279 | 60.05814 |  21629.547 | FK180310\_DDApos100.mzML.gz |
+|      rt |       mz |       int | filename          |
+|--------:|---------:|----------:|:------------------|
+| 240.051 | 80.05009 | 12057.776 | DDApos\_2.mzML.gz |
+| 240.051 | 80.26269 |  8178.767 | DDApos\_2.mzML.gz |
+| 240.051 | 80.94841 | 19075.213 | DDApos\_2.mzML.gz |
 
 ``` r
 knitr::kable(head(output$MS2, 3))
 ```
 
-|      rt |   premz |   fragmz |      int | voltage | filename                    |
-| ------: | ------: | -------: | -------: | ------: | :-------------------------- |
-| 4.01227 | 757.017 | 57.46079 | 6493.131 |     100 | FK180310\_DDApos100.mzML.gz |
-| 4.01227 | 757.017 | 59.75748 | 6986.794 |     100 | FK180310\_DDApos100.mzML.gz |
-| 4.01227 | 757.017 | 62.73330 | 7692.589 |     100 | FK180310\_DDApos100.mzML.gz |
+|      rt |    premz |   fragmz |       int | voltage | filename          |
+|--------:|---------:|---------:|----------:|--------:|:------------------|
+| 240.184 | 127.0325 | 56.05023 | 17019.613 |      35 | DDApos\_2.mzML.gz |
+| 240.184 | 127.0325 | 59.46344 |  1003.812 |      35 | DDApos\_2.mzML.gz |
+| 240.184 | 127.0325 | 70.06580 |  1521.526 |      35 | DDApos\_2.mzML.gz |
 
 This means that basic R functions work exactly as we expect them to, no
 new functionality necessary:
@@ -84,7 +91,7 @@ plot(first_file_data$rt, first_file_data$int, type = "l")
 
 ![](man/figures/README-unnamed-chunk-4-1.png)<!-- -->
 
------
+------------------------------------------------------------------------
 
 And of course, the tidy data format means that it plays nicely with
 every other tidy data package.
@@ -141,8 +148,8 @@ output$EIC %>%
 
 ![](man/figures/plotlyplot.png)
 
-For more usage examples, see [the vignette](vignettes/RaMS-vignette.pdf).
-
+For more usage examples, see [the
+vignette](vignettes/RaMS-vignette.pdf).
 
 ## File types
 
