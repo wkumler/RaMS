@@ -22,7 +22,7 @@ Welcome to RaMS! This vignette is designed to provide examples using
 the package at various levels of complexity. Let's jump right in.
 
 If you have your own data, feel free to load it here. If not, there's a couple
-example small files you're welcome to use in the "inst" folder. I'll be using
+small example files you're welcome to use in the "extdata" folder. I'll be using
 these throughout.
 
 ```{r findfiles, message=FALSE}
@@ -113,7 +113,7 @@ ggplot(file_data$BPC) +
         axis.title = element_text(family = "serif"),
         plot.title = element_text(face = "bold")) +
   scale_colour_brewer(palette = "Dark2") +
-  labs(x="Retention time (min)", y="Intensity", 
+  labs(x="Retention time (s)", y="Intensity", 
        title = "My chromatogram", color="File names:")
 ```
 
@@ -167,9 +167,9 @@ This makes it easy to grab the data for multiple compounds of interest with a
 simple loop, provided here by the `purrr` package of the tidyverse:
 
 ```{r multicmpdplot}
-masses_of_interest <- c(adenine=136.06232, valine=118.0865, homarine=138.055503)
+mzs_of_interest <- c(adenine=136.06232, valine=118.0865, homarine=138.055503)
 
-mass_data <- imap(masses_of_interest, function(mz_i, name){
+mass_data <- imap(mzs_of_interest, function(mz_i, name){
   cbind(file_data$MS1[mz%between%pmppm(mz_i, ppm=10)], name)
 }) %>% rbindlist()
 
@@ -194,9 +194,9 @@ DDA data can be plotted nicely with `ggplot2` as well. Typically it makes sense
 to filter for a precursor mass, then render the fragments obtained.
 
 ```{r MS2demo}
-homarine_mass <- 137.047678+1.007276
+homarine_mz <- 137.047678+1.007276
 
-homarine_MS2 <- DDA_data$MS2[premz%between%pmppm(homarine_mass, 5)]
+homarine_MS2 <- DDA_data$MS2[premz%between%pmppm(homarine_mz, 5)]
 homarine_MS2$int <- homarine_MS2$int/max(homarine_MS2$int)*100
 
 ggplot(homarine_MS2) +
@@ -204,7 +204,6 @@ ggplot(homarine_MS2) +
   geom_segment(aes(x=fragmz, xend=fragmz, y=int, yend=0)) +
   labs(x="Fragment m/z", y="Relative intensity (%)")
 ```
-
 
 This is also the perfect place to enable some interactivity with packages such
 as `plotly`, making data exploration not only simple but also enjoyable. 
@@ -216,7 +215,7 @@ data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
 file_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2", "BPC"))
 
 clean_MS2 <- file_data$MS2 %>% 
-  filter(premz%between%pmppm(homarine_mass, 10)) %>%
+  filter(premz%between%pmppm(homarine_mz, 10)) %>%
   group_by(rt) %>%
   arrange(desc(int)) %>%
   summarise(frags=paste(
@@ -224,7 +223,7 @@ clean_MS2 <- file_data$MS2 %>%
     .groups="drop"
   )
 file_data$MS1 %>% 
-  filter(mz%between%pmppm(homarine_mass, 10)) %>%
+  filter(mz%between%pmppm(homarine_mz, 10)) %>%
   filter(!str_detect(filename, "DDA")) %>%
   plot_ly() %>%
   add_trace(type="scatter", mode="lines", x=~rt, y=~int, color=~filename,
@@ -235,8 +234,6 @@ file_data$MS1 %>%
   layout(annotations=list(x=min(clean_MS2$rt), y=0, 
                           text="Mouse over to see\nMSMS fragments"))
 ```
-
-
 
 Easy access to MS<sup>2</sup> data also allows us to rapidly perform 
 simple operations such as searching for a
@@ -259,7 +256,7 @@ Similarly, we can easily search instead for neutral losses with this method. If
 we suspect other molecules are producing a similar neutral loss as homarine:
 
 ```{r homarine_neutsearch}
-homarine_neutral_loss <- homarine_mass - homarine_frag_mz
+homarine_neutral_loss <- homarine_mz - homarine_frag_mz
 
 file_data$MS2 <- mutate(DDA_data$MS2, neutral_loss=premz-fragmz) %>%
   select("rt", "premz", "fragmz", "neutral_loss", "int", "voltage", "filename")
@@ -295,9 +292,9 @@ the data is discarded.
 data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
 all_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"))
 
-masses_of_interest <- c(adenine=136.06232, valine=118.0865)
+mzs_of_interest <- c(adenine=136.06232, valine=118.0865)
 small_data <- grabMSdata(data_files, grab_what = c("EIC", "EIC_MS2"),
-                         mz=masses_of_interest, ppm = 5)
+                         mz=mzs_of_interest, ppm = 5)
 
 all_data$MS1 %>%
   mutate(type="All data") %>%
@@ -443,9 +440,6 @@ stopImplicitCluster()
 
 ### The nitty-gritty details
 
-Wow, you really made it this far through the vignette? Well, your reward is some
-very dry information about what `RaMS` does under the hood.
-
 `RaMS` is possible because mzML and mzXML documents are fundamentally
 [XML](https://en.wikipedia.org/wiki/XML)-based. This means that we can leverage
 speedy and robust XML parsing packages such as `xml2` to extract the data.
@@ -495,3 +489,17 @@ thing.
 
 For more information about the mzML data format and its history, check out the
 specification at http://www.psidev.info/mzML.
+
+### Minified file details
+
+While many `RaMS` users will arrive at this vignette with their own data, 
+several small files are provided for demonstration. These files originate from the [Ingalls Lab](https://sites.google.com/view/anitra-ingalls) at the University of Washington, USA and are published in the manuscript [**"Metabolic consequences of cobalamin scarcity in diatoms as revealed through metabolomics"**](https://www.sciencedirect.com/science/article/pii/S1434461018301184). Files were downloaded from the corresponding [Metabolights repository](https://www.ebi.ac.uk/metabolights/MTBLS703/files).
+
+Due to CRAN's restrictions on package size, the original files cannot be included. Instead, MS1 data was compressed by extracting EICs for each compound in the Ingalls Lab [list of targeted compounds](https://github.com/IngallsLabUW/Ingalls_Standards/blob/b098927ea0089b6e7a31e1758e7c7eaad5408535/Ingalls_Lab_Standards_NEW.csv) as of August 24, 2020. EIC width was set with a ppm value of 10 and time data were filtered to fall between 240 and 540 seconds. These compressed files were then written out using [`MSnbase`'s](https://bioconductor.org/packages/release/bioc/html/MSnbase.html) `writeMSdata` function after coercing the existing data frame into an `MSnExp` object. Finally, they were gzip-compressed with [`R.utils`'s](https://cran.r-project.org/web/packages/R.utils/index.html) `gzip` function and default parameters.
+
+MS2 data was processed via [Proteowizard's `msconvert` tool](http://proteowizard.sourceforge.net/tools/msconvert.html) instead. Files were converted with the flags `-gz` and `--noindex` to save space, and three filters were used: 
+ - `--filter "scanTime [240,540]"`
+ - `--filter "mzWindow [0,120]"`
+ - `--filter "absolute 100000 most-intense"`
+
+These filters reduced the MS2 data to a sufficiently limited size that they could be published with the package. The mzXML file was created identically, but the `--mzXML` flag was added.
