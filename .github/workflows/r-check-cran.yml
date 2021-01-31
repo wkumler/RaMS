@@ -77,7 +77,6 @@ jobs:
       - name: Install MSnbase manually to avoid weird error
         run: |
           BiocManager::install("MSnbase")
-
       - name: Check
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
