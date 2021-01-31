@@ -68,6 +68,15 @@ jobs:
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
+      
+      - name: Install BiocManager
+        run: |
+          remotes::install_cran("BiocManager")
+        shell: Rscript {0}
+      
+      - name: Install MSnbase manually to avoid weird error
+        run: |
+          BiocManager::install("MSnbase")
 
       - name: Check
         env:
