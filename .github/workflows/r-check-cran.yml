@@ -79,9 +79,14 @@ jobs:
           BiocManager::install("MSnbase")
         shell: Rscript {0}
       
-      - name: Install covr to
+      - name: Install covr
         run: |
           remotes::install_cran("covr")
+        shell: Rscript {0}
+      
+      - name: Test coverage
+        run: |
+          covr::codecov()
         shell: Rscript {0}
         
       - name: Check
