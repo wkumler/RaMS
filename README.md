@@ -1,10 +1,13 @@
 R-based access to Mass-Spec data (RaMS)
 ================
 
+<!-- README.md is generated from README.Rmd. Please edit that file -->
 <!-- badges: start -->
 
 [![R build
 status](https://github.com/wkumler/RaMS/workflows/R-CMD-check/badge.svg)](https://github.com/wkumler/RaMS/actions/)
+[![Codecov test
+coverage](https://codecov.io/gh/wkumler/RaMS/branch/master/graph/badge.svg)](https://codecov.io/gh/wkumler/RaMS)
 <!-- badges: end -->
 
 ## Overview
@@ -184,3 +187,5 @@ file_data <- grabMSdata(sample_url, grab_what="everything",
                        check_exists=FALSE, verbosity="very")
 file_data$metadata
 ```
+
+README last built on 2021-01-31
