@@ -234,12 +234,6 @@ checkOutputQuality <- function(output_data, grab_what){
                   paste(names(output_data)[missing_data], collapse = ", ")))
   }
 
-  weird_classes <- !as.logical(colSums(sapply(output_data, class)=="data.table"))
-  if(any(weird_classes)){
-    message(paste("Some data aren't data tables:",
-                  paste(names(output_data)[weird_classes], collapse = ", ")))
-  }
-
   misnamed <- mapply(function(nms, dt){
     if(nms=="BPC"|nms=="TIC"){
       proper_names <- c("rt", "int", "filename")
