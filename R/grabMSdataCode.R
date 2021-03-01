@@ -327,6 +327,21 @@ timeReport <- function(last_time, text=NULL){
   Sys.time()
 }
 
+checkRTrange <- function(rtrange){
+  if(!is.null(rtrange)){
+    if("matrix"%in%class(rtrange)){
+      rtrange <- as.vector(rtrange)
+    }
+    if(length(rtrange)!=2){
+      stop("Please provide an rtrange of length 2")
+    }
+    if(class(rtrange)!="numeric"&&class(rtrange)!="integer"){
+      stop("Please provide a numeric rtrange")
+    }
+  }
+  rtrange
+}
+
 
 # Import area ----
 

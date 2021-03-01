@@ -293,15 +293,16 @@ grabMzmlMS1 <- function(xml_data, rtrange, file_metadata){
   ms1_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
                       '@value="1"]][d1:cvParam[@name="base peak intensity"]]')
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
-  if(!is.null(rtrange)){
-    ms1_nodes <- shrinkRTrange(ms1_nodes, rtrange)
-  }
   if(!length(ms1_nodes)){
     return(data.table(rt=numeric(), mz=numeric(), int=numeric()))
   }
 
-
   rt_vals <- grabSpectraRt(ms1_nodes)
+  if(!is.null(rtrange)){
+    ms1_nodes <- ms1_nodes[rt_vals%between%rtrange]
+    rt_vals <- rt_vals[rt_vals%between%rtrange]
+  }
+
   mz_vals <- grabSpectraMz(ms1_nodes, file_metadata)
   int_vals <- grabSpectraInt(ms1_nodes, file_metadata)
 
@@ -330,15 +331,17 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
                       '@value="2"]][d1:cvParam[@name="base peak intensity"]]')
 
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
-  if(!is.null(rtrange)){
-    ms2_nodes <- shrinkRTrange(ms2_nodes, rtrange)
-  }
   if(!length(ms2_nodes)){
     return(data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
                       int=numeric(), voltage=integer()))
   }
 
   rt_vals <- grabSpectraRt(ms2_nodes)
+  if(!is.null(rtrange)){
+    ms2_nodes <- ms2_nodes[rt_vals%between%rtrange]
+    rt_vals <- rt_vals[rt_vals%between%rtrange]
+  }
+
   premz_vals <- grabSpectraPremz(ms2_nodes)
   voltage <- grabSpectraVoltage(ms2_nodes)
   mz_vals <- grabSpectraMz(ms2_nodes, file_metadata)
@@ -372,11 +375,12 @@ grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE){
                       '@value="1"]][d1:cvParam[@name="base peak intensity"]]')
 
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
-  if(!is.null(rtrange)){
-    ms1_nodes <- shrinkRTrange(ms1_nodes, rtrange)
-  }
 
   rt_vals <- grabSpectraRt(ms1_nodes)
+  if(!is.null(rtrange)){
+    ms1_nodes <- ms1_nodes[rt_vals%between%rtrange]
+    rt_vals <- rt_vals[rt_vals%between%rtrange]
+  }
 
   int_xpath <- ifelse(TIC, "total ion current", "base peak intensity")
   int_xpath_full <- paste0('d1:cvParam[@name="', int_xpath, '"]')
@@ -400,7 +404,7 @@ grabSpectraRt <- function(xml_nodes){
   rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
   rt_nodes <- xml2::xml_find_all(xml_nodes, rt_xpath)
   rt_vals <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
-  if(any(rt_vals)>150){
+  if(any(rt_vals>150)){
     # Guess RT is in seconds if the run is more than 150 long
     # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
     rt_vals <- rt_vals/60
@@ -505,29 +509,14 @@ grabSpectraInt <- function(xml_nodes, file_metadata){
 
 
 # Other helper functions ----
-checkRTrange <- function(rtrange){
-  if(!is.null(rtrange)){
-    if("matrix"%in%class(rtrange)){
-      rtrange <- as.vector(rtrange)
-    }
-    if(length(rtrange)!=2){
-      stop("Please provide an rtrange of length 2")
-    }
-    if(class(rtrange)!="numeric"&&class(rtrange)!="integer"){
-      stop("Please provide a numeric rtrange")
-    }
+shrinkRTrangemzML <- function(xml_nodes, rtrange){
+  rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
+  rt_nodes <- xml2::xml_find_all(xml_nodes, rt_xpath)
+  rt_vals <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
+  if(any(rt_vals>150)){
+    # Guess RT is in seconds if the run is more than 150 long
+    # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
+    rt_vals <- rt_vals/60
   }
-  rtrange
-}
-
-shrinkRTrange <- function(xml_nodes, rtrange){
-  # Xpath is magic. Basically we walk down from each spectrum node to find its
-  # "scan start time" node and can filter directly on that.
-  rtrange_xpath <- paste0("d1:scanList/d1:scan/d1:cvParam[",
-                          '@name="scan start time"',
-                          " and @value>=", min(rtrange),
-                          " and @value<=", max(rtrange), "]",
-                          "/parent::d1:scan/parent::d1:scanList/",
-                          "parent::d1:spectrum")
-  xml2::xml_find_all(xml_nodes, rtrange_xpath)
+  xml_nodes[rt_vals%between%rtrange]
 }

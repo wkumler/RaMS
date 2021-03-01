@@ -22,12 +22,16 @@ mzML_EIC_data <- grabMSdata(mzML_filenames[1:2], grab_what = c("EIC", "EIC_MS2")
 mzXML_EIC_data <- grabMSdata(mzXML_filenames[1:2], grab_what = c("EIC", "EIC_MS2"),
                              mz = EIC_mz, ppm = EIC_ppm, verbosity = "very")
 
-test_rtrange <- c(300, 360)
+test_rtrange <- c(5, 6)
 mzML_trimmed <- grabMSdata(files = mzML_filenames[1:2],
                            grab_what = c("MS1", "MS2", "TIC", "BPC"),
                            rtrange = test_rtrange)
+mzXML_trimmed <- grabMSdata(files = mzXML_filenames[1],
+                           grab_what = c("MS1", "MS2", "TIC", "BPC"),
+                           rtrange = test_rtrange)
 
-test_zerorange <- c(300, 300)
+
+test_zerorange <- c(5, 5)
 mzML_zeroed <- grabMSdata(files = mzML_filenames[1:2],
                           grab_what = c("MS1", "MS2", "TIC", "BPC"),
                           rtrange = test_zerorange)

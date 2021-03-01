@@ -61,9 +61,6 @@
 #'
 grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
                           rtrange=NULL, mz=NULL, ppm=NULL){
-  if(!is.null(rtrange)){
-    message("\n`rtrange` argument not supported for mzXML files, ignoring")
-  }
   if(verbose){
     cat(paste0("\nReading file ", basename(filename), "... "))
     last_time <- Sys.time()
@@ -71,6 +68,7 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
   xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzXML")
+  rtrange <- checkRTrange(rtrange)
   file_metadata <- grabMzxmlEncodingData(xml_data)
 
   output_data <- list()
@@ -86,31 +84,33 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
 
   if("MS1"%in%grab_what){
     if(verbose)last_time <- timeReport(last_time, text = "Reading MS1 data...")
-    output_data$MS1 <- grabMzxmlMS1(xml_data = xml_data,
+    output_data$MS1 <- grabMzxmlMS1(xml_data = xml_data, rtrange=rtrange,
                                     file_metadata = file_metadata)
   }
 
   if("MS2"%in%grab_what){
     if(verbose)last_time <- timeReport(last_time, text = "Reading MS2 data...")
-    output_data$MS2 <- grabMzxmlMS2(xml_data = xml_data,
+    output_data$MS2 <- grabMzxmlMS2(xml_data = xml_data, rtrange=rtrange,
                                     file_metadata = file_metadata)
   }
 
   if("BPC"%in%grab_what){
     if(verbose)last_time <- timeReport(last_time, text = "Reading BPC...")
-    output_data$BPC <- grabMzxmlBPC(xml_data = xml_data)
+    output_data$BPC <- grabMzxmlBPC(xml_data = xml_data, rtrange=rtrange)
   }
 
   if("TIC"%in%grab_what){
     if(verbose)last_time <- timeReport(last_time, text = "Reading TIC...")
-    output_data$TIC <- grabMzxmlBPC(xml_data = xml_data, TIC = TRUE)
+    output_data$TIC <- grabMzxmlBPC(xml_data = xml_data, rtrange=rtrange,
+                                    TIC = TRUE)
   }
 
   if("EIC"%in%grab_what){
     checkProvidedMzPpm(mz, ppm)
     if(verbose)last_time <- timeReport(last_time, text = "Extracting EIC...")
     if(!"MS1"%in%grab_what){
-      init_dt <- grabMzxmlMS1(xml_data=xml_data, file_metadata = file_metadata)
+      init_dt <- grabMzxmlMS1(xml_data=xml_data, file_metadata = file_metadata,
+                              rtrange=rtrange)
     } else {
       init_dt <- output_data$MS1
       if(!nrow(init_dt))stop("Something weird - can't find MS1 data to subset")
@@ -127,7 +127,8 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
       last_time <- timeReport(last_time, text = "Extracting EIC MS2...")
       }
     if(!"MS2"%in%grab_what){
-      init_dt <- grabMzxmlMS2(xml_data=xml_data, file_metadata = file_metadata)
+      init_dt <- grabMzxmlMS2(xml_data=xml_data, file_metadata = file_metadata,
+                              rtrange=rtrange)
     } else {
       init_dt <- output_data$MS2
     }
@@ -242,11 +243,16 @@ grabMzxmlEncodingData <- function(xml_data){
 #'
 #' @return A `data.table` with columns for retention time (rt), m/z (mz),
 #' and intensity (int).
-grabMzxmlMS1 <- function(xml_data, file_metadata){
+grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange){
   ms1_xpath <- '//d1:scan[@msLevel="1" and @peaksCount>0]'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
 
   rt_vals <- grabMzxmlSpectraRt(ms1_nodes)
+  if(!is.null(rtrange)){
+    ms1_nodes <- ms1_nodes[rt_vals%between%rtrange]
+    rt_vals <- rt_vals[rt_vals%between%rtrange]
+  }
+
   mz_int_vals <- grabMzxmlSpectraMzInt(ms1_nodes, file_metadata)
 
   dt_data <- mapply(cbind, rt_vals, mz_int_vals, SIMPLIFY = FALSE)
@@ -265,7 +271,7 @@ grabMzxmlMS1 <- function(xml_data, file_metadata){
 #'
 #' @return A `data.table` with columns for retention time (rt),  precursor m/z (mz),
 #' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
-grabMzxmlMS2 <- function(xml_data, file_metadata){
+grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange){
   ms2_xpath <- '//d1:scan[@msLevel="2" and @peaksCount>0]'
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   if(!length(ms2_nodes)){
@@ -276,6 +282,11 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
   ms2_nodes <- ms2_nodes[as.numeric(xml2::xml_attr(ms2_nodes, "peaksCount"))>0]
 
   rt_vals <- grabMzxmlSpectraRt(ms2_nodes)
+  if(!is.null(rtrange)){
+    ms2_nodes <- ms2_nodes[rt_vals%between%rtrange]
+    rt_vals <- rt_vals[rt_vals%between%rtrange]
+  }
+
   premz_vals <- grabMzxmlSpectraPremz(ms2_nodes)
   voltage_vals <- grabMzxmlSpectraVoltage(ms2_nodes)
   mz_int_vals <- grabMzxmlSpectraMzInt(ms2_nodes, file_metadata)
@@ -300,15 +311,21 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
 #' @param TIC Boolean. If TRUE, the TIC is extracted rather than the BPC.
 #'
 #' @return A `data.table` with columns for retention time (rt), and intensity (int).
-grabMzxmlBPC <- function(xml_data, TIC=FALSE){
+grabMzxmlBPC <- function(xml_data, TIC=FALSE, rtrange){
   scan_nodes <- xml2::xml_find_all(
     xml_data, '//d1:scan[@msLevel="1" and @peaksCount>0]'
   )
   rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
   rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
+  if(any(rt_vals>150)){rt_vals <- rt_vals/60}
 
   int_attr <- ifelse(TIC, "totIonCurrent", "basePeakIntensity")
   int_vals <- as.numeric(xml2::xml_attr(scan_nodes, int_attr))
+  if(!is.null(rtrange)){
+    int_vals <- int_vals[rt_vals%between%rtrange]
+    rt_vals <- rt_vals[rt_vals%between%rtrange]
+  }
+
 
   return(data.table(rt=rt_vals, int=int_vals))
 }
@@ -328,7 +345,7 @@ grabMzxmlBPC <- function(xml_data, TIC=FALSE){
 grabMzxmlSpectraRt <- function(xml_nodes){
   rt_attrs <- xml2::xml_attr(xml_nodes, "retentionTime")
   rt_vals <- as.numeric(gsub("PT|S", "", rt_attrs))
-  if(any(rt_vals)>150){
+  if(any(rt_vals>150)){
     # Guess RT is in seconds if the run is more than 150 long
     # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
     rt_vals <- rt_vals/60
@@ -405,5 +422,14 @@ grabMzxmlSpectraMzInt <- function(xml_nodes, file_metadata){
 
 
 # Other helper functions ----
-
-
+shrinkRTrangemzXML <- function(xml_nodes, rtrange){
+  rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
+  rt_nodes <- xml2::xml_find_all(xml_nodes, rt_xpath)
+  rt_vals <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
+  if(any(rt_vals>150)){
+    # Guess RT is in seconds if the run is more than 150 long
+    # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
+    rt_vals <- rt_vals/60
+  }
+  xml_nodes[rt_vals%between%rtrange]
+}
