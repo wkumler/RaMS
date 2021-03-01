@@ -112,17 +112,17 @@
 #' file_data <- grabMSdata(sample_url, grab_what="everything",
 #'                         check_exists=FALSE, verbosity="very")
 #' }
-grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="none",
+grabMSdata <- function(files, grab_what="everything", verbosity="none",
                        mz=NULL, ppm=NULL, rtrange=NULL, check_exists=TRUE){
-  # Check that files can be found
-  if(check_exists)checkFiles(files)
+  # Check that files were provided
+  if(!length(files))stop("No files provided")
 
   # Add sanity check for EIC extraction
-  if(!is.null(mz) & !c("EIC", "EIC_MS2")%in%grab_what){
+  if(!is.null(mz) & !any(c("EIC", "EIC_MS2")%in%grab_what)){
     warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
             '"EIC_MS2" and will be ignored in the current call'))
   }
-  if(!is.null(ppm) & !c("EIC", "EIC_MS2")%in%grab_what){
+  if(!is.null(ppm) & !any(c("EIC", "EIC_MS2")%in%grab_what)){
     warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
                    '"EIC_MS2" and will be ignored in the current call'))
   }
@@ -175,35 +175,6 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="none",
   ))
 
   all_file_data_output
-}
-
-# checkFiles ----
-
-#' Check that filenames are acceptable.
-#'
-#' @param files The vector of files provided to grabMSdata.
-#'
-#' @return NULL (invisibly). The goal of this function is its side effects, i.e.
-#'   throwing errors and providing info when the files are not found.
-#'
-checkFiles <- function(files){
-  # Check that files were actually provided
-  if(!length(files))stop("No files provided")
-  # Check that files exist and stop with messages if not
-  # I could be nicer here and just read in the files that exist but I think not
-  files_exist <- file.exists(files)
-  if(any(!files_exist)){
-    message("Error: Unable to find all files:")
-    if(sum(!files_exist)>6){
-      # Avoid spamming output if lots of files missing
-      message(paste("Couldn't find file", head(files[!files_exist]), "\n"))
-      message(paste("... and", sum(!files_exist)-6, "others"))
-    } else {
-      message(paste("Couldn't find file", files[!files_exist], "\n"))
-    }
-    stopQuietly()
-  }
-  return(invisible(NULL))
 }
 
 # checkOutputQuality ----
