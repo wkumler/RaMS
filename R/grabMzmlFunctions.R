@@ -400,10 +400,10 @@ grabSpectraRt <- function(xml_nodes){
   rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
   rt_nodes <- xml2::xml_find_all(xml_nodes, rt_xpath)
   rt_vals <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
-  if(max(rt_vals)<150){
-    # Guess RT is in minutes if the run is less than 150 units long
+  if(any(rt_vals)>150){
+    # Guess RT is in seconds if the run is more than 150 long
     # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
-    rt_vals <- rt_vals*60
+    rt_vals <- rt_vals/60
   }
   rt_vals
 }

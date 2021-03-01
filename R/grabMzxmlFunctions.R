@@ -328,10 +328,10 @@ grabMzxmlBPC <- function(xml_data, TIC=FALSE){
 grabMzxmlSpectraRt <- function(xml_nodes){
   rt_attrs <- xml2::xml_attr(xml_nodes, "retentionTime")
   rt_vals <- as.numeric(gsub("PT|S", "", rt_attrs))
-  if(max(rt_vals)<150){
-    # Guess RT is in minutes if the run is less than 150 units long
+  if(any(rt_vals)>150){
+    # Guess RT is in seconds if the run is more than 150 long
     # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
-    rt_vals <- rt_vals*60
+    rt_vals <- rt_vals/60
   }
   rt_vals
 }

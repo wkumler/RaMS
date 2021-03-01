@@ -11,6 +11,8 @@
 #' or metadata information. This function serves as a wrapper around both
 #' `grabMzmlData` and `grabMzxmlData` and handles multiple files, but those two
 #' have also been exposed to the user in case super-simple handling is desired.
+#' Retention times are reported in minutes, and will be converted automatically
+#' if they are encoded in seconds.
 #'
 #' @param files A character vector of filenames to read into R's memory. Both
 #'   absolute and relative paths are acceptable.
