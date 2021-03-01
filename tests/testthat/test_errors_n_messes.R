@@ -13,8 +13,6 @@ test_that("error if weird files", {
   file.remove("blah.txt")
 })
 
-
-
 test_that("checkOutputQuality detects things", {
   grab_what <- "everything"
   output_data <- list(MS1=data.table(runif(100)))
@@ -25,7 +23,14 @@ test_that("checkOutputQuality detects things", {
   expect_message(checkOutputQuality(output_data, grab_what))
 })
 
-
+test_that("mz ppm sanity checks work", {
+  expect_warning(grabMSdata(files = mzML_filenames[2],
+                            grab_what = "everything",
+                            mz=118.0865))
+  expect_warning(grabMSdata(files = mzML_filenames[2],
+                            grab_what = "everything",
+                            ppm=5))
+})
 
 test_that("checkProvidedMzPpm detects things", {
   expect_error(checkProvidedMzPpm(mz=NULL))

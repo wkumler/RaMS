@@ -115,6 +115,16 @@ grabMSdata <- function(files, grab_what=c("MS1", "MS2"), verbosity="none",
   # Check that files can be found
   if(check_exists)checkFiles(files)
 
+  # Add sanity check for EIC extraction
+  if(!is.null(mz) & !c("EIC", "EIC_MS2")%in%grab_what){
+    warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
+            '"EIC_MS2" and will be ignored in the current call'))
+  }
+  if(!is.null(ppm) & !c("EIC", "EIC_MS2")%in%grab_what){
+    warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
+                   '"EIC_MS2" and will be ignored in the current call'))
+  }
+
   # Define outer control loop so multiple files can be read in simultaneously
   all_file_data <- list()
   if(verbosity=="very"|verbosity=="minimal"){
