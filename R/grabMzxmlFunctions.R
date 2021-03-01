@@ -243,7 +243,7 @@ grabMzxmlEncodingData <- function(xml_data){
 #' @return A `data.table` with columns for retention time (rt), m/z (mz),
 #' and intensity (int).
 grabMzxmlMS1 <- function(xml_data, file_metadata){
-  ms1_xpath <- '//d1:scan[@msLevel="1"]'
+  ms1_xpath <- '//d1:scan[@msLevel="1" and @peaksCount>0]'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
 
   rt_vals <- grabMzxmlSpectraRt(ms1_nodes)
@@ -266,7 +266,7 @@ grabMzxmlMS1 <- function(xml_data, file_metadata){
 #' @return A `data.table` with columns for retention time (rt),  precursor m/z (mz),
 #' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
 grabMzxmlMS2 <- function(xml_data, file_metadata){
-  ms2_xpath <- '//d1:scan[@msLevel="2"]'
+  ms2_xpath <- '//d1:scan[@msLevel="2" and @peaksCount>0]'
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   if(!length(ms2_nodes)){
     return(data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
@@ -301,7 +301,9 @@ grabMzxmlMS2 <- function(xml_data, file_metadata){
 #'
 #' @return A `data.table` with columns for retention time (rt), and intensity (int).
 grabMzxmlBPC <- function(xml_data, TIC=FALSE){
-  scan_nodes <- xml2::xml_find_all(xml_data, '//d1:scan[@msLevel="1"]')
+  scan_nodes <- xml2::xml_find_all(
+    xml_data, '//d1:scan[@msLevel="1" and @peaksCount>0]'
+  )
   rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
   rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
 
