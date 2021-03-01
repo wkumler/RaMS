@@ -290,7 +290,8 @@ grabMzmlEncodingData <- function(xml_data){
 #' @return A `data.table` with columns for retention time (rt), m/z (mz), and
 #'   intensity (int).
 grabMzmlMS1 <- function(xml_data, rtrange, file_metadata){
-  ms1_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level" and @value="1"]]'
+  ms1_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
+                      '@value="1"]][d1:cvParam[@name="base peak intensity"]]')
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
   if(!is.null(rtrange)){
     ms1_nodes <- shrinkRTrange(ms1_nodes, rtrange)
@@ -325,7 +326,9 @@ grabMzmlMS1 <- function(xml_data, rtrange, file_metadata){
 #'   (mz), fragment m/z (fragmz), collision energy (voltage), and intensity
 #'   (int).
 grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
-  ms2_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level" and @value="2"]]'
+  ms2_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
+                      '@value="2"]][d1:cvParam[@name="base peak intensity"]]')
+
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   if(!is.null(rtrange)){
     ms2_nodes <- shrinkRTrange(ms2_nodes, rtrange)
@@ -365,7 +368,9 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
 #' @return A `data.table` with columns for retention time (rt), and intensity
 #'   (int).
 grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE){
-  ms1_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level" and @value="1"]]'
+  ms1_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
+                      '@value="1"]][d1:cvParam[@name="base peak intensity"]]')
+
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
   if(!is.null(rtrange)){
     ms1_nodes <- shrinkRTrange(ms1_nodes, rtrange)
