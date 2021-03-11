@@ -6,7 +6,7 @@
 \usage{
 grabMSdata(
   files,
-  grab_what = c("MS1", "MS2"),
+  grab_what = "everything",
   verbosity = "none",
   mz = NULL,
   ppm = NULL,
@@ -71,6 +71,8 @@ determined by the `grab_what` argument, which can include MS1, MS2, BPC, TIC,
 or metadata information. This function serves as a wrapper around both
 `grabMzmlData` and `grabMzxmlData` and handles multiple files, but those two
 have also been exposed to the user in case super-simple handling is desired.
+Retention times are reported in minutes, and will be converted automatically
+if they are encoded in seconds.
 }
 \examples{
 # Operations on a single file

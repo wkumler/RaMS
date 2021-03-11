@@ -4,7 +4,7 @@
 \alias{grabMzxmlMS2}
 \title{Extract the MS2 data from an mzXML nodeset}
 \usage{
-grabMzxmlMS2(xml_data, file_metadata)
+grabMzxmlMS2(xml_data, file_metadata, rtrange)
 }
 \arguments{
 \item{xml_data}{An `xml2` nodeset, usually created by applying `read_xml` to
