@@ -11,6 +11,11 @@ grabMzxmlBPC(xml_data, TIC = FALSE, rtrange)
 an mzML file.}
 
 \item{TIC}{Boolean. If TRUE, the TIC is extracted rather than the BPC.}
+
+\item{rtrange}{A vector of length 2 containing an upper and lower bound on
+retention times of interest. Providing a range here can speed up load times
+(although not enormously, as the entire file must still be read) and reduce
+the final object's size.}
 }
 \value{
 A `data.table` with columns for retention time (rt), and intensity (int).

@@ -240,6 +240,10 @@ grabMzxmlEncodingData <- function(xml_data){
 #'   an mzXML file.
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information.
+#' @param rtrange A vector of length 2 containing an upper and lower bound on
+#'   retention times of interest. Providing a range here can speed up load times
+#'   (although not enormously, as the entire file must still be read) and reduce
+#'   the final object's size.
 #'
 #' @return A `data.table` with columns for retention time (rt), m/z (mz),
 #' and intensity (int).
@@ -268,6 +272,10 @@ grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange){
 #'   an mzXML file.
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information.
+#' @param rtrange A vector of length 2 containing an upper and lower bound on
+#'   retention times of interest. Providing a range here can speed up load times
+#'   (although not enormously, as the entire file must still be read) and reduce
+#'   the final object's size.
 #'
 #' @return A `data.table` with columns for retention time (rt),  precursor m/z (mz),
 #' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
@@ -309,6 +317,10 @@ grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange){
 #' @param xml_data An `xml2` nodeset, usually created by applying `read_xml` to
 #'   an mzML file.
 #' @param TIC Boolean. If TRUE, the TIC is extracted rather than the BPC.
+#' @param rtrange A vector of length 2 containing an upper and lower bound on
+#'   retention times of interest. Providing a range here can speed up load times
+#'   (although not enormously, as the entire file must still be read) and reduce
+#'   the final object's size.
 #'
 #' @return A `data.table` with columns for retention time (rt), and intensity (int).
 grabMzxmlBPC <- function(xml_data, TIC=FALSE, rtrange){

@@ -12,6 +12,11 @@ an mzXML file.}
 
 \item{file_metadata}{Information about the file used to decode the binary
 arrays containing m/z and intensity information.}
+
+\item{rtrange}{A vector of length 2 containing an upper and lower bound on
+retention times of interest. Providing a range here can speed up load times
+(although not enormously, as the entire file must still be read) and reduce
+the final object's size.}
 }
 \value{
 A `data.table` with columns for retention time (rt),  precursor m/z (mz),
