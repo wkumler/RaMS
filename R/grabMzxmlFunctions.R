@@ -22,7 +22,7 @@
 #'   working with files whose total size exceeds working memory - it first
 #'   extracts all relevant MS1 and MS2 data, then discards data outside of the
 #'   mass range(s) calculated from the provided mz and ppm.
-#' @param verbose Three levels of processing output to the R console are
+#' @param verbosity Three levels of processing output to the R console are
 #'   available, with increasing verbosity corresponding to higher integers. A
 #'   verbosity of zero means that no output will be produced, useful when
 #'   wrapping within larger functions. A verbosity of 1 will produce a progress
@@ -63,9 +63,9 @@
 #' sample_file <- system.file("extdata", "DDApos_2.mzXML.gz", package = "RaMS")
 #' MS2_data <- grabMzxmlData(sample_file, grab_what="MS2")
 #'
-grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
+grabMzxmlData <- function(filename, grab_what, verbosity=0,
                           rtrange=NULL, mz=NULL, ppm=NULL){
-  if(verbose){
+  if(verbosity>1){
     cat(paste0("\nReading file ", basename(filename), "... "))
     last_time <- Sys.time()
   }
@@ -78,7 +78,7 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
   output_data <- list()
 
   if("everything"%in%grab_what){
-    if(length(setdiff(grab_what, "everything"))&&verbose){
+    if(length(setdiff(grab_what, "everything"))&&verbosity>0){
       message(paste("Heads-up: grab_what = `everything` includes",
                     "MS1, MS2, BPC, and TIC data"))
       message("Ignoring additional grabs")
@@ -87,31 +87,31 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
   }
 
   if("MS1"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, text = "Reading MS1 data...")
+    if(verbosity>1)last_time <- timeReport(last_time, text = "Reading MS1 data...")
     output_data$MS1 <- grabMzxmlMS1(xml_data = xml_data, rtrange=rtrange,
                                     file_metadata = file_metadata)
   }
 
   if("MS2"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, text = "Reading MS2 data...")
+    if(verbosity>1)last_time <- timeReport(last_time, text = "Reading MS2 data...")
     output_data$MS2 <- grabMzxmlMS2(xml_data = xml_data, rtrange=rtrange,
                                     file_metadata = file_metadata)
   }
 
   if("BPC"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, text = "Reading BPC...")
+    if(verbosity>1)last_time <- timeReport(last_time, text = "Reading BPC...")
     output_data$BPC <- grabMzxmlBPC(xml_data = xml_data, rtrange=rtrange)
   }
 
   if("TIC"%in%grab_what){
-    if(verbose)last_time <- timeReport(last_time, text = "Reading TIC...")
+    if(verbosity>1)last_time <- timeReport(last_time, text = "Reading TIC...")
     output_data$TIC <- grabMzxmlBPC(xml_data = xml_data, rtrange=rtrange,
                                     TIC = TRUE)
   }
 
   if("EIC"%in%grab_what){
     checkProvidedMzPpm(mz, ppm)
-    if(verbose)last_time <- timeReport(last_time, text = "Extracting EIC...")
+    if(verbosity>1)last_time <- timeReport(last_time, text = "Extracting EIC...")
     if(!"MS1"%in%grab_what){
       init_dt <- grabMzxmlMS1(xml_data=xml_data, file_metadata = file_metadata,
                               rtrange=rtrange)
@@ -127,7 +127,7 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
 
   if("EIC_MS2"%in%grab_what){
     checkProvidedMzPpm(mz, ppm)
-    if(verbose){
+    if(verbosity>1){
       last_time <- timeReport(last_time, text = "Extracting EIC MS2...")
       }
     if(!"MS2"%in%grab_what){
@@ -144,14 +144,15 @@ grabMzxmlData <- function(filename, grab_what, verbose=FALSE,
   }
 
   if("metadata"%in%grab_what){
-    if(verbose){
+    if(verbosity>1){
       last_time <- timeReport(last_time, text = "Reading file metadata...")
     }
     output_data$metadata <- grabMzxmlMetadata(xml_data = xml_data)
   }
 
-  if(verbose){
-    cat(Sys.time()-last_time, "s\n")
+  if(verbosity>1){
+    time_total <- round(difftime(Sys.time(), last_time), digits = 2)
+    cat(time_total, units(time_total), "\n")
   }
 
   output_data
@@ -188,7 +189,7 @@ grabMzxmlMetadata <- function(xml_data){
 
   mslevel_nodes <- xml2::xml_find_all(xml_data, xpath = "//d1:scan")
   if(length(mslevel_nodes)>0){
-    mslevels <- paste0("MS", unique(xml_attr(mslevel_nodes, "msLevel")),
+    mslevels <- paste0("MS", unique(xml2::xml_attr(mslevel_nodes, "msLevel")),
                        collapse = ", ")
   } else {
     mslevels <- "None found"

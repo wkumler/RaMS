@@ -117,10 +117,10 @@
 #' file_data <- grabMSdata(sample_url, grab_what="everything",
 #'                         check_exists=FALSE, verbosity="very")
 #' }
-grabMSdata <- function(files, grab_what="everything", verbosity="none",
+grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
                        mz=NULL, ppm=NULL, rtrange=NULL, check_exists=TRUE){
   # Check that files were provided
-  if(!length(files))stop("No files provided")
+  if(!length(files)>0)stop("No files provided")
 
   # Add sanity check for EIC extraction
   if(!is.null(mz) & !any(c("EIC", "EIC_MS2")%in%grab_what)){
@@ -134,21 +134,23 @@ grabMSdata <- function(files, grab_what="everything", verbosity="none",
 
   # Define outer control loop so multiple files can be read in simultaneously
   all_file_data <- list()
-  if(verbosity=="very"|verbosity=="minimal"){
+  if(is.null(verbosity)){
+    verbosity <- ifelse(length(files)==1, 2, 1)
+  }
+  if(verbosity>0){
     start_time <- Sys.time()
     pb <- txtProgressBar(min = 0, max = length(files), style = 3)
   }
   for(i in seq_along(files)){
     filename <- files[i]
 
-    verbose <- ifelse(verbosity=="very", TRUE, FALSE)
     if(grepl("mzML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzmlData(filename = filename, grab_what = grab_what,
-                               verbose = verbose, mz = mz, ppm = ppm,
+                               verbosity = verbosity, mz = mz, ppm = ppm,
                                rtrange = rtrange)
     } else if(grepl("mzXML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzxmlData(filename = filename, grab_what = grab_what,
-                                verbose = verbose, mz = mz, ppm = ppm,
+                                verbosity = verbosity, mz = mz, ppm = ppm,
                                 rtrange = rtrange)
     } else {
       message(paste("Unable to determine file type for", filename))
@@ -164,13 +166,14 @@ grabMSdata <- function(files, grab_what="everything", verbosity="none",
     }, dt_i=out_data, fname_i=basename(filename), SIMPLIFY = FALSE)
     all_file_data[[i]] <- out_data_filenamed
     names(all_file_data)[[i]] <- basename(filename)
-    if(verbosity=="very"|verbosity=="minimal"){
+    if(verbosity>0){
       setTxtProgressBar(pb, i)
     }
   }
-  if(verbosity=="very"|verbosity=="minimal"){
+  if(verbosity>0){
     close(pb)
-    cat("Total time:", round(Sys.time()-start_time, digits = 2), " s\n")
+    time_total <- round(difftime(Sys.time(), start_time), digits = 2)
+    cat("Total time:", time_total, units(time_total), "\n")
   }
 
   # Bind all the similar pieces together (e.g. stack MS1 from different files)
@@ -327,7 +330,8 @@ pmppm <- function(mass, ppm=4)c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
 
 
 timeReport <- function(last_time, text=NULL){
-  cat(Sys.time()-last_time, "s\n")
+  time_total <- round(difftime(Sys.time(), last_time), digits = 2)
+  cat(time_total, units(time_total), "\n")
   cat(text)
   Sys.time()
 }
