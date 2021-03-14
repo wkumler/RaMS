@@ -27,8 +27,12 @@ working with files whose total size exceeds working memory - it first
 extracts all relevant MS1 and MS2 data, then discards data outside of the
 mass range(s) calculated from the provided mz and ppm.}
 
-\item{verbose}{Boolean. If TRUE, R will print information about timing to the
-console as the file is read in.}
+\item{verbose}{Three levels of processing output to the R console are
+available, with increasing verbosity corresponding to higher integers. A
+verbosity of zero means that no output will be produced, useful when
+wrapping within larger functions. A verbosity of 1 will produce a progress
+bar using base R's txtProgressBar function. A verbosity of 2 or higher will
+produce timing output for each individual file read in.}
 
 \item{mz}{A vector of the mass-to-charge ratio for compounds of interest.
 Only used when combined with `grab_what = "EIC"` (see above). Multiple

@@ -28,10 +28,15 @@ useful when working with files whose total size exceeds working memory -
 they first extracts all relevant MS1 and MS2 data, then discard data
 outside of the mass range(s) calculated from the provided mz and ppm.}
 
-\item{verbosity}{Three levels of processing output to the R console: "very",
-which provides information about each file as it's read in; "minimal", for
-a progress bar but no individual file information; and "none" for no output
-of any kind.}
+\item{verbosity}{Three levels of processing output to the R console are
+available, with increasing verbosity corresponding to higher integers. A
+verbosity of zero means that no output will be produced, useful when
+wrapping within larger functions. A verbosity of 1 will produce a progress
+bar using base R's txtProgressBar function. A verbosity of 2 or higher will
+produce timing output for each individual file read in. The default, NULL,
+will select between 1 and 2 depending on the number of files being read: if
+a single file, verbosity is set to 2; if multiple files, verbosity is set
+to 1.}
 
 \item{mz}{A vector of the mass-to-charge ratio for compounds of interest.
 Only used when combined with `grab_what = "EIC"` (see above). Multiple
