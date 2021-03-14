@@ -73,7 +73,7 @@
 #'                         rtrange=c(5, 7))
 #'
 #' # Get timing data
-#' file_data <- grabMSdata(sample_file, verbosity="very")
+#' file_data <- grabMSdata(sample_file, verbosity=2)
 #'
 #' # Extract data from multiple files simultaneously
 #' sample_dir <- system.file("extdata", package = "RaMS")
@@ -115,7 +115,7 @@
 #'                      "MTBLS703/download/acefcd61-a634-4f35-9c3c-c572",
 #'                      "ade5acf3?file=161024_Smp_LB12HL_AB_pos.mzXML")
 #' file_data <- grabMSdata(sample_url, grab_what="everything",
-#'                         check_exists=FALSE, verbosity="very")
+#'                         check_exists=FALSE, verbosity=2)
 #' }
 grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
                        mz=NULL, ppm=NULL, rtrange=NULL, check_exists=TRUE){
