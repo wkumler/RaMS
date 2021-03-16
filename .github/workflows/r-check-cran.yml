@@ -39,6 +39,15 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v1
 
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install matplotlib seaborn
+
       - name: Query dependencies
         run: |
           install.packages('remotes')
@@ -66,28 +75,28 @@ jobs:
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
-      
+
       - name: Install BiocManager
         run: |
           remotes::install_cran("BiocManager")
         shell: Rscript {0}
-      
+
       - name: Install mzR manually to avoid weird error
         run: |
           BiocManager::install("mzR")
         shell: Rscript {0}
-      
+
       - name: Install MSnbase manually to avoid weird error
         run: |
           BiocManager::install("MSnbase")
         shell: Rscript {0}
-      
+
       - name: Install covr and test coverage
         run: |
           remotes::install_cran("covr")
           covr::codecov()
         shell: Rscript {0}
-              
+
       - name: Check
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
