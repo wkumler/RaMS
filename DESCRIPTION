@@ -27,6 +27,6 @@ Suggests:
     plotly,
     openxlsx,
     DBI,
-    RSQlite,
+    RSQLite,
     reticulate
 VignetteBuilder: knitr
