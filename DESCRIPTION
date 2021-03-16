@@ -25,5 +25,8 @@ Suggests:
     rmarkdown,
     tidyverse,
     plotly,
-    R.rsp
+    openxlsx,
+    DBI,
+    RSQlite,
+    reticulate
 VignetteBuilder: knitr
