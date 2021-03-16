@@ -122,7 +122,10 @@ msdata <- grabMSdata(files = file_paths, grab_what = "BPC")$BPC
 
 ### Python code chunk: {python}
 
-```{python, fig.height=3}
+```{python, fig.height=3, eval=FALSE}
+# Not run to pass R CMD check on GitHub
+# Make sure python, matplotlib, and seaborn are installed
+
 import seaborn as sns
 import matplotlib.pyplot as plt
 
