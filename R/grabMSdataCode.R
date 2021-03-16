@@ -137,9 +137,11 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   if(is.null(verbosity)){
     verbosity <- ifelse(length(files)==1, 2, 1)
   }
-  if(verbosity>0 & length(files)>2){
+  if(verbosity>0){
+    if(length(files)>2){
+      pb <- txtProgressBar(min = 0, max = length(files), style = 3)
+    }
     start_time <- Sys.time()
-    pb <- txtProgressBar(min = 0, max = length(files), style = 3)
   }
   for(i in seq_along(files)){
     filename <- files[i]
@@ -170,8 +172,10 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
       setTxtProgressBar(pb, i)
     }
   }
-  if(verbosity>0 & length(files)>2){
-    close(pb)
+  if(verbosity>0){
+    if(length(files)>2){
+      close(pb)
+    }
     time_total <- round(difftime(Sys.time(), start_time), digits = 2)
     cat("Total time:", time_total, units(time_total), "\n")
   }
