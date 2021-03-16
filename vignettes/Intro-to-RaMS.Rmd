@@ -166,7 +166,7 @@ Note that this also makes the data much larger in R's memory - so don't go
 loading hundreds of files simultaneously. If that's necessary, check out the
 section below on saving space.
 
-Because `RaMS` returns [data.tables](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-intro.html) rather than normal `data.frame`s, indexing
+Because `RaMS` returns [data.tables](https://cran.r-project.org/package=data.table) rather than normal `data.frame`s, indexing
 is super-fast and a bit more intuitive than with base R. Below, I also use the
 `pmppm` function from `RaMS` to produce a mass range from an initial mass and
 spectrometer accuracy (here, 5 parts-per-million).
@@ -513,7 +513,7 @@ specification at http://www.psidev.info/mzML.
 While many `RaMS` users will arrive at this vignette with their own data, 
 several small files are provided for demonstration. These files originate from the [Ingalls Lab](https://sites.google.com/view/anitra-ingalls) at the University of Washington, USA and are published in the manuscript [**"Metabolic consequences of cobalamin scarcity in diatoms as revealed through metabolomics"**](https://www.sciencedirect.com/science/article/pii/S1434461018301184). Files were downloaded from the corresponding [Metabolights repository](https://www.ebi.ac.uk/metabolights/MTBLS703/files).
 
-Due to CRAN's restrictions on package size, the original files cannot be included. Instead, MS1 data was compressed by extracting EICs for each compound in the Ingalls Lab [list of targeted compounds](https://github.com/IngallsLabUW/Ingalls_Standards/blob/b098927ea0089b6e7a31e1758e7c7eaad5408535/Ingalls_Lab_Standards_NEW.csv) as of August 24, 2020. EIC width was set with a ppm value of 10 and time data were filtered to fall between 4 and 9 minutes. These compressed files were then written out using [`MSnbase`'s](https://bioconductor.org/packages/release/bioc/html/MSnbase.html) `writeMSdata` function after coercing the existing data frame into an `MSnExp` object. Finally, they were gzip-compressed with [`R.utils`'s](https://cran.r-project.org/web/packages/R.utils/index.html) `gzip` function and default parameters.
+Due to CRAN's restrictions on package size, the original files cannot be included. Instead, MS1 data was compressed by extracting EICs for each compound in the Ingalls Lab [list of targeted compounds](https://github.com/IngallsLabUW/Ingalls_Standards/blob/b098927ea0089b6e7a31e1758e7c7eaad5408535/Ingalls_Lab_Standards_NEW.csv) as of August 24, 2020. EIC width was set with a ppm value of 10 and time data were filtered to fall between 4 and 9 minutes. These compressed files were then written out using [`MSnbase`'s](https://bioconductor.org/packages/release/bioc/html/MSnbase.html) `writeMSdata` function after coercing the existing data frame into an `MSnExp` object. Finally, they were gzip-compressed with [`R.utils`'s](https://cran.r-project.org/package=R.utils) `gzip` function and default parameters.
 
 MS2 data was processed via [Proteowizard's `msconvert` tool](http://proteowizard.sourceforge.net/tools/msconvert.html) instead. Files were converted with the flags `-gz` and `--noindex` to save space, and three filters were used: 
  - `--filter "scanTime [240,540]"`

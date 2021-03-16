@@ -47,7 +47,7 @@ Excel workbooks are a common format because of their intuitive GUI and
 widespread adoption. They can also encode more information than CSV files
 due to their multiple "sheets" within a single workbook - perfect for encoding
 both MS1 and MS2 information in one place. This vignette uses the 
-[`openxlsx`](https://cran.r-project.org/web/packages/openxlsx/)
+[`openxlsx`](https://cran.r-project.org/package=openxlsx)
 package, although there are several alternatives with identical functionality.
 
 ```{r}
@@ -72,7 +72,7 @@ file.remove("MS2_data.xlsx")
 
 For more robust data processing and storage, or to work with larger-than-memory
 data sets, SQL databases are an excellent choice. This vignette will demo the
-[`RSQLite`](https://cran.r-project.org/web/packages/RSQLite/) 
+[`RSQLite`](https://cran.r-project.org/package=RSQLite) 
 package's engine, although several other database engines have similar
 functionality.
 
