@@ -10,6 +10,13 @@ status](https://github.com/wkumler/RaMS/workflows/R-CMD-check/badge.svg)](https:
 coverage](https://codecov.io/gh/wkumler/RaMS/branch/master/graph/badge.svg)](https://codecov.io/gh/wkumler/RaMS)
 <!-- badges: end -->
 
+**Table of contents:**
+[Overview](https://github.com/wkumler/RaMS#overview) -
+[Installation](https://github.com/wkumler/RaMS#installation) -
+[Usage](https://github.com/wkumler/RaMS#usage) - [File
+types](https://github.com/wkumler/RaMS#file-types) -
+[Contact](https://github.com/wkumler/RaMS#contact)
+
 ## Overview
 
 `RaMS` is a lightweight package that provides rapid and tidy access to
@@ -28,18 +35,25 @@ other [tidy data packages](https://www.tidyverse.org/).
 
 ## Installation
 
-Until `RaMS` is on CRAN, the easiest way to install is via `devtools`:
+To install the stable version on CRAN:
+
+``` r
+install.packages('RaMS')
+```
+
+To install the current development version:
 
 ``` r
 devtools::install_github("wkumler/RaMS")
+```
 
+Finally, load RaMS like every other package:
+
+``` r
 library(RaMS)
 ```
 
 ## Usage
-
-(For more usage examples, see the
-[vignette](vignettes/RaMS-vignette.pdf).)
 
 There’s only one main function in `RaMS`: the aptly named `grabMSdata`.
 This function accepts the names of mass-spectrometry files as well as
@@ -48,111 +62,140 @@ list of data tables. Each table is intuitively named within the list and
 formatted tidily:
 
 ``` r
-demo_dir <- system.file("extdata", package = "RaMS")
-msdata_files <- list.files(demo_dir, pattern = "mzML", full.names = TRUE)
-output <- grabMSdata(files = msdata_files, grab_what = c("TIC", "MS1", "MS2"))
+msdata_dir <- system.file("extdata", package = "RaMS")
+msdata_files <- list.files(msdata_dir, pattern = "mzML", full.names=TRUE)
+
+msdata <- grabMSdata(files = msdata_files[2:4], grab_what = c("BPC", "MS1"))
 ```
+
+#### BPC/TIC data:
+
+Base peak chromatograms (BPCs) and total ion chromatograms (TICs) have
+three columns, making them super-simple to plot with either base R or
+the popular \[ggplot2\] library:
 
 ``` r
-knitr::kable(head(output$TIC, 3))
+knitr::kable(head(msdata$BPC, 3))
 ```
 
-|      rt |       int | filename          |
-|--------:|----------:|:------------------|
-| 240.051 | 291632610 | DDApos\_2.mzML.gz |
-| 240.393 | 304016350 | DDApos\_2.mzML.gz |
-| 240.966 | 299228260 | DDApos\_2.mzML.gz |
+|       rt |      int | filename           |
+|---------:|---------:|:-------------------|
+| 4.009000 | 11141859 | LB12HL\_AB.mzML.gz |
+| 4.024533 |  9982309 | LB12HL\_AB.mzML.gz |
+| 4.040133 | 10653922 | LB12HL\_AB.mzML.gz |
 
 ``` r
-knitr::kable(head(output$MS1, 3))
+plot(msdata$BPC$rt, msdata$BPC$int, type = "l")
 ```
 
-|      rt |       mz |       int | filename          |
-|--------:|---------:|----------:|:------------------|
-| 240.051 | 80.05009 | 12057.776 | DDApos\_2.mzML.gz |
-| 240.051 | 80.26269 |  8178.767 | DDApos\_2.mzML.gz |
-| 240.051 | 80.94841 | 19075.213 | DDApos\_2.mzML.gz |
-
-``` r
-knitr::kable(head(output$MS2, 3))
-```
-
-|      rt |    premz |   fragmz |       int | voltage | filename          |
-|--------:|---------:|---------:|----------:|--------:|:------------------|
-| 240.184 | 127.0325 | 56.05023 | 17019.613 |      35 | DDApos\_2.mzML.gz |
-| 240.184 | 127.0325 | 59.46344 |  1003.812 |      35 | DDApos\_2.mzML.gz |
-| 240.184 | 127.0325 | 70.06580 |  1521.526 |      35 | DDApos\_2.mzML.gz |
-
-This means that basic R functions work exactly as we expect them to, no
-new functionality necessary:
-
-``` r
-# Outputs are data.tables so we can use their intuitive indexing on column name
-first_file_data <- output$TIC[filename==basename(msdata_files[2])]
-plot(first_file_data$rt, first_file_data$int, type = "l")
-```
-
-![](man/figures/README-unnamed-chunk-4-1.png)<!-- -->
-
-------------------------------------------------------------------------
-
-And of course, the tidy data format means that it plays nicely with
-every other tidy data package.
-
-### Chromatograms with ggplot2
-
-``` r
-output <- grabMSdata(files = msdata_files[-1], grab_what = c("TIC", "MS1"))
-```
+![](man/figures/README-unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 library(ggplot2)
-ggplot(output$TIC) + geom_line(aes(x = rt, y=int, color=filename)) + theme(legend.position="top")
+ggplot(msdata$BPC) + geom_line(aes(x = rt, y=int, color=filename)) +
+  facet_wrap(~filename, scales = "free_y", ncol = 1) +
+  labs(x="Retention time (min)", y="Intensity", color="File name: ") +
+  theme(legend.position="top")
 ```
 
 ![](man/figures/README-unnamed-chunk-6-1.png)<!-- -->
 
-``` r
-ggplot(output$TIC) + geom_line(aes(x = rt, y=int)) +
-  facet_wrap(~filename, scales = "free_y", ncol = 1) +
-  labs(x="Retention time (min)", y="Intensity")
-```
+#### MS1 data:
 
-![](man/figures/README-unnamed-chunk-6-2.png)<!-- -->
-
-### Interactive MSMS with dplyr, stringr, and plotly
+MS<sup>1</sup> data includes an additional dimension, the *m/z* of each
+ion measured, and has multiple entries per retention time:
 
 ``` r
-output <- grabMSdata(files = msdata_files, grab_what = c("EIC", "EIC_MS2"),
-                     mz=118.0865, ppm=5)
-
-library(dplyr)
-library(stringr)
-library(plotly)
-
-clean_EIC_MS2 <- output$EIC_MS2 %>% 
-  group_by(rt) %>%
-  arrange(desc(int)) %>%
-  summarise(frags=paste(
-    paste(round(fragmz, digits = 3), round(int), sep = ": "), collapse = "\n")
-  )
-output$EIC %>% 
-  filter(!str_detect(filename, "DDA")) %>%
-  plot_ly() %>%
-  add_trace(type="scatter", mode="lines", x=~rt, y=~int, color=~filename,
-            hoverinfo="none") %>%
-  add_trace(type="scatter", mode="markers", x=~rt, y=0,
-            text=~frags, hoverinfo="text", showlegend=FALSE,
-            marker=list(color="black"), data = clean_EIC_MS2) %>%
-  layout(annotations=list(x=min(clean_EIC_MS2$rt), y=0, 
-                          text="Mouse over to see\nMSMS fragments"),
-         title="(See vignette for interactive version)")
+knitr::kable(head(msdata$MS1, 3))
 ```
 
-![](man/figures/plotlyplot.png)
+|    rt |       mz |        int | filename           |
+|------:|---------:|-----------:|:-------------------|
+| 4.009 | 104.0710 | 1297755.00 | LB12HL\_AB.mzML.gz |
+| 4.009 | 104.1075 |  140668.12 | LB12HL\_AB.mzML.gz |
+| 4.009 | 112.0509 |   67452.86 | LB12HL\_AB.mzML.gz |
 
-For more usage examples, see [the
-vignette](vignettes/RaMS-vignette.pdf).
+This tidy format means that it plays nicely with other tidy data
+packages. Here, we use \[data.table\] and a few other tidyverse packages
+to compare a molecule’s 13C and 15N peak areas to that of the base peak,
+giving us some clue as to its molecular formula.
+
+``` r
+library(data.table)
+library(tidyverse)
+```
+
+    ## Warning: package 'tibble' was built under R version 4.0.4
+
+``` r
+M <- 118.0865
+M_13C <- M + 1.003355
+M_15N <- M + 0.997035
+
+iso_data <- imap_dfr(lst(M, M_13C, M_15N), function(mass, isotope){
+  peak_data <- msdata$MS1[mz%between%pmppm(mass) & rt%between%c(7.6, 8.2)]
+  cbind(peak_data, isotope)
+})
+
+iso_data %>%
+  group_by(filename, isotope) %>%
+  summarise(area=sum(int)) %>%
+  pivot_wider(names_from = isotope, values_from = area) %>%
+  mutate(ratio_13C_12C = M_13C/M) %>%
+  mutate(ratio_15N_14N = M_15N/M) %>%
+  select(filename, contains("ratio")) %>%
+  pivot_longer(cols = contains("ratio"), names_to = "isotope") %>%
+  group_by(isotope) %>%
+  summarize(avg_ratio = mean(value), sd_ratio = sd(value), .groups="drop") %>%
+  mutate(isotope=str_extract(isotope, "(?<=_).*(?=_)")) %>%
+  knitr::kable()
+```
+
+    ## `summarise()` has grouped output by 'filename'. You can override using the `.groups` argument.
+
+| isotope | avg\_ratio | sd\_ratio |
+|:--------|-----------:|----------:|
+| 13C     |  0.0543929 | 0.0006015 |
+| 15N     |  0.0033375 | 0.0001846 |
+
+``` r
+ggplot(iso_data) +
+  geom_line(aes(x=rt, y=int, color=filename)) +
+  facet_wrap(~isotope, scales = "free_y", ncol = 1)
+```
+
+![](man/figures/README-warning==FALSE-1.png)<!-- -->
+
+#### MS2 data:
+
+DDA (fragmentation) data can also be extracted, allowing rapid and
+intuitive searches for fragments or neutral losses:
+
+``` r
+msdata <- grabMSdata(files = msdata_files[1], grab_what = "MS2")
+```
+
+For example, we may be interested in the major fragments of a specific
+molecule:
+
+``` r
+msdata$MS2[premz%between%pmppm(118.0865) & int>mean(int)] %>%
+  plot(int~fragmz, type="h", data=., ylab="Intensity", xlab="Fragment m/z")
+```
+
+![](man/figures/README-unnamed-chunk-9-1.png)<!-- -->
+
+Or want to search for a specific neutral loss:
+
+``` r
+msdata$MS2[, neutral_loss:=premz-fragmz] %>%
+  filter(neutral_loss%between%pmppm(60.02064, 5))
+```
+
+    ##         rt    premz    fragmz        int voltage         filename neutral_loss
+    ## 1: 4.13587 169.1222 109.10166   5582.765      35 DDApos_2.mzML.gz     60.02054
+    ## 2: 7.04086 118.0865  58.06591 214222.156      35 DDApos_2.mzML.gz     60.02064
+    ## 3: 8.09109 132.1020  72.08141   1248.639      35 DDApos_2.mzML.gz     60.02058
 
 ## File types
 
@@ -188,4 +231,11 @@ file_data <- grabMSdata(sample_url, grab_what="everything",
 file_data$metadata
 ```
 
-README last built on 2021-01-31
+## Contact
+
+Feel free to submit questions, bugs, or feature requests on the [GitHub
+Issues page](https://github.com/wkumler/RaMS/issues).
+
+------------------------------------------------------------------------
+
+README last built on 2021-03-14

@@ -26,4 +26,4 @@ Suggests:
     tidyverse,
     plotly,
     R.rsp
-VignetteBuilder: R.rsp
+VignetteBuilder: knitr

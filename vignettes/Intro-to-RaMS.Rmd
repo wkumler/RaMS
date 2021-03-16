@@ -1,12 +1,16 @@
 ---
 title: "Intro to RaMS"
-date: "Updated `r Sys.Date()`"
-output: pdf_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Intro-to-RaMS}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
-# RUN OUTSIDE OF PROJECT OR KNITR WILL EAT YOUR OUTPUT
-# https://stackoverflow.com/questions/62432329/in-rstudio-where-is-knitr-markdown-output-located
+<!-- This vignette is created from a .Rmd file: please edit that instead. -->
+
+```{r, include = FALSE}
+options(tidyverse.quiet = TRUE)
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -33,7 +37,7 @@ library(data.table)
 msdata_dir <- system.file("extdata", package = "RaMS")
 
 # Identify the files of interest
-data_files <- list.files(msdata_dir, pattern = "HL.*mzML", full.names = TRUE)
+data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
 
 # Check that the files identified are the ones expected
 basename(data_files)
@@ -55,11 +59,11 @@ scan, so the data is parsed into two columns: retention time (rt) and intensity
 (int). This makes it easy to read and simple to plot:
 
 ```{r loadTIC}
-single_file <- data_files[1]
+single_file <- data_files[2]
 
-file_data <- grabMSdata(single_file, grab_what = "TIC")
+msdata <- grabMSdata(single_file, grab_what = "TIC")
 
-knitr::kable(head(file_data$TIC, 3))
+knitr::kable(head(msdata$TIC, 3))
 ```
 
 Since we asked for a single thing, the TIC, our `file_data` object is a list
@@ -67,7 +71,7 @@ with a single entry: the TIC. Let's plot that data:
 
 ```{r headerTIC}
 par(mar=c(4.1, 4.1, 0.1, 0.1))
-plot(file_data$TIC$rt, file_data$TIC$int, type = "l")
+plot(msdata$TIC$rt, msdata$TIC$int, type = "l")
 ```
 
 Simple enough!
@@ -77,7 +81,7 @@ rather than the sum of all intensities. This data is also collected by the mass
 analyzer and doesn't need to be calculated.
 
 ```{r loadBPC}
-file_data <- grabMSdata(single_file, grab_what = "BPC")
+msdata <- grabMSdata(single_file, grab_what = "BPC")
 ```
 
 Since the data is parsed in a ["tidy" format](https://r4ds.had.co.nz/tidy-data.html), 
@@ -85,36 +89,33 @@ it plays nicely with popular packages such as `ggplot2`. Let's use that to plot
 our BPC instead of the base R plotting system:
 
 ```{r plotBPC}
-suppressPackageStartupMessages(library(tidyverse))
-ggplot(file_data$BPC) + geom_line(aes(x=rt, y=int))
+library(tidyverse)
+ggplot(msdata$BPC) + geom_line(aes(x=rt, y=int))
 ```
 
 The advantages of tidy data and `ggplot` become clear when we load more than
 one file at a time because we can group and color by the third column, the
-name of the file from which the data was read. Here I've also enabled a progress
-bar with the argument `verbosity="minimal"` because it's nice to see progress
-when multiple files are being read.
+name of the file from which the data was read.
 
 ```{r loadmultiBPC}
-file_data <- grabMSdata(data_files, grab_what = "BPC", verbosity = "minimal")
+msdata <- grabMSdata(data_files, grab_what = "BPC")
 
-ggplot(file_data$BPC) + geom_line(aes(x=rt, y=int, color=filename))
+ggplot(msdata$BPC) + geom_line(aes(x=rt, y=int, color=filename))
 ```
 
 And of course, this means that all of `ggplot`'s aesthetic power can be brought
 to your chromatograms as well, so customize away!
 
 ```{r ggplotdemo, dev.args=list(png  = list(type = "cairo"))}
-ggplot(file_data$BPC) + 
-  geom_line(aes(x=rt, y=int, color=filename), lwd=1.2) +
-  theme_minimal() +
-  theme(legend.position = "bottom",
-        axis.text = element_text(color = "#AA0000"),
-        axis.title = element_text(family = "serif"),
-        plot.title = element_text(face = "bold")) +
-  scale_colour_brewer(palette = "Dark2") +
-  labs(x="Retention time (s)", y="Intensity", 
-       title = "My chromatogram", color="File names:")
+ggplot(msdata$BPC) + 
+  geom_polygon(aes(x=rt, y=int, color=filename), lwd=1, fill="#FFFFFF44") +
+  theme(legend.position = c(0.8, 0.75), plot.title = element_text(face="bold"),
+        axis.title = element_text(size = 15)) +
+  scale_y_continuous(labels = scales::label_number_si()) +
+  scale_colour_manual(values = c("#2596be", "#6c25be", "#bea925")) +
+  labs(x="Retention time (minutes)", y="Intensity", 
+       title = "Base peak chromatogram", color="Files:") +
+  coord_cartesian(xlim = c(7.50, 9), ylim = c(0, 5e8))
 ```
 
 `RaMS` also provides some basic file metadata extraction capability, although
@@ -196,7 +197,7 @@ to filter for a precursor mass, then render the fragments obtained.
 ```{r MS2demo}
 homarine_mz <- 137.047678+1.007276
 
-homarine_MS2 <- DDA_data$MS2[premz%between%pmppm(homarine_mz, 5)]
+homarine_MS2 <- DDA_data$MS2[premz%between%pmppm(homarine_mz, 20000)]
 homarine_MS2$int <- homarine_MS2$int/max(homarine_MS2$int)*100
 
 ggplot(homarine_MS2) +
@@ -326,7 +327,7 @@ on retention time. This is useful when a small time window is of interest, and
 only the data between those bounds is relevant.
 
 ```{r rtrangedemo}
-small_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), rtrange = c(340, 410))
+small_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), rtrange = c(5.5, 7))
 
 all_data$MS1 %>%
   mutate(type="All data") %>%
@@ -495,7 +496,7 @@ specification at http://www.psidev.info/mzML.
 While many `RaMS` users will arrive at this vignette with their own data, 
 several small files are provided for demonstration. These files originate from the [Ingalls Lab](https://sites.google.com/view/anitra-ingalls) at the University of Washington, USA and are published in the manuscript [**"Metabolic consequences of cobalamin scarcity in diatoms as revealed through metabolomics"**](https://www.sciencedirect.com/science/article/pii/S1434461018301184). Files were downloaded from the corresponding [Metabolights repository](https://www.ebi.ac.uk/metabolights/MTBLS703/files).
 
-Due to CRAN's restrictions on package size, the original files cannot be included. Instead, MS1 data was compressed by extracting EICs for each compound in the Ingalls Lab [list of targeted compounds](https://github.com/IngallsLabUW/Ingalls_Standards/blob/b098927ea0089b6e7a31e1758e7c7eaad5408535/Ingalls_Lab_Standards_NEW.csv) as of August 24, 2020. EIC width was set with a ppm value of 10 and time data were filtered to fall between 240 and 540 seconds. These compressed files were then written out using [`MSnbase`'s](https://bioconductor.org/packages/release/bioc/html/MSnbase.html) `writeMSdata` function after coercing the existing data frame into an `MSnExp` object. Finally, they were gzip-compressed with [`R.utils`'s](https://cran.r-project.org/web/packages/R.utils/index.html) `gzip` function and default parameters.
+Due to CRAN's restrictions on package size, the original files cannot be included. Instead, MS1 data was compressed by extracting EICs for each compound in the Ingalls Lab [list of targeted compounds](https://github.com/IngallsLabUW/Ingalls_Standards/blob/b098927ea0089b6e7a31e1758e7c7eaad5408535/Ingalls_Lab_Standards_NEW.csv) as of August 24, 2020. EIC width was set with a ppm value of 10 and time data were filtered to fall between 4 and 9 minutes. These compressed files were then written out using [`MSnbase`'s](https://bioconductor.org/packages/release/bioc/html/MSnbase.html) `writeMSdata` function after coercing the existing data frame into an `MSnExp` object. Finally, they were gzip-compressed with [`R.utils`'s](https://cran.r-project.org/web/packages/R.utils/index.html) `gzip` function and default parameters.
 
 MS2 data was processed via [Proteowizard's `msconvert` tool](http://proteowizard.sourceforge.net/tools/msconvert.html) instead. Files were converted with the flags `-gz` and `--noindex` to save space, and three filters were used: 
  - `--filter "scanTime [240,540]"`
