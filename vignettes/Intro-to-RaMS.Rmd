@@ -121,10 +121,10 @@ ggplot(msdata$BPC) + geom_line(aes(x=rt, y=int, color=filename))
 And of course, this means that all of `ggplot`'s aesthetic power can be brought
 to your chromatograms as well, so customize away!
 
-```{r ggplotdemo, dev.args=list(png  = list(type = "cairo"))}
+```{r ggplotdemo, dpi=144}
 ggplot(msdata$BPC) + 
   geom_polygon(aes(x=rt, y=int, color=filename), lwd=1, fill="#FFFFFF44") +
-  theme(legend.position = c(0.8, 0.75), plot.title = element_text(face="bold"),
+  theme(legend.position = c(0.8, 0.7), plot.title = element_text(face="bold"),
         axis.title = element_text(size = 15)) +
   scale_y_continuous(labels = c(0, "250M", "500M"), breaks = c(0, 2.5e8, 5e8)) +
   scale_colour_manual(values = c("#2596be", "#6c25be", "#bea925")) +
