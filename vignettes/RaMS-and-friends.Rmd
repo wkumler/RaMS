@@ -77,8 +77,8 @@ library(DBI)
 MSdb <- dbConnect(RSQLite::SQLite(), "MSdata.sqlite")
 
 # Export MS1 and MS2 data to sqlite tables
-dbWriteTable(MSdb, "MS1", MS2_data$MS1)
-dbWriteTable(MSdb, "MS2", MS2_data$MS2)
+dbWriteTable(MSdb, "MS1", msdata$MS1)
+dbWriteTable(MSdb, "MS2", msdata$MS2)
 dbListTables(MSdb)
 
 # Perform a simple query to ensure data was exported correctly
