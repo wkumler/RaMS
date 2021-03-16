@@ -7,6 +7,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r setup, include = FALSE}
+options(rmarkdown.html_vignette.check_title = FALSE)
+
+```
+
+
 The strength of `RaMS` is its simple data format. Table-like data structures are
 common in most programming languages, and they can always be converted to the
 nigh-universal matrix format. The goal of this vignette is to illustrate this
