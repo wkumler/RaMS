@@ -46,6 +46,6 @@ test_that("checkProvidedMzPpm detects things", {
 test_that("default verbosity works", {
   expect_output(
     grabMSdata(files = mzML_filenames[2], grab_what = "everything"),
-    regexp = "Reading MS1.*="
+    regexp = "Reading MS1"
   )
 })
