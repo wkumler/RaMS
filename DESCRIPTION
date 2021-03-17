@@ -8,7 +8,8 @@ Authors@R: person(given = "William", family = "Kumler",
 Maintainer: William Kumler <wkumler@uw.edu>
 Description: R-based access to mass-spectrometry (MS) data. While many packages 
   exist to process MS data, many of these make it difficult to 
-  access the underlying m/z, intensity, and retention time of the files 
+  access the underlying mass-to-charge ratio (m/z), intensity, and 
+  retention time of the files 
   themselves. This package is designed to format MS data in a tidy fashion and 
   allows the user perform the plotting and analysis.
 License: MIT + file LICENSE
