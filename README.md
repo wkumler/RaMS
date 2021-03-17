@@ -88,7 +88,7 @@ knitr::kable(head(msdata$BPC, 3))
 plot(msdata$BPC$rt, msdata$BPC$int, type = "l")
 ```
 
-![](man/figures/README-unnamed-chunk-5-1.png)<!-- -->
+![](man/figures/README-showbaseplot-1.png)<!-- -->
 
 ``` r
 library(ggplot2)
@@ -98,7 +98,7 @@ ggplot(msdata$BPC) + geom_line(aes(x = rt, y=int, color=filename)) +
   theme(legend.position="top")
 ```
 
-![](man/figures/README-unnamed-chunk-6-1.png)<!-- -->
+![](man/figures/README-showggplot-1.png)<!-- -->
 
 #### MS1 data:
 
@@ -123,11 +123,7 @@ giving us some clue as to its molecular formula.
 ``` r
 library(data.table)
 library(tidyverse)
-```
 
-    ## Warning: package 'tibble' was built under R version 4.0.4
-
-``` r
 M <- 118.0865
 M_13C <- M + 1.003355
 M_15N <- M + 0.997035
@@ -151,12 +147,19 @@ iso_data %>%
   knitr::kable()
 ```
 
-    ## `summarise()` has grouped output by 'filename'. You can override using the `.groups` argument.
-
 | isotope | avg\_ratio | sd\_ratio |
 |:--------|-----------:|----------:|
 | 13C     |  0.0543929 | 0.0006015 |
 | 15N     |  0.0033375 | 0.0001846 |
+
+With [natural
+abundances](https://en.wikipedia.org/wiki/Natural_abundance) for
+<sup>13</sup>C and <sup>15</sup>N of 1.11% and 0.36%, respectively, we
+can conclude that this molecule likely has five carbons and a single
+nitrogen.
+
+Of course, it’s always a good idea to plot the peaks and perform a
+manual check of data quality:
 
 ``` r
 ggplot(iso_data) +
@@ -164,7 +167,7 @@ ggplot(iso_data) +
   facet_wrap(~isotope, scales = "free_y", ncol = 1)
 ```
 
-![](man/figures/README-warning==FALSE-1.png)<!-- -->
+![](man/figures/README-isoexampleplot-1.png)<!-- -->
 
 #### MS2 data:
 
@@ -183,7 +186,7 @@ msdata$MS2[premz%between%pmppm(118.0865) & int>mean(int)] %>%
   plot(int~fragmz, type="h", data=., ylab="Intensity", xlab="Fragment m/z")
 ```
 
-![](man/figures/README-unnamed-chunk-9-1.png)<!-- -->
+![](man/figures/README-plotfragdata-1.png)<!-- -->
 
 Or want to search for a specific neutral loss:
 
@@ -192,10 +195,72 @@ msdata$MS2[, neutral_loss:=premz-fragmz] %>%
   filter(neutral_loss%between%pmppm(60.02064, 5))
 ```
 
-    ##         rt    premz    fragmz        int voltage         filename neutral_loss
-    ## 1: 4.13587 169.1222 109.10166   5582.765      35 DDApos_2.mzML.gz     60.02054
-    ## 2: 7.04086 118.0865  58.06591 214222.156      35 DDApos_2.mzML.gz     60.02064
-    ## 3: 8.09109 132.1020  72.08141   1248.639      35 DDApos_2.mzML.gz     60.02058
+    ##           rt    premz    fragmz          int voltage         filename
+    ##  1: 4.182333 118.0864  58.06590   390179.500      35 DDApos_2.mzML.gz
+    ##  2: 4.276100 116.0709  56.05036     1093.988      35 DDApos_2.mzML.gz
+    ##  3: 4.521367 118.0864  58.06589   343084.000      35 DDApos_2.mzML.gz
+    ##  4: 4.649867 170.0810 110.06034     4792.479      35 DDApos_2.mzML.gz
+    ##  5: 4.857983 118.0865  58.06590   314075.312      35 DDApos_2.mzML.gz
+    ##  6: 5.195617 118.0865  58.06590   282611.688      35 DDApos_2.mzML.gz
+    ##  7: 5.536383 118.0865  58.06592   300432.906      35 DDApos_2.mzML.gz
+    ##  8: 5.642417 116.0709  56.05035     1985.602      35 DDApos_2.mzML.gz
+    ##  9: 5.719433 138.0550  78.03460     1749.604      35 DDApos_2.mzML.gz
+    ## 10: 5.876633 118.0865  58.06593   336346.625      35 DDApos_2.mzML.gz
+    ## 11: 6.063700 138.0549  78.03448  4783814.000      35 DDApos_2.mzML.gz
+    ## 12: 6.197033 119.0899  59.06926     1459.779      35 DDApos_2.mzML.gz
+    ## 13: 6.214217 118.0865  58.06592    87062.281      35 DDApos_2.mzML.gz
+    ## 14: 6.399933 138.0549  78.03451  4311163.000      35 DDApos_2.mzML.gz
+    ## 15: 6.552300 118.0865  58.06591   188614.250      35 DDApos_2.mzML.gz
+    ## 16: 6.569983 174.1125 114.09184     4416.066      35 DDApos_2.mzML.gz
+    ## 17: 6.648017 119.0899  59.06929     7744.978      35 DDApos_2.mzML.gz
+    ## 18: 6.739650 138.0550  78.03453    45146.910      35 DDApos_2.mzML.gz
+    ## 19: 6.889233 118.0865  58.06590   247183.109      35 DDApos_2.mzML.gz
+    ## 20: 7.080050 138.0550  78.03455    15764.113      35 DDApos_2.mzML.gz
+    ## 21: 7.232333 118.0865  58.06590   317423.344      35 DDApos_2.mzML.gz
+    ## 22: 7.418867 138.0550  78.03444     5292.677      35 DDApos_2.mzML.gz
+    ## 23: 7.571183 118.0865  58.06591  1110205.500      35 DDApos_2.mzML.gz
+    ## 24: 7.913200 118.0863  58.06591 53963628.000      35 DDApos_2.mzML.gz
+    ## 25: 8.094183 148.0425  88.02216     1632.094      35 DDApos_2.mzML.gz
+    ## 26: 8.197183 162.1124 102.09158     1861.552      35 DDApos_2.mzML.gz
+    ## 27: 8.250383 118.0864  58.06590  3601956.250      35 DDApos_2.mzML.gz
+    ## 28: 8.262433 119.0835  59.06298    17410.162      35 DDApos_2.mzML.gz
+    ## 29: 8.576400 130.0863  70.06579     7045.373      35 DDApos_2.mzML.gz
+    ## 30: 8.585383 118.0864  58.06588  1340395.125      35 DDApos_2.mzML.gz
+    ## 31: 8.925200 118.0864  58.06589   920915.938      35 DDApos_2.mzML.gz
+    ##           rt    premz    fragmz          int voltage         filename
+    ##     neutral_loss
+    ##  1:     60.02055
+    ##  2:     60.02050
+    ##  3:     60.02056
+    ##  4:     60.02070
+    ##  5:     60.02057
+    ##  6:     60.02057
+    ##  7:     60.02060
+    ##  8:     60.02058
+    ##  9:     60.02043
+    ## 10:     60.02057
+    ## 11:     60.02037
+    ## 12:     60.02066
+    ## 13:     60.02054
+    ## 14:     60.02039
+    ## 15:     60.02060
+    ## 16:     60.02068
+    ## 17:     60.02063
+    ## 18:     60.02046
+    ## 19:     60.02060
+    ## 20:     60.02043
+    ## 21:     60.02058
+    ## 22:     60.02058
+    ## 23:     60.02056
+    ## 24:     60.02042
+    ## 25:     60.02038
+    ## 26:     60.02086
+    ## 27:     60.02052
+    ## 28:     60.02054
+    ## 29:     60.02052
+    ## 30:     60.02055
+    ## 31:     60.02052
+    ##     neutral_loss
 
 ## File types
 
@@ -238,4 +303,4 @@ Issues page](https://github.com/wkumler/RaMS/issues).
 
 ------------------------------------------------------------------------
 
-README last built on 2021-03-14
+README last built on 2021-03-17
