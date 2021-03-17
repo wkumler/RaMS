@@ -13,6 +13,9 @@ interest for which a mass range is desired.}
 \item{ppm}{The parts-per-million accuracy of the mass spectrometer on which
 the data was collected.}
 }
+\value{
+A length-2 numeric representing the mass range requested
+}
 \description{
 It shouldn't be hard to translate a point mass into a mass window bounded by
 spectrometer accuracy.
