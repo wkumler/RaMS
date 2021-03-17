@@ -2,7 +2,9 @@ Package: RaMS
 Type: Package
 Title: R Access To Mass-Spec Data
 Version: 1.0.0
-Author: William Kumler
+Authors@R: person(given = "William", family = "Kumler", 
+                  email = "wkumler@uw.edu",
+                  role = c("aut", "cre", "cph"))
 Maintainer: William Kumler <wkumler@uw.edu>
 Description: R-based access to mass-spectrometry (MS) data. While many packages 
   exist to process MS data, many of these make it difficult to 
@@ -10,6 +12,8 @@ Description: R-based access to mass-spectrometry (MS) data. While many packages
   themselves. This package is designed to format MS data in a tidy fashion and 
   allows the user perform the plotting and analysis.
 License: MIT + file LICENSE
+URL: https://github.com/wkumler/RaMS
+BugReports: https://github.com/wkumler/RaMS/issues
 Encoding: UTF-8
 LazyData: true
 Imports: 
