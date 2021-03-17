@@ -506,7 +506,7 @@ instead for every time a specific word shows up, you've gotta read the whole
 thing.
 
 For more information about the mzML data format and its history, check out the
-specification at http://www.psidev.info/mzML.
+specification at https://www.psidev.info/mzML.
 
 ### Minified file details
 
