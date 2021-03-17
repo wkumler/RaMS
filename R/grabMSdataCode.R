@@ -323,6 +323,8 @@ checkProvidedMzPpm <- function(mz, ppm){
 #' @param ppm The parts-per-million accuracy of the mass spectrometer on which
 #' the data was collected.
 #'
+#' @return A length-2 numeric representing the mass range requested
+#'
 #' @export
 #'
 #' @examples
