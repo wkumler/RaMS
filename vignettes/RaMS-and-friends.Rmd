@@ -9,8 +9,14 @@ vignette: >
 
 ```{r setup, include = FALSE}
 options(rmarkdown.html_vignette.check_title = FALSE)
-
 ```
+
+**Table of contents:**
+
+* [Standard export to CSV]
+* [Fancier export to Excel]
+* [Exporting to SQL database]
+* [Interfacing with Python via `reticulate`]
 
 
 The strength of `RaMS` is its simple data format. Table-like data structures are
@@ -32,10 +38,10 @@ library(RaMS)
 single_file <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
 
 # Grab the MS data
-file_data <- grabMSdata(single_file, grab_what = "everything")
+msdata <- grabMSdata(single_file, grab_what = "everything")
 
 # Write out MS1 data to .csv file
-write.csv(x = file_data$MS1, file = "MS1_data.csv")
+write.csv(x = msdata$MS1, file = "MS1_data.csv")
 
 # Clean up afterward
 file.remove("MS1_data.csv")
