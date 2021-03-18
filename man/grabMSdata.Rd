@@ -75,24 +75,11 @@ if they are encoded in seconds.
 }
 \examples{
 library(RaMS)
-# Extract data from multiple files
+# Extract MS1 data from a couple files
 sample_dir <- system.file("extdata", package = "RaMS")
 sample_files <- list.files(sample_dir, full.names=TRUE)
 multifile_data <- grabMSdata(sample_files[2:4], grab_what="MS1")
 
-# Extract EIC for multiple masses simultaneously, from multiple files
-file_data <- grabMSdata(sample_files, grab_what="EIC", ppm=5,
-                        mz=c(118.0865, 146.118104, 189.123918))
-
-# Extract MS2 data and search for specific fragment masses
-library(data.table)
-MS2_file <- list.files(sample_dir, pattern="DDA.*mzML", full.names=TRUE)
-file_data <- grabMSdata(MS2_file, grab_what=c("MS1", "MS2"))
-fragment_mass <- 59.0739
-frags <- file_data$MS2[fragmz\%between\%pmppm(fragment_mass, ppm=5)]
-
-# Just get the file's metadata
-metadata <- grabMSdata(MS2_file, grab_what="metadata")
 # "Stream" data from the internet (i.e. Metabolights)
 \dontrun{
 access_url <- "https://www.ebi.ac.uk/metabolights/MTBLS703/files"
