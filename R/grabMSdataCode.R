@@ -59,29 +59,11 @@
 #' @export
 #'
 #' @examples
-#' # Operations on a single file
-#' sample_file <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
-#' file_data <- grabMSdata(sample_file, grab_what="MS1")
-#' # Extract MS1 data and a base peak chromatogram
-#' file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"))
-#' # Extract data from a retention time subset
-#' file_data <- grabMSdata(sample_file, grab_what=c("MS1", "BPC"),
-#'                         rtrange=c(5, 7))
-#'
-#' # Get timing data
-#' file_data <- grabMSdata(sample_file, verbosity=2)
-#'
-#' # Extract data from multiple files simultaneously
+#' library(RaMS)
+#' # Extract data from multiple files
 #' sample_dir <- system.file("extdata", package = "RaMS")
-#' sample_files <- list.files(sample_dir, pattern="HL", full.names=TRUE)
-#' multifile_data <- grabMSdata(sample_files, grab_what="MS1")
-#'
-#' # Extract an EIC for glycine betaine from several files
-#' sample_files <- list.files(sample_dir, pattern="mzML", full.names=TRUE)
-#' bet_EIC <- grabMSdata(sample_files, grab_what="EIC", mz=118.0865, ppm=5)
-#' # Or speed it up even more because you already know betaine's retention time
-#' bet_EIC <- grabMSdata(sample_files, grab_what="EIC", rtrange=c(300, 420),
-#'                       mz=118.0865, ppm=5)
+#' sample_files <- list.files(sample_dir, full.names=TRUE)
+#' multifile_data <- grabMSdata(sample_files[2:4], grab_what="MS1")
 #'
 #' # Extract EIC for multiple masses simultaneously, from multiple files
 #' file_data <- grabMSdata(sample_files, grab_what="EIC", ppm=5,
@@ -94,13 +76,8 @@
 #' fragment_mass <- 59.0739
 #' frags <- file_data$MS2[fragmz%between%pmppm(fragment_mass, ppm=5)]
 #'
-#' # Or search for neutral losses
-#' neutral_loss <- 60.0205
-#' frags <- file_data$MS2[(premz-fragmz)%between%pmppm(neutral_loss, ppm=5)]
-#'
 #' # Just get the file's metadata
 #' metadata <- grabMSdata(MS2_file, grab_what="metadata")
-#'
 #' # "Stream" data from the internet (i.e. Metabolights)
 #' \dontrun{
 #' access_url <- "https://www.ebi.ac.uk/metabolights/MTBLS703/files"
