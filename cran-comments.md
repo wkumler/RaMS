@@ -1,3 +1,9 @@
+## Resubmission
+This is a resubmission. In this version I have
+
+* Reduced each example to less than 5 seconds
+
+
 ## Test environments
 * local R installation, R 4.0.4
 * windows-latest (release) (via GitHub Actions)
@@ -9,14 +15,6 @@
 0 errors | 0 warnings | 1 note
 
 * **This is a new release.**
-
-On some builds, an additional note is returned:
-
-* **Examples with CPU (user + system) or elapsed time > 5s.** 
-The examples for grabMSdata typically take a while because there are a large
-number of examples demonstrating multiple parameters and because the function
-typically reads a large amount of data from disk. Both of these are expected
-behaviors.
 
 ## References describing the methods in package
 * There are no references describing the methods this package. These are in
