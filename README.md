@@ -72,7 +72,8 @@ msdata <- grabMSdata(files = msdata_files[2:4], grab_what = c("BPC", "MS1"))
 
 Base peak chromatograms (BPCs) and total ion chromatograms (TICs) have
 three columns, making them super-simple to plot with either base R or
-the popular \[ggplot2\] library:
+the popular [ggplot2](https://cran.r-project.org/package=ggplot2)
+library:
 
 ``` r
 knitr::kable(head(msdata$BPC, 3))
@@ -117,8 +118,8 @@ knitr::kable(head(msdata$MS1, 3))
 
 This tidy format means that it plays nicely with other tidy data
 packages. Here, we use \[data.table\] and a few other tidyverse packages
-to compare a molecule’s 13C and 15N peak areas to that of the base peak,
-giving us some clue as to its molecular formula.
+to compare a molecule’s <sup>13</sup>C and <sup>15</sup>N peak areas to
+that of the base peak, giving us some clue as to its molecular formula.
 
 ``` r
 library(data.table)
@@ -192,75 +193,18 @@ Or want to search for a specific neutral loss:
 
 ``` r
 msdata$MS2[, neutral_loss:=premz-fragmz] %>%
-  filter(neutral_loss%between%pmppm(60.02064, 5))
+  filter(neutral_loss%between%pmppm(60.02064, 5)) %>%
+  head() %>% knitr::kable()
 ```
 
-    ##           rt    premz    fragmz          int voltage         filename
-    ##  1: 4.182333 118.0864  58.06590   390179.500      35 DDApos_2.mzML.gz
-    ##  2: 4.276100 116.0709  56.05036     1093.988      35 DDApos_2.mzML.gz
-    ##  3: 4.521367 118.0864  58.06589   343084.000      35 DDApos_2.mzML.gz
-    ##  4: 4.649867 170.0810 110.06034     4792.479      35 DDApos_2.mzML.gz
-    ##  5: 4.857983 118.0865  58.06590   314075.312      35 DDApos_2.mzML.gz
-    ##  6: 5.195617 118.0865  58.06590   282611.688      35 DDApos_2.mzML.gz
-    ##  7: 5.536383 118.0865  58.06592   300432.906      35 DDApos_2.mzML.gz
-    ##  8: 5.642417 116.0709  56.05035     1985.602      35 DDApos_2.mzML.gz
-    ##  9: 5.719433 138.0550  78.03460     1749.604      35 DDApos_2.mzML.gz
-    ## 10: 5.876633 118.0865  58.06593   336346.625      35 DDApos_2.mzML.gz
-    ## 11: 6.063700 138.0549  78.03448  4783814.000      35 DDApos_2.mzML.gz
-    ## 12: 6.197033 119.0899  59.06926     1459.779      35 DDApos_2.mzML.gz
-    ## 13: 6.214217 118.0865  58.06592    87062.281      35 DDApos_2.mzML.gz
-    ## 14: 6.399933 138.0549  78.03451  4311163.000      35 DDApos_2.mzML.gz
-    ## 15: 6.552300 118.0865  58.06591   188614.250      35 DDApos_2.mzML.gz
-    ## 16: 6.569983 174.1125 114.09184     4416.066      35 DDApos_2.mzML.gz
-    ## 17: 6.648017 119.0899  59.06929     7744.978      35 DDApos_2.mzML.gz
-    ## 18: 6.739650 138.0550  78.03453    45146.910      35 DDApos_2.mzML.gz
-    ## 19: 6.889233 118.0865  58.06590   247183.109      35 DDApos_2.mzML.gz
-    ## 20: 7.080050 138.0550  78.03455    15764.113      35 DDApos_2.mzML.gz
-    ## 21: 7.232333 118.0865  58.06590   317423.344      35 DDApos_2.mzML.gz
-    ## 22: 7.418867 138.0550  78.03444     5292.677      35 DDApos_2.mzML.gz
-    ## 23: 7.571183 118.0865  58.06591  1110205.500      35 DDApos_2.mzML.gz
-    ## 24: 7.913200 118.0863  58.06591 53963628.000      35 DDApos_2.mzML.gz
-    ## 25: 8.094183 148.0425  88.02216     1632.094      35 DDApos_2.mzML.gz
-    ## 26: 8.197183 162.1124 102.09158     1861.552      35 DDApos_2.mzML.gz
-    ## 27: 8.250383 118.0864  58.06590  3601956.250      35 DDApos_2.mzML.gz
-    ## 28: 8.262433 119.0835  59.06298    17410.162      35 DDApos_2.mzML.gz
-    ## 29: 8.576400 130.0863  70.06579     7045.373      35 DDApos_2.mzML.gz
-    ## 30: 8.585383 118.0864  58.06588  1340395.125      35 DDApos_2.mzML.gz
-    ## 31: 8.925200 118.0864  58.06589   920915.938      35 DDApos_2.mzML.gz
-    ##           rt    premz    fragmz          int voltage         filename
-    ##     neutral_loss
-    ##  1:     60.02055
-    ##  2:     60.02050
-    ##  3:     60.02056
-    ##  4:     60.02070
-    ##  5:     60.02057
-    ##  6:     60.02057
-    ##  7:     60.02060
-    ##  8:     60.02058
-    ##  9:     60.02043
-    ## 10:     60.02057
-    ## 11:     60.02037
-    ## 12:     60.02066
-    ## 13:     60.02054
-    ## 14:     60.02039
-    ## 15:     60.02060
-    ## 16:     60.02068
-    ## 17:     60.02063
-    ## 18:     60.02046
-    ## 19:     60.02060
-    ## 20:     60.02043
-    ## 21:     60.02058
-    ## 22:     60.02058
-    ## 23:     60.02056
-    ## 24:     60.02042
-    ## 25:     60.02038
-    ## 26:     60.02086
-    ## 27:     60.02052
-    ## 28:     60.02054
-    ## 29:     60.02052
-    ## 30:     60.02055
-    ## 31:     60.02052
-    ##     neutral_loss
+|       rt |    premz |    fragmz |        int | voltage | filename          | neutral\_loss |
+|---------:|---------:|----------:|-----------:|--------:|:------------------|--------------:|
+| 4.182333 | 118.0864 |  58.06590 | 390179.500 |      35 | DDApos\_2.mzML.gz |      60.02055 |
+| 4.276100 | 116.0709 |  56.05036 |   1093.988 |      35 | DDApos\_2.mzML.gz |      60.02050 |
+| 4.521367 | 118.0864 |  58.06589 | 343084.000 |      35 | DDApos\_2.mzML.gz |      60.02056 |
+| 4.649867 | 170.0810 | 110.06034 |   4792.479 |      35 | DDApos\_2.mzML.gz |      60.02070 |
+| 4.857983 | 118.0865 |  58.06590 | 314075.312 |      35 | DDApos\_2.mzML.gz |      60.02057 |
+| 5.195617 | 118.0865 |  58.06590 | 282611.688 |      35 | DDApos\_2.mzML.gz |      60.02057 |
 
 ## File types
 
@@ -278,9 +222,8 @@ I haven’t observed a demonstrated need for higher fragmentation level
 data collection.
 
 Additionally, note that files can be streamed from the internet directly
-if a URL is provided to `grabMSdata` and the `check_exists` argument is
-set to `FALSE`, although this will usually take longer than reading a
-file from disk:
+if a URL is provided to `grabMSdata`, although this will usually take
+longer than reading a file from disk:
 
 ``` r
 ## Not run:
@@ -291,9 +234,8 @@ browseURL("https://www.ebi.ac.uk/metabolights/MTBLS703/files")
 sample_url <- paste0("https://www.ebi.ac.uk/metabolights/ws/studies/MTBLS703/",
                      "download/acefcd61-a634-4f35-9c3c-c572ade5acf3?file=",
                      "161024_Smp_LB12HL_AB_pos.mzXML")
-file_data <- grabMSdata(sample_url, grab_what="everything",
-                       check_exists=FALSE, verbosity="very")
-file_data$metadata
+msdata <- grabMSdata(sample_url, grab_what="everything", verbosity=2)
+msdata$metadata
 ```
 
 ## Contact

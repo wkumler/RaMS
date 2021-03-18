@@ -44,10 +44,6 @@
 #'   containing an upper and lower bound on retention times of interest.
 #'   Providing a range here can speed up load times (although not enormously, as
 #'   the entire file must still be read) and reduce the final object's size.
-#' @param check_exists Boolean, default TRUE. Whether or not to check if a file
-#'   exists before attempting to load it. If TRUE and file cannot be found,
-#'   provides helpful warning message and stops function. Set to FALSE if
-#'   streaming files from internet repositories such as Metabolights.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. $MS1 contains MS1 information, MS2 contains fragmentation info,
@@ -114,11 +110,10 @@
 #' sample_url <- paste0("https://www.ebi.ac.uk/metabolights/ws/studies/",
 #'                      "MTBLS703/download/acefcd61-a634-4f35-9c3c-c572",
 #'                      "ade5acf3?file=161024_Smp_LB12HL_AB_pos.mzXML")
-#' file_data <- grabMSdata(sample_url, grab_what="everything",
-#'                         check_exists=FALSE, verbosity=2)
+#' file_data <- grabMSdata(sample_url, grab_what="everything", verbosity=2)
 #' }
 grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
-                       mz=NULL, ppm=NULL, rtrange=NULL, check_exists=TRUE){
+                       mz=NULL, ppm=NULL, rtrange=NULL){
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
