@@ -1,5 +1,11 @@
-## Resubmission
+## Resubmission 
 This is a resubmission. In this version I have
+
+* Removed all calls to  global settings (par, options)
+
+## Resubmission (prior)
+This section contains information about previous submission attempts. 
+In prior revisions I have:
 
 * Reduced each example to less than 5 seconds
 

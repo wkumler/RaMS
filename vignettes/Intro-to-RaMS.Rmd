@@ -84,7 +84,6 @@ Since we asked for a single thing, the TIC, our `file_data` object is a list
 with a single entry: the TIC. Let's plot that data:
 
 ```{r headerTIC}
-par(mar=c(4.1, 4.1, 0.1, 0.1))
 plot(msdata$TIC$rt, msdata$TIC$int, type = "l")
 ```
 
