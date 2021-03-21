@@ -115,7 +115,7 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
                                 rtrange = rtrange)
     } else {
       message(paste("Unable to determine file type for", filename))
-      stopQuietly()
+      stop()
     }
     out_data_filenamed <- mapply(function(dt_i, fname_i){
       if(nrow(dt_i)){
@@ -232,12 +232,6 @@ checkOutputQuality <- function(output_data, grab_what){
 }
 
 # Other functions ----
-stopQuietly <- function(){
-  opt <- options(show.error.messages = FALSE)
-  on.exit(options(opt))
-  stop()
-}
-
 checkFileType <- function(xml_data, node_to_check){
   # Check for mzML node
   # Length works because external pointer has length 2
