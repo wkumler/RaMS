@@ -1,7 +1,7 @@
 Package: RaMS
 Type: Package
 Title: R Access to Mass-Spec Data
-Version: 1.0.0
+Version: 1.0.0.9000
 Authors@R: person(given = "William", family = "Kumler", 
                   email = "wkumler@uw.edu",
                   role = c("aut", "cre", "cph"))
