@@ -134,8 +134,6 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     if(length(files)>2){
       close(pb)
     }
-    time_total <- round(difftime(Sys.time(), start_time), digits = 2)
-    cat("Total time:", time_total, units(time_total), "\n")
   }
 
   # Bind all the similar pieces together (e.g. stack MS1 from different files)
@@ -143,6 +141,11 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   invisible(checkOutputQuality(
     output_data = all_file_data_output, grab_what = grab_what
   ))
+
+  if(verbosity>0){
+    time_total <- round(difftime(Sys.time(), start_time), digits = 2)
+    cat("Total time:", time_total, units(time_total), "\n")
+  }
 
   all_file_data_output
 }
