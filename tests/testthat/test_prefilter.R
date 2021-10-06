@@ -24,3 +24,16 @@ test_that("prefilter removes expected data", {
   expect_equal(mzML_data$MS1[int>major_prefilter], mzML_majorfilter$MS1)
 })
 
+test_that("prefilter warns when non-numeric", {
+  expect_warning(
+    grabMSdata(files = mzML_filenames[2], prefilter = "banana",
+               verbosity = 0, grab_what = "MS1")
+  )
+})
+
+test_that("prefilter warns when greater than length 1", {
+  expect_warning(
+    grabMSdata(files = mzML_filenames[2], prefilter = c(0, 10000),
+               verbosity = 0, grab_what = "MS1")
+  )
+})

@@ -95,6 +95,16 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
                    '"EIC_MS2" and will be ignored in the current call'))
   }
+  if(!is.numeric(prefilter)){warning(
+    paste0("`prefilter` argument should be numeric, but instead it seems to be ",
+          class(prefilter), " with value ", prefilter, ". Ignoring...")
+  )}
+  if(length(prefilter)>1){
+    warning(paste0("`prefilter` argument should be length 1, but instead it ",
+                   "seems to be ", length(prefilter), ". Ignoring all later ",
+                   "values..."))
+    prefilter <- prefilter[1]
+    }
 
   # Define outer control loop so multiple files can be read in simultaneously
   all_file_data <- list()
