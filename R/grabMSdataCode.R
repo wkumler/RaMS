@@ -44,6 +44,10 @@
 #'   containing an upper and lower bound on retention times of interest.
 #'   Providing a range here can speed up load times (although not enormously, as
 #'   the entire file must still be read) and reduce the final object's size.
+#' @param prefilter A single number corresponding to the minimum intensity of
+#'   interest. Data points with intensities below this threshold will be
+#'   silently dropped, which can dramatically reduce the size of the final
+#'   object.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. $MS1 contains MS1 information, MS2 contains fragmentation info,
@@ -77,7 +81,7 @@
 #' file_data <- grabMSdata(sample_url, grab_what="everything", verbosity=2)
 #' }
 grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
-                       mz=NULL, ppm=NULL, rtrange=NULL){
+                       mz=NULL, ppm=NULL, rtrange=NULL, prefilter=-1){
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
@@ -108,11 +112,11 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     if(grepl("mzML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzmlData(filename = filename, grab_what = grab_what,
                                verbosity = verbosity, mz = mz, ppm = ppm,
-                               rtrange = rtrange)
+                               rtrange = rtrange, prefilter = prefilter)
     } else if(grepl("mzXML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzxmlData(filename = filename, grab_what = grab_what,
                                 verbosity = verbosity, mz = mz, ppm = ppm,
-                                rtrange = rtrange)
+                                rtrange = rtrange, prefilter = prefilter)
     } else {
       stop(paste("Unable to determine file type for", filename))
     }

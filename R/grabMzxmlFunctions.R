@@ -36,6 +36,10 @@
 #'   combined with `grab_what = "EIC"` (see above).
 #' @param rtrange Not supported for mzXML data. Only provided here so as to
 #'   throw a friendly warning rather than an unexpected error.
+#' @param prefilter A single number corresponding to the minimum intensity of
+#'   interest. Data points with intensities below this threshold will be
+#'   silently dropped, which can dramatically reduce the size of the final
+#'   object.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. $MS1 contains MS1 information, $MS2 contains fragmentation info,
@@ -64,7 +68,7 @@
 #' MS2_data <- grabMzxmlData(sample_file, grab_what="MS2")
 #'
 grabMzxmlData <- function(filename, grab_what, verbosity=0,
-                          rtrange=NULL, mz=NULL, ppm=NULL){
+                          rtrange=NULL, mz=NULL, ppm=NULL, prefilter=-1){
   if(verbosity>1){
     cat(paste0("\nReading file ", basename(filename), "... "))
     last_time <- Sys.time()
@@ -89,7 +93,7 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
   if("MS1"%in%grab_what){
     if(verbosity>1)last_time <- timeReport(last_time, text = "Reading MS1 data...")
     output_data$MS1 <- grabMzxmlMS1(xml_data = xml_data, rtrange=rtrange,
-                                    file_metadata = file_metadata)
+                                    file_metadata = file_metadata, prefilter = prefilter)
   }
 
   if("MS2"%in%grab_what){
@@ -113,8 +117,8 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
     checkProvidedMzPpm(mz, ppm)
     if(verbosity>1)last_time <- timeReport(last_time, text = "Extracting EIC...")
     if(!"MS1"%in%grab_what){
-      init_dt <- grabMzxmlMS1(xml_data=xml_data, file_metadata = file_metadata,
-                              rtrange=rtrange)
+      init_dt <- grabMzxmlMS1(xml_data = xml_data, file_metadata = file_metadata,
+                              rtrange = rtrange, prefilter = prefilter)
     } else {
       init_dt <- output_data$MS1
       if(!nrow(init_dt))stop("Something weird - can't find MS1 data to subset")
@@ -252,7 +256,7 @@ grabMzxmlEncodingData <- function(xml_data){
 #'
 #' @return A `data.table` with columns for retention time (rt), m/z (mz),
 #' and intensity (int).
-grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange){
+grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange, prefilter){
   ms1_xpath <- '//d1:scan[@msLevel="1" and @peaksCount>0]'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
 
@@ -267,7 +271,7 @@ grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange){
   dt_data <- mapply(cbind, rt_vals, mz_int_vals, SIMPLIFY = FALSE)
   dt <- as.data.table(do.call(what=rbind, dt_data))
   names(dt) <- c("rt", "mz", "int")
-  dt
+  dt[int>prefilter]
 }
 
 
