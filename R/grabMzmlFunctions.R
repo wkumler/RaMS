@@ -39,9 +39,10 @@
 #'   (although not enormously, as the entire file must still be read) and reduce
 #'   the final object's size.
 #' @param prefilter A single number corresponding to the minimum intensity of
-#'   interest. Data points with intensities below this threshold will be
-#'   silently dropped, which can dramatically reduce the size of the final
-#'   object.
+#'   interest in the MS1 data. Data points with intensities below this threshold
+#'   will be silently dropped, which can dramatically reduce the size of the
+#'   final object. Currently only works with MS1 data, but could be expanded
+#'   easily to handle more.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. $MS1 contains MS1 information, $MS2 contains fragmentation info,
