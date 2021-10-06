@@ -97,7 +97,7 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     verbosity <- ifelse(length(files)==1, 2, 1)
   }
   if(verbosity>0){
-    if(length(files)>2){
+    if(length(files)>=2){
       pb <- txtProgressBar(min = 0, max = length(files), style = 3)
     }
     start_time <- Sys.time()
