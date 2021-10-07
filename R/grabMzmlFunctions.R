@@ -297,6 +297,8 @@ grabMzmlEncodingData <- function(xml_data){
 #'   the final object's size.
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information.
+#' @param prefilter The lowest intensity value of interest, used to reduce file
+#'   size (and especially useful for profile mode data with many 0 values)
 #'
 #' @return A `data.table` with columns for retention time (rt), m/z (mz), and
 #'   intensity (int).

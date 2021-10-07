@@ -17,6 +17,9 @@ arrays containing m/z and intensity information.}
 retention times of interest. Providing a range here can speed up load times
 (although not enormously, as the entire file must still be read) and reduce
 the final object's size.}
+
+\item{prefilter}{The lowest intensity value of interest, used to reduce file
+size (and especially useful for profile mode data with many 0 values)}
 }
 \value{
 A `data.table` with columns for retention time (rt), m/z (mz),

@@ -17,6 +17,9 @@ the final object's size.}
 
 \item{file_metadata}{Information about the file used to decode the binary
 arrays containing m/z and intensity information.}
+
+\item{prefilter}{The lowest intensity value of interest, used to reduce file
+size (and especially useful for profile mode data with many 0 values)}
 }
 \value{
 A `data.table` with columns for retention time (rt), m/z (mz), and
