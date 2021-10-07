@@ -186,20 +186,25 @@ minifyMzml <- function(filename, output_filename,
   xml2::xml_add_child(proc_node, "processingMethod", order=0, softwareRef="RaMS")
   meth_node <- xml2::xml_find_all(proclist_node, '//processingMethod[@order="0"]')
   if(!is.null(mz_whitelist)){
-    xml2::xml_add_child(meth_node, "cvParam", cvRef="MS", accession="MS:1009000",
+    xml2::xml_add_child(meth_node, "userParam", cvRef="MS", accession="MS:1009000",
                         name="Minification by m/z whitelist",
                         value=paste0(mz_whitelist, collapse = "; "))
   } else {
-    xml2::xml_add_child(meth_node, "cvParam", cvRef="MS", accession="MS:1009001",
+    xml2::xml_add_child(meth_node, "userParam", cvRef="MS", accession="MS:1009001",
                         name="Minification by m/z blacklist",
                         value=paste0(mz_blacklist, collapse = "; "))
   }
-  xml2::xml_add_child(meth_node, "cvParam", cvRef="MS", accession="MS:1009002",
-                      name="ppm error for minification",
-                      value=ppm)
+  xml2::xml_add_child(meth_node, "userParam", cvRef="MS", accession="MS:1009002",
+                      name="ppm error for minification", value=ppm)
   process_count <- as.numeric(xml2::xml_attr(proclist_node, "count"))+1
   xml2::xml_attr(proclist_node, "count") <- process_count
-
+  softlist_node <- xml2::xml_find_all(xml_data, "//d1:softwareList")
+  xml2::xml_add_child(softlist_node, "software", id="RaMS",
+                      version=as.character(packageVersion("RaMS")))
+  soft_node <- xml2::xml_find_all(softlist_node, 'software[@id="RaMS"]')
+  xml2::xml_add_child(soft_node, "userParam", name="RaMS R package")
+  software_count <- as.numeric(xml2::xml_attr(softlist_node, "count"))+1
+  xml2::xml_attr(softlist_node, "count") <- software_count
 
 
   # And write out the new version
