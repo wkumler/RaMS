@@ -58,10 +58,12 @@ minifyMzml <- function(filename, output_filename,
   file_metadata <- RaMS:::grabMzmlEncodingData(xml_data)
 
   # Check for indexed mzML and drop index if present, with warning
-  if(xml2::xml_name(xml_data)=="indexedmzML" && warn){
-    warning(paste0("mzML file ", basename(filename), " contains an index. ",
-                   "I don't know how to recompile indices so it's ",
-                   "getting dropped for the minified file."))
+  if(xml2::xml_name(xml_data)=="indexedmzML"){
+    if(warn){
+      warning(paste0("mzML file ", basename(filename), " contains an index. ",
+                     "I don't know how to recompile indices so it's ",
+                     "getting dropped for the minified file."))
+    }
     xml_data <- xml2::xml_new_root(xml2::xml_find_first(xml_data, "//d1:mzML"))
   }
 
@@ -214,7 +216,7 @@ minifyMzml <- function(filename, output_filename,
 
 
 
-
+# Helper functions ----
 #' Convert from compressed binary to R numeric vector
 #'
 #' @param mzint_nodes The XML nodes containing the compressed binary string
@@ -241,4 +243,3 @@ giveEncoding <- function(mzint_vals, compression_type, bin_precision){
   new_raw_ints <- memCompress(comp_ints, type=compression_type)
   base64enc::base64encode(new_raw_ints)
 }
-
