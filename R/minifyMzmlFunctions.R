@@ -1,7 +1,7 @@
 # TO-DO:
-# Write documentation
 # Write tests
 # Write mzXML functions
+# Write warning for MS2 data OR write MS2 code
 # Publish new version to CRAN
 
 
