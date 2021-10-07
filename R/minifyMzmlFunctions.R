@@ -1,28 +1,57 @@
 # TO-DO:
-# Add "software" node to denote shrinkage via RaMS
-#   - What accession number to use?
+# Write documentation
 # Write tests
 # Write mzXML functions
 # Publish new version to CRAN
 
 
+# minifyMzml ----
 
-getEncoded <- function(mzint_nodes, compression_type, bin_precision){
-  decoded_mzs <- base64enc::base64decode(mzint_nodes)
-  decomp_mzs <- memDecompress(decoded_mzs, type = compression_type)
-  readBin(decomp_mzs, what = "double", n=length(decomp_mzs)/bin_precision,
-          size = bin_precision)
-}
-giveEncoding <- function(mzint_vals, compression_type, bin_precision){
-  comp_ints <- writeBin(mzint_vals, raw(0), size = bin_precision)
-  new_raw_ints <- memCompress(comp_ints, type=compression_type)
-  base64enc::base64encode(new_raw_ints)
-}
-
-
-minifyMSdata <- function(filename, output_filename, rtrange=NULL,
+#' Shrink mzML files by including only data points near masses of interest
+#'
+#' mzML files can be annoyingly large if only a few masses are of interest. This large size makes it
+#' difficult to share them online for debugging purposes and often means that untargeted algorithms
+#' spend a lot of time picking peaks in data that's irrelevant. minifyMzml is a function designed to
+#' "minify" mzML files by extracting only those data points that are within a ppm error of an m/z value
+#' of interest, and returns the file essentially otherwise unchanged. This function currently works
+#' only on MS1 data, but is reasonably expandable if demand becomes evident.
+#'
+#' @param filename The name of a single file to be minified, usually produced by Proteowizard's `msconvert`
+#' or something similar.
+#' @param output_filename The name of the file to be written out.
+#' @param mz_blacklist A vector of m/z values that should be excluded from the minified file. This argument
+#' must be used with the `ppm` argument and should not be used with mz_whitelist. For each mass provided, an
+#' m/z window of +/- `ppm` is calculated, and all data points within that window are removed.
+#' @param mz_whitelist A vector of m/z values that should be included in the minified file. This argument
+#' must be used with the `ppm` argument and should not be used with mz_blacklist. For each mass provided, an
+#' m/z window of +/- `ppm` is calculated, and all data points within that window are kept.
+#' @param ppm The parts-per-million error of the instrument used to collect the original file.
+#' @param warn Boolean. Should the function warn the user when removing an index from an mzML file?
+#'
+#' @return Invisibly, the name of the new file.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(RaMS)
+#' # Extract data corresponding to only valine and homarine
+#' # m/z = 118.0865 and 138.0555, respectively
+#' filename <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
+#' output_filename <- "mini_LB12HL_AB.mzML"
+#' include_mzs <- c(118.0865, 138.0555)
+#' minifyMzml(filename, output_filename, mz_whitelist=include_mzs, ppm=5)
+#' unlink(output_filename)
+#'
+#' # Exclude data corresponding to valine and homarine
+#' filename <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
+#' output_filename <- "mini_LB12HL_AB.mzML"
+#' exclude_mzs <- c(118.0865, 138.0555)
+#' minifyMzml(filename, output_filename, mz_blacklist=exclude_mzs, ppm=5)
+#' unlink(output_filename)
+#' }
+minifyMzml <- function(filename, output_filename,
                          mz_blacklist=NULL, mz_whitelist=NULL,
-                         ppm=NULL, verbosity=0, warn=TRUE){
+                         ppm=NULL, warn=TRUE){
   xml_data <- xml2::read_xml(filename)
 
   RaMS:::checkFileType(xml_data, "mzML")
@@ -189,8 +218,8 @@ msdata_init <- RaMS::grabMSdata(filename)
 
 ### Whitelist ----
 mz_whitelist <- c(118.0865, 138.0555)
-minifyMSdata(filename, output_filename = "C:/Users/willi/Desktop/mini_mzML.mzML",
-             mz_blacklist=NULL, mz_whitelist=mz_whitelist, ppm=ppm, verbosity=2)
+minifyMzml(filename, output_filename = "C:/Users/willi/Desktop/mini_mzML.mzML",
+             mz_blacklist=NULL, mz_whitelist=mz_whitelist, ppm=ppm)
 
 
 
@@ -228,8 +257,8 @@ msdata_init$MS1[mz%between%pmppm(179.005326)]
 
 ### Blacklist ----
 mz_blacklist <- c(138.0555, 118.0865)
-minifyMSdata(filename, output_filename = "C:/Users/willi/Desktop/mini_mzML.mzML",
-             mz_blacklist=mz_blacklist, mz_whitelist=NULL, ppm=ppm, verbosity=2)
+minifyMzml(filename, output_filename = "C:/Users/willi/Desktop/mini_mzML.mzML",
+             mz_blacklist=mz_blacklist, mz_whitelist=NULL, ppm=ppm)
 
 
 msdata <- grabMSdata(output_filename)
@@ -254,7 +283,7 @@ all.equal(msdata_init$MS1[mz%between%pmppm(138.0555)],
 
 
 
-
+### XCMS check ----
 library(xcms)
 raw_data <- readMSData(output_filename, pdata = NULL, msLevel. = 1)
 bpis <- chromatogram(raw_data, aggregationFun = "max")
