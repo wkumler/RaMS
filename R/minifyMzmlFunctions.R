@@ -88,7 +88,7 @@ minifyMzml <- function(filename, output_filename,
         mz_idxs <- mzs>min(range_i)&mzs<max(range_i)
         ints <- ints[mz_idxs]
         mzs <- mzs[mz_idxs]
-        c(mzs=mzs, ints=ints)
+        cbind(mzs=mzs, ints=ints)
       })
       if(all(sapply(whitelist_data, length)==0)){
         output_mat <- cbind(mzs=numeric(0), ints=numeric(0))
