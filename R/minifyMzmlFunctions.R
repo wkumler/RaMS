@@ -54,8 +54,8 @@ minifyMzml <- function(filename, output_filename,
                          ppm=NULL, warn=TRUE){
   xml_data <- xml2::read_xml(filename)
 
-  RaMS:::checkFileType(xml_data, "mzML")
-  file_metadata <- RaMS:::grabMzmlEncodingData(xml_data)
+  checkFileType(xml_data, "mzML")
+  file_metadata <- grabMzmlEncodingData(xml_data)
 
   # Check for indexed mzML and drop index if present, with warning
   if(xml2::xml_name(xml_data)=="indexedmzML"){
