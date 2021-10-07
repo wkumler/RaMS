@@ -66,4 +66,6 @@ test_that("whitelist file opens in MSnbase", {
 })
 
 
+
+unlink(output_filename)
 unlink(output_dir)
