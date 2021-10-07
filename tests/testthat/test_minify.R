@@ -18,11 +18,12 @@ test_that("blacklisted file has no data within bounds", {
     expect_equal(0, nrow(mini_msdata$MS1[mz%between%pmppm(i, ppm = 5)]))
   }
 })
-test_that("blacklist file opens in MSnbase", {
-  raw_data <- MSnbase::readMSData(output_filename, pdata = NULL, msLevel. = 1)
-  bpis <- xcms::chromatogram(raw_data, aggregationFun = "max")
-  expect_s4_class(bpis, "Chromatograms")
-})
+# # Don't want to deal with MSnbase dependencies, but these are good to run personally
+# test_that("blacklist file opens in MSnbase", {
+#   raw_data <- MSnbase::readMSData(output_filename, pdata = NULL, msLevel. = 1)
+#   bpis <- xcms::chromatogram(raw_data, aggregationFun = "max")
+#   expect_s4_class(bpis, "Chromatograms")
+# })
 
 
 
@@ -59,11 +60,12 @@ test_that("whitelisted file has data only within bounds", {
   expect_equal(eic_full$mz, mini_msdata$MS1$mz)
   expect_equal(eic_full$int, mini_msdata$MS1$int)
 })
-test_that("whitelist file opens in MSnbase", {
-  raw_data <- MSnbase::readMSData(output_filename, pdata = NULL, msLevel. = 1)
-  bpis <- xcms::chromatogram(raw_data, aggregationFun = "max")
-  expect_s4_class(bpis, "Chromatograms")
-})
+# # Don't want to deal with MSnbase dependencies, but these are good to run personally
+# test_that("whitelist file opens in MSnbase", {
+#   raw_data <- MSnbase::readMSData(output_filename, pdata = NULL, msLevel. = 1)
+#   bpis <- xcms::chromatogram(raw_data, aggregationFun = "max")
+#   expect_s4_class(bpis, "Chromatograms")
+# })
 
 
 
