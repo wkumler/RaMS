@@ -10,7 +10,8 @@ grabMSdata(
   verbosity = NULL,
   mz = NULL,
   ppm = NULL,
-  rtrange = NULL
+  rtrange = NULL,
+  prefilter = -1
 )
 }
 \arguments{
@@ -49,6 +50,12 @@ combined with `grab_what = "EIC"` (see above).}
 containing an upper and lower bound on retention times of interest.
 Providing a range here can speed up load times (although not enormously, as
 the entire file must still be read) and reduce the final object's size.}
+
+\item{prefilter}{A single number corresponding to the minimum intensity of
+interest in the MS1 data. Data points with intensities below this threshold
+will be silently dropped, which can dramatically reduce the size of the
+final object. Currently only works with MS1 data, but could be expanded
+easily to handle more.}
 }
 \value{
 A list of `data.table`s, each named after the arguments requested in

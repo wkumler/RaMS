@@ -3,6 +3,7 @@
 export(grabMSdata)
 export(grabMzmlData)
 export(grabMzxmlData)
+export(minifyMzml)
 export(pmppm)
 import(data.table)
 import(utils)
