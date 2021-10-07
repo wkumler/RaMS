@@ -212,6 +212,41 @@ minifyMzml <- function(filename, output_filename,
   return(invisible(output_filename))
 }
 
+
+
+
+#' Convert from compressed binary to R numeric vector
+#'
+#' @param mzint_nodes The XML nodes containing the compressed binary string
+#' @param compression_type Compression type to be used by memDecompress
+#' @param bin_precision The bit (?) precision used by readBin
+#'
+#' @return A numeric vector of m/z or intensity values
+getEncoded <- function(mzint_nodes, compression_type, bin_precision){
+  decoded_mzs <- base64enc::base64decode(mzint_nodes)
+  decomp_mzs <- memDecompress(decoded_mzs, type = compression_type)
+  readBin(decomp_mzs, what = "double", n=length(decomp_mzs)/bin_precision,
+          size = bin_precision)
+}
+
+#' Convert from R numeric vector to compressed binary
+#'
+#' @param mzint_vals A numeric vector of m/z or intensity values
+#' @param compression_type Compression type to be used by memCompress
+#' @param bin_precision The bit (?) precision used by writeBin
+#'
+#' @return A single base64-encoded string of compressed binary values
+giveEncoding <- function(mzint_vals, compression_type, bin_precision){
+  comp_ints <- writeBin(mzint_vals, raw(0), size = bin_precision)
+  new_raw_ints <- memCompress(comp_ints, type=compression_type)
+  base64enc::base64encode(new_raw_ints)
+}
+
+
+
+
+
+
 # Test it ----
 library(tidyverse)
 library(data.table)
