@@ -283,7 +283,7 @@ grabMzmlEncodingData <- function(xml_data){
   if(is.na(mz_precision))mz_precision <- int_precision
 
   list(compression=compr, mz_precision=mz_precision,
-       int_precision=int_precision)
+       int_precision=int_precision, endi_enc="little")
 }
 
 
