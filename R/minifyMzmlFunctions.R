@@ -1,6 +1,5 @@
 # TO-DO:
-# Write tests
-# Write mzXML functions
+# Write tests for mzXML
 # Write warning for MS2 data OR write MS2 code
 # Publish new version to CRAN
 
@@ -50,8 +49,8 @@
 #' unlink(output_filename)
 #' }
 minifyMzml <- function(filename, output_filename,
-                         mz_blacklist=NULL, mz_whitelist=NULL,
-                         ppm=NULL, warn=TRUE){
+                       mz_blacklist=NULL, mz_whitelist=NULL,
+                       ppm=NULL, warn=TRUE){
   xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzML")
@@ -126,10 +125,12 @@ minifyMzml <- function(filename, output_filename,
     } else {
       recoded_mzs <- giveEncoding(output_mat[,"mzs"],
                                   compression_type = file_metadata$compression,
-                                  bin_precision = file_metadata$mz_precision)
+                                  bin_precision = file_metadata$mz_precision,
+                                  endi_enc = file_metadata$endi_enc)
       recoded_ints <- giveEncoding(output_mat[,"ints"],
                                    compression_type = file_metadata$compression,
-                                   bin_precision = file_metadata$int_precision)
+                                   bin_precision = file_metadata$int_precision,
+                                   endi_enc = file_metadata$endi_enc)
       bpmz <- unname(output_mat[which.max(output_mat[,"ints"]), "mzs"])
       bpint <- max(output_mat[,"ints"], na.rm = TRUE)
       ticur <- sum(output_mat[,"ints"], na.rm = TRUE)
@@ -138,13 +139,16 @@ minifyMzml <- function(filename, output_filename,
 
       arraylength <- nrow(output_mat)
     }
-    c(mzs=recoded_mzs, ints=recoded_ints, bpmz=bpmz, bpint=bpint,
+    data.frame(
+      mzs=recoded_mzs, ints=recoded_ints,
+      bpmz=bpmz, bpint=bpint,
       ticur=ticur, minmz=minmz, maxmz=maxmz,
       mz_enclength=nchar(recoded_mzs),
       int_enclength=nchar(recoded_ints),
-      arraylength=arraylength)
-  }, ms1_mz_nodes, ms1_int_nodes)
-  ms1_minified <- as.data.frame(t(ms1_minified))
+      arraylength=arraylength
+    )
+  }, ms1_mz_nodes, ms1_int_nodes, SIMPLIFY = FALSE)
+  ms1_minified <- do.call(what = "rbind", ms1_minified)
 
   xml2::xml_text(ms1_mz_nodes) <- ms1_minified$mzs
   xml2::xml_text(ms1_int_nodes) <- ms1_minified$ints
@@ -216,6 +220,151 @@ minifyMzml <- function(filename, output_filename,
 
 
 
+# minifyMzxml ----
+#' Shrink mzxML files by including only data points near masses of interest
+#'
+#' mzXML files can be annoyingly large if only a few masses are of interest. This large size makes it
+#' difficult to share them online for debugging purposes and often means that untargeted algorithms
+#' spend a lot of time picking peaks in data that's irrelevant. minifyMzxml is a function designed to
+#' "minify" mzXML files by extracting only those data points that are within a ppm error of an m/z value
+#' of interest, and returns the file essentially otherwise unchanged. This function currently works
+#' only on MS1 data, but is reasonably expandable if demand becomes evident.
+#'
+#' @param filename The name of a single file to be minified, usually produced by Proteowizard's `msconvert`
+#' or something similar.
+#' @param output_filename The name of the file to be written out.
+#' @param mz_blacklist A vector of m/z values that should be excluded from the minified file. This argument
+#' must be used with the `ppm` argument and should not be used with mz_whitelist. For each mass provided, an
+#' m/z window of +/- `ppm` is calculated, and all data points within that window are removed.
+#' @param mz_whitelist A vector of m/z values that should be included in the minified file. This argument
+#' must be used with the `ppm` argument and should not be used with mz_blacklist. For each mass provided, an
+#' m/z window of +/- `ppm` is calculated, and all data points within that window are kept.
+#' @param ppm The parts-per-million error of the instrument used to collect the original file.
+#' @param warn Boolean. Should the function warn the user when removing an index from an mzML file?
+#'
+#' @return Invisibly, the name of the new file.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(RaMS)
+#' # Extract data corresponding to only valine and homarine
+#' # m/z = 118.0865 and 138.0555, respectively
+#' filename <- system.file("extdata", "LB12HL_AB.mzXML.gz", package = "RaMS")
+#' output_filename <- "mini_LB12HL_AB.mzXML"
+#' include_mzs <- c(118.0865, 138.0555)
+#' minifyMzxml(filename, output_filename, mz_whitelist=include_mzs, ppm=5)
+#' unlink(output_filename)
+#'
+#' # Exclude data corresponding to valine and homarine
+#' filename <- system.file("extdata", "LB12HL_AB.mzXML.gz", package = "RaMS")
+#' output_filename <- "mini_LB12HL_AB.mzXML"
+#' exclude_mzs <- c(118.0865, 138.0555)
+#' minifyMzxml(filename, output_filename, mz_blacklist=exclude_mzs, ppm=5)
+#' unlink(output_filename)
+#' }
+minifyMzxml <- function(filename, output_filename, mz_blacklist=NULL,
+                        mz_whitelist=NULL,ppm=NULL){
+  xml_data <- xml2::read_xml(filename)
+
+  RaMS:::checkFileType(xml_data, "mzXML")
+  file_metadata <- RaMS:::grabMzxmlEncodingData(xml_data)
+
+  # Find MS1 intensity and m/z nodes
+  ms1_xpath <- '//d1:scan[@msLevel="1" and @peaksCount>0]'
+  ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
+
+  mz_int_vals <- RaMS:::grabMzxmlSpectraMzInt(ms1_nodes, file_metadata)
+
+  # Convert MS1 nodes into data.tables
+  ms1_minified <- lapply(mz_int_vals, function(mz_int_val){
+    mzs <- mz_int_val[,1]
+    ints <- mz_int_val[,2]
+
+    if(!is.null(mz_whitelist)){
+      whitelist_data <- lapply(mz_whitelist, function(mz_i){
+        range_i <- pmppm(mz_i, ppm)
+        mz_idxs <- mzs>min(range_i)&mzs<max(range_i)
+        ints <- ints[mz_idxs]
+        mzs <- mzs[mz_idxs]
+        cbind(mzs=mzs, ints=ints)
+      })
+      if(all(sapply(whitelist_data, length)==0)){
+        output_mat <- cbind(mzs=numeric(0), ints=numeric(0))
+      } else {
+        output_mat <- do.call(what = "rbind", whitelist_data)
+      }
+    } else if(!is.null(mz_blacklist)){
+      iterated_mzs <- mzs
+      iterated_ints <- ints
+      for(mz_i in unique(mz_blacklist)){
+        range_i <- pmppm(mz_i, ppm)
+        iterate_idxs <- iterated_mzs>min(range_i)&iterated_mzs<max(range_i)
+        iterated_mzs <- iterated_mzs[!iterate_idxs]
+        iterated_ints <- iterated_ints[!iterate_idxs]
+      }
+      output_mat <- cbind(mzs=iterated_mzs, ints=iterated_ints)
+      if(any(is.na(output_mat))){
+        browser("Found you an NA:")
+      }
+    } else {
+      stop("Either `mz_whitelist` or `mz_blacklist` must not be NULL")
+    }
+    if(nrow(output_mat)==0){
+      recoded_mzints <- ""
+      bpmz <- 0
+      bpint <- 0
+      ticur <- 0
+      minmz <- 0
+      maxmz <- 0
+
+      arraylength <- 0
+    } else {
+      interped_mzints <- as.numeric(t(output_mat[,c("mzs", "ints")]))
+      recoded_mzints <- giveEncoding(interped_mzints,
+                                     compression_type = file_metadata$compression,
+                                     bin_precision = file_metadata$precision,
+                                     endi_enc = file_metadata$endi_enc)
+      bpmz <- unname(output_mat[which.max(output_mat[,"ints"]), "mzs"])
+      bpint <- max(output_mat[,"ints"], na.rm = TRUE)
+      ticur <- sum(output_mat[,"ints"], na.rm = TRUE)
+      minmz <- min(output_mat[,"mzs"], na.rm = TRUE)
+      maxmz <- max(output_mat[,"mzs"], na.rm = TRUE)
+
+      arraylength <- nrow(output_mat)
+    }
+    data.frame(mzints=recoded_mzints,
+               bpmz=bpmz, bpint=bpint,
+               ticur=ticur, minmz=minmz, maxmz=maxmz,
+               arraylength=arraylength)
+  })
+  ms1_minified <- do.call(what = "rbind", ms1_minified)
+
+  peak_nodes <- xml2::xml_find_first(ms1_nodes, "d1:peaks")
+  xml2::xml_text(peak_nodes) <- ms1_minified$mzints
+
+  xml2::xml_attr(ms1_nodes, "peaksCount") <- ms1_minified$arraylength
+  xml2::xml_attr(ms1_nodes, "lowMz") <- ms1_minified$minmz
+  xml2::xml_attr(ms1_nodes, "highMz") <- ms1_minified$maxmz
+  xml2::xml_attr(ms1_nodes, "basePeakMz") <- ms1_minified$bpmz
+  xml2::xml_attr(ms1_nodes, "basePeakIntensity") <- ms1_minified$bpint
+  xml2::xml_attr(ms1_nodes, "totIonCurrent") <- ms1_minified$ticur
+
+
+
+  # Add note that RaMS was used to shrink the file
+  proclist_node <- xml2::xml_find_all(xml_data, "//d1:dataProcessing")
+  xml2::xml_add_sibling(proclist_node, "dataProcessing")
+  proc_node <- xml2::xml_find_first(xml_data, "//dataProcessing")
+  xml2::xml_add_child(proc_node, "software", type="minification", name="RaMS",
+                      version=as.character(packageVersion("RaMS")))
+
+  # And write out the new version
+  xml2::write_xml(x = xml_data, file = output_filename)
+  return(invisible(output_filename))
+}
+
+
 # Helper functions ----
 #' Convert from compressed binary to R numeric vector
 #'
@@ -238,8 +387,9 @@ getEncoded <- function(mzint_nodes, compression_type, bin_precision){
 #' @param bin_precision The bit (?) precision used by writeBin
 #'
 #' @return A single base64-encoded string of compressed binary values
-giveEncoding <- function(mzint_vals, compression_type, bin_precision){
-  comp_ints <- writeBin(mzint_vals, raw(0), size = bin_precision)
+giveEncoding <- function(mzint_vals, compression_type, bin_precision, endi_enc){
+  comp_ints <- writeBin(mzint_vals, raw(0), size = bin_precision,
+                        endian = endi_enc)
   new_raw_ints <- memCompress(comp_ints, type=compression_type)
   base64enc::base64encode(new_raw_ints)
 }
