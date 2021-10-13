@@ -319,6 +319,7 @@ grabMzmlMS1 <- function(xml_data, rtrange, file_metadata, prefilter){
   mz_vals <- grabSpectraMz(ms1_nodes, file_metadata)
   int_vals <- grabSpectraInt(ms1_nodes, file_metadata)
 
+  int <- NULL #To prevent R CMD check "notes"  when using data.table syntax
   all_data <- data.table(rt=rep(rt_vals, sapply(mz_vals, length)),
                          mz=unlist(mz_vals), int=as.numeric(unlist(int_vals)))
   all_data[int>prefilter]

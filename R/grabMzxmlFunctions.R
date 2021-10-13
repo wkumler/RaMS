@@ -274,6 +274,7 @@ grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange, prefilter){
   dt_data <- mapply(cbind, rt_vals, mz_int_vals, SIMPLIFY = FALSE)
   dt <- as.data.table(do.call(what=rbind, dt_data))
   names(dt) <- c("rt", "mz", "int")
+  int <- NULL #To prevent R CMD check "notes" when using data.table syntax
   dt[int>prefilter]
 }
 
