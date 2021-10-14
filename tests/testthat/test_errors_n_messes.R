@@ -43,6 +43,21 @@ test_that("checkProvidedMzPpm detects things", {
   expect_error(checkProvidedMzPpm(mz=100, ppm = -3))
 })
 
+test_that("checkProvidedPrefilter does things", {
+  expect_warning(
+    one_out <- checkProvidedPrefilter("banana")
+  )
+  expect_identical(one_out, -1)
+
+  multi_prefilter <- 1:3
+  expect_warning(
+    multi_out <- checkProvidedPrefilter(multi_prefilter)
+  )
+  expect_identical(multi_out, 1L)
+
+  expect_warning(checkProvidedPrefilter(NA))
+})
+
 test_that("default verbosity works", {
   expect_output(
     grabMSdata(files = mzML_filenames[2], grab_what = "everything"),
