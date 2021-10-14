@@ -82,6 +82,7 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
 
   checkFileType(xml_data, "mzML")
   rtrange <- checkRTrange(rtrange)
+  prefilter <- checkProvidedPrefilter(prefilter)
   file_metadata <- grabMzmlEncodingData(xml_data)
 
   output_data <- list()
