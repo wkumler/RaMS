@@ -78,10 +78,12 @@ minifyMzml <- function(filename, output_filename,
   ms1_minified <- mapply(function(ms1_mz_node, ms1_int_node){
     mzs <- getEncoded(xml2::xml_text(ms1_mz_node),
                       compression_type = file_metadata$compression,
-                      bin_precision = file_metadata$mz_precision)
+                      bin_precision = file_metadata$mz_precision,
+                      endi_enc = file_metadata$endi_enc)
     ints <- getEncoded(xml2::xml_text(ms1_int_node),
                        compression_type = file_metadata$compression,
-                       bin_precision = file_metadata$int_precision)
+                       bin_precision = file_metadata$int_precision,
+                       endi_enc = file_metadata$endi_enc)
     if(!is.null(mz_whitelist)){
       whitelist_data <- lapply(mz_whitelist, function(mz_i){
         range_i <- pmppm(mz_i, ppm)
@@ -370,13 +372,15 @@ minifyMzxml <- function(filename, output_filename, mz_blacklist=NULL,
 #' @param mzint_nodes The XML nodes containing the compressed binary string
 #' @param compression_type Compression type to be used by memDecompress
 #' @param bin_precision The bit (?) precision used by readBin
+#' @param endi_enc The byte order (?) of the string. For mzML this is always
+#'   "little" but mzXML can also be "big"
 #'
 #' @return A numeric vector of m/z or intensity values
-getEncoded <- function(mzint_nodes, compression_type, bin_precision){
+getEncoded <- function(mzint_nodes, compression_type, bin_precision, endi_enc){
   decoded_mzs <- base64enc::base64decode(mzint_nodes)
   decomp_mzs <- memDecompress(decoded_mzs, type = compression_type)
   readBin(decomp_mzs, what = "double", n=length(decomp_mzs)/bin_precision,
-          size = bin_precision)
+          size = bin_precision, endian = endi_enc)
 }
 
 #' Convert from R numeric vector to compressed binary
@@ -384,6 +388,8 @@ getEncoded <- function(mzint_nodes, compression_type, bin_precision){
 #' @param mzint_vals A numeric vector of m/z or intensity values
 #' @param compression_type Compression type to be used by memCompress
 #' @param bin_precision The bit (?) precision used by writeBin
+#' @param endi_enc The byte order (?) of the string. For mzML this is always
+#'   "little" but mzXML can also be "big"
 #'
 #' @return A single base64-encoded string of compressed binary values
 giveEncoding <- function(mzint_vals, compression_type, bin_precision, endi_enc){
