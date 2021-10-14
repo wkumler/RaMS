@@ -3,10 +3,6 @@
 # Publish new version to CRAN
 
 # minifyMSdata ----
-msfiles <- list.files("msdata_making/", pattern = "HL", full.names = TRUE)
-msout <- gsub("170223", "mini", msfiles)
-minifyMSdata(msfiles, msout, mz_whitelist = c(118.0865, 138.0555), ppm=5)
-
 minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
                          mz_whitelist=NULL, ppm=NULL, warn=TRUE,
                          prefilter=-1, verbosity=NULL){
