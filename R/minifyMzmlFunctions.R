@@ -241,7 +241,6 @@ minifyMzml <- function(filename, output_filename,
 #' must be used with the `ppm` argument and should not be used with mz_blacklist. For each mass provided, an
 #' m/z window of +/- `ppm` is calculated, and all data points within that window are kept.
 #' @param ppm The parts-per-million error of the instrument used to collect the original file.
-#' @param warn Boolean. Should the function warn the user when removing an index from an mzML file?
 #'
 #' @return Invisibly, the name of the new file.
 #' @export
