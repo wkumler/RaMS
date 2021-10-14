@@ -202,7 +202,7 @@ minifyMzml <- function(filename, output_filename,
       stop("Either `mz_whitelist` or `mz_blacklist` must not be NULL")
     }
     subfilter_idxs <- output_mat[,"ints"]<prefilter
-    output_mat <- output_mat[!subfilter_idxs,]
+    output_mat <- output_mat[!subfilter_idxs, ,drop=FALSE]
     if(nrow(output_mat)==0){
       recoded_mzs <- ""
       recoded_ints <- ""
@@ -407,7 +407,7 @@ minifyMzxml <- function(filename, output_filename, mz_blacklist=NULL,
       stop("Either `mz_whitelist` or `mz_blacklist` must not be NULL")
     }
     subfilter_idxs <- output_mat[,"ints"]<prefilter
-    output_mat <- output_mat[!subfilter_idxs,]
+    output_mat <- output_mat[!subfilter_idxs, ,drop=FALSE]
     if(nrow(output_mat)==0){
       recoded_mzints <- ""
       bpmz <- 0
