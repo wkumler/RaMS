@@ -198,13 +198,10 @@ minifyMzml <- function(filename, output_filename,
         iterated_ints <- iterated_ints[!iterate_idxs]
       }
       output_mat <- cbind(mzs=iterated_mzs, ints=iterated_ints)
-      if(any(is.na(output_mat))){
-        browser("Found you an NA:")
-      }
     } else {
       stop("Either `mz_whitelist` or `mz_blacklist` must not be NULL")
     }
-    subfilter_idxs <- output_mat[,"int"]<prefilter
+    subfilter_idxs <- output_mat[,"ints"]<prefilter
     output_mat <- output_mat[!subfilter_idxs,]
     if(nrow(output_mat)==0){
       recoded_mzs <- ""
@@ -409,7 +406,7 @@ minifyMzxml <- function(filename, output_filename, mz_blacklist=NULL,
     } else {
       stop("Either `mz_whitelist` or `mz_blacklist` must not be NULL")
     }
-    subfilter_idxs <- output_mat[,"int"]<prefilter
+    subfilter_idxs <- output_mat[,"ints"]<prefilter
     output_mat <- output_mat[!subfilter_idxs,]
     if(nrow(output_mat)==0){
       recoded_mzints <- ""
