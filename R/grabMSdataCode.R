@@ -272,15 +272,32 @@ checkProvidedMzPpm <- function(mz, ppm){
   }
 }
 
+checkRTrange <- function(rtrange){
+  if(!is.null(rtrange)){
+    if("matrix"%in%class(rtrange)){
+      rtrange <- as.vector(rtrange)
+    }
+    if(length(rtrange)!=2){
+      stop("Please provide an rtrange of length 2")
+    }
+    if(class(rtrange)!="numeric"&&class(rtrange)!="integer"){
+      stop("Please provide a numeric rtrange")
+    }
+  }
+  rtrange
+}
+
 checkProvidedPrefilter <- function(prefilter){
-  if(!is.numeric(prefilter)){warning(
-    paste0("`prefilter` argument should be numeric, but instead it seems to be ",
-           class(prefilter), " with value ", prefilter, ". Ignoring...")
+  if(!is.numeric(prefilter)){
+    warning(paste0("`prefilter` argument should be numeric, but instead it ",
+                   "seems to be ", class(prefilter), " with value ",
+                   prefilter, ". Replacing with -1..."))
+
     prefilter <- -1
-  )}
+  }
   if(length(prefilter)>1){
     warning(paste0("`prefilter` argument should be length 1, but instead it ",
-                   "seems to be ", length(prefilter), ". Ignoring all later ",
+                   "seems to be ", length(prefilter), ". Ignoring all extra ",
                    "values..."))
     prefilter <- prefilter[1]
   }
@@ -315,21 +332,6 @@ timeReport <- function(last_time, text=NULL){
   cat(time_total, units(time_total), "\n")
   cat(text)
   Sys.time()
-}
-
-checkRTrange <- function(rtrange){
-  if(!is.null(rtrange)){
-    if("matrix"%in%class(rtrange)){
-      rtrange <- as.vector(rtrange)
-    }
-    if(length(rtrange)!=2){
-      stop("Please provide an rtrange of length 2")
-    }
-    if(class(rtrange)!="numeric"&&class(rtrange)!="integer"){
-      stop("Please provide a numeric rtrange")
-    }
-  }
-  rtrange
 }
 
 
