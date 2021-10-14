@@ -9,7 +9,7 @@ minifyMSdata(msfiles, msout, mz_whitelist = c(118.0865, 138.0555), ppm=5)
 
 minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
                          mz_whitelist=NULL, ppm=NULL, warn=TRUE,
-                         verbosity=NULL){
+                         prefilter=-1, verbosity=NULL){
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
@@ -68,11 +68,11 @@ minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
     if(grepl("mzML", basename(filename), ignore.case = TRUE)){
       minifyMzml(filename, output_filename = output_filenames[i],
                  mz_blacklist = mz_blacklist, mz_whitelist = mz_whitelist,
-                 ppm = ppm, warn = warn)
+                 ppm = ppm, warn = warn, prefilter = prefilter)
     } else if(grepl("mzXML", basename(filename), ignore.case = TRUE)){
       minifyMzxml(filename, output_filename = output_filenames[i],
                   mz_blacklist = mz_blacklist, mz_whitelist = mz_whitelist,
-                  ppm = ppm)
+                  ppm = ppm, prefilter = prefilter)
     } else {
       stop(paste("Unable to determine file type for", filename))
     }
@@ -114,6 +114,11 @@ minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
 #' m/z window of +/- `ppm` is calculated, and all data points within that window are kept.
 #' @param ppm The parts-per-million error of the instrument used to collect the original file.
 #' @param warn Boolean. Should the function warn the user when removing an index from an mzML file?
+#' @param prefilter A single number corresponding to the minimum intensity of
+#'   interest in the MS1 data. Data points with intensities below this threshold
+#'   will be silently dropped, which can dramatically reduce the size of the
+#'   final object. Currently only works with MS1 data, but could be expanded
+#'   easily to handle more.
 #'
 #' @return Invisibly, the name of the new file.
 #' @export
@@ -138,10 +143,11 @@ minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
 #' }
 minifyMzml <- function(filename, output_filename,
                        mz_blacklist=NULL, mz_whitelist=NULL,
-                       ppm=NULL, warn=TRUE){
+                       ppm=NULL, warn=TRUE, prefilter=-1){
   xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzML")
+  prefilter <- checkProvidedPrefilter(prefilter)
   file_metadata <- grabMzmlEncodingData(xml_data)
 
   # Check for indexed mzML and drop index if present, with warning
@@ -202,6 +208,8 @@ minifyMzml <- function(filename, output_filename,
     } else {
       stop("Either `mz_whitelist` or `mz_blacklist` must not be NULL")
     }
+    subfilter_idxs <- output_mat[,"int"]<prefilter
+    output_mat <- output_mat[!subfilter_idxs,]
     if(nrow(output_mat)==0){
       recoded_mzs <- ""
       recoded_ints <- ""
@@ -330,6 +338,11 @@ minifyMzml <- function(filename, output_filename,
 #' must be used with the `ppm` argument and should not be used with mz_blacklist. For each mass provided, an
 #' m/z window of +/- `ppm` is calculated, and all data points within that window are kept.
 #' @param ppm The parts-per-million error of the instrument used to collect the original file.
+#' @param prefilter A single number corresponding to the minimum intensity of
+#'   interest in the MS1 data. Data points with intensities below this threshold
+#'   will be silently dropped, which can dramatically reduce the size of the
+#'   final object. Currently only works with MS1 data, but could be expanded
+#'   easily to handle more.
 #'
 #' @return Invisibly, the name of the new file.
 #' @export
@@ -353,10 +366,11 @@ minifyMzml <- function(filename, output_filename,
 #' unlink(output_filename)
 #' }
 minifyMzxml <- function(filename, output_filename, mz_blacklist=NULL,
-                        mz_whitelist=NULL,ppm=NULL){
+                        mz_whitelist=NULL, ppm=NULL, prefilter=-1){
   xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzXML")
+  prefilter <- checkProvidedPrefilter(prefilter)
   file_metadata <- grabMzxmlEncodingData(xml_data)
 
   # Find MS1 intensity and m/z nodes
@@ -399,6 +413,8 @@ minifyMzxml <- function(filename, output_filename, mz_blacklist=NULL,
     } else {
       stop("Either `mz_whitelist` or `mz_blacklist` must not be NULL")
     }
+    subfilter_idxs <- output_mat[,"int"]<prefilter
+    output_mat <- output_mat[!subfilter_idxs,]
     if(nrow(output_mat)==0){
       recoded_mzints <- ""
       bpmz <- 0
