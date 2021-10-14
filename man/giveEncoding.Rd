@@ -4,7 +4,7 @@
 \alias{giveEncoding}
 \title{Convert from R numeric vector to compressed binary}
 \usage{
-giveEncoding(mzint_vals, compression_type, bin_precision)
+giveEncoding(mzint_vals, compression_type, bin_precision, endi_enc)
 }
 \arguments{
 \item{mzint_vals}{A numeric vector of m/z or intensity values}
@@ -12,6 +12,9 @@ giveEncoding(mzint_vals, compression_type, bin_precision)
 \item{compression_type}{Compression type to be used by memCompress}
 
 \item{bin_precision}{The bit (?) precision used by writeBin}
+
+\item{endi_enc}{The byte order (?) of the string. For mzML this is always
+"little" but mzXML can also be "big"}
 }
 \value{
 A single base64-encoded string of compressed binary values

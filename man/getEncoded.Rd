@@ -4,7 +4,7 @@
 \alias{getEncoded}
 \title{Convert from compressed binary to R numeric vector}
 \usage{
-getEncoded(mzint_nodes, compression_type, bin_precision)
+getEncoded(mzint_nodes, compression_type, bin_precision, endi_enc)
 }
 \arguments{
 \item{mzint_nodes}{The XML nodes containing the compressed binary string}
@@ -12,6 +12,9 @@ getEncoded(mzint_nodes, compression_type, bin_precision)
 \item{compression_type}{Compression type to be used by memDecompress}
 
 \item{bin_precision}{The bit (?) precision used by readBin}
+
+\item{endi_enc}{The byte order (?) of the string. For mzML this is always
+"little" but mzXML can also be "big"}
 }
 \value{
 A numeric vector of m/z or intensity values
