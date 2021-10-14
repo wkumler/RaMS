@@ -154,3 +154,38 @@ test_that("whitelisted file has data only within bounds", {
 
 unlink(output_filename)
 unlink(output_dir)
+
+
+# Multifile tests ----
+output_dir <- tempdir()
+
+# Test errors_n_messes
+test_that("minify errors and messages work", {
+  # Error when file not found
+  expect_error(minifyMSdata(files = "banana"))
+
+  # Fancy error when many files not found
+  expect_error(minifyMSdata(files = letters[1:5]))
+
+  # Warn on overwrite
+  expect_warning(minifyMSdata(files = mzML_filenames[2:4]))
+
+  # Stop if lengths not equal
+  expect_error(minifyMSdata(files = mzML_filenames[2:4],
+                            output_filenames = "banana"))
+
+  # Stop if types not same
+  acc_files <- gsub("mzML", "mzXML", mzML_filenames[2:4])
+  expect_error(
+    minifyMSdata(mzML_filenames[2:4], acc_files)
+  )
+})
+
+# Test blacklist
+exclude_mzs <- c(118.0865, 138.0555)
+minifyMSdata(files, mz_blacklist=exclude_mzs, ppm=5, warn = FALSE)
+mini_msdata <- grabMSdata(output_filename)
+
+# Test whitelist
+include_mzs <- c(118.0865, 138.0555)
+minifyMSdata(filename, output_filename, mz_whitelist=include_mzs, ppm=5, warn = FALSE)
