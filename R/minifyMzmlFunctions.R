@@ -266,14 +266,14 @@ minifyMzxml <- function(filename, output_filename, mz_blacklist=NULL,
                         mz_whitelist=NULL,ppm=NULL){
   xml_data <- xml2::read_xml(filename)
 
-  RaMS:::checkFileType(xml_data, "mzXML")
-  file_metadata <- RaMS:::grabMzxmlEncodingData(xml_data)
+  checkFileType(xml_data, "mzXML")
+  file_metadata <- grabMzxmlEncodingData(xml_data)
 
   # Find MS1 intensity and m/z nodes
   ms1_xpath <- '//d1:scan[@msLevel="1" and @peaksCount>0]'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
 
-  mz_int_vals <- RaMS:::grabMzxmlSpectraMzInt(ms1_nodes, file_metadata)
+  mz_int_vals <- grabMzxmlSpectraMzInt(ms1_nodes, file_metadata)
 
   # Convert MS1 nodes into data.tables
   ms1_minified <- lapply(mz_int_vals, function(mz_int_val){
