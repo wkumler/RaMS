@@ -2,6 +2,95 @@
 # Write warning for MS2 data OR write MS2 code
 # Publish new version to CRAN
 
+# minifyMSdata ----
+msfiles <- list.files("msdata_making/", pattern = "HL", full.names = TRUE)
+msout <- gsub("170223", "mini", msfiles)
+minifyMSdata(msfiles, msout, mz_whitelist = c(118.0865, 138.0555), ppm=5)
+
+minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
+                         mz_whitelist=NULL, ppm=NULL, warn=TRUE,
+                         verbosity=NULL){
+  # Check that files were provided
+  if(!length(files)>0)stop("No files provided")
+
+  # Check that all files exist, stop if not
+  files_exist <- sapply(files, file.exists)
+  if(!all(files_exist)){
+    if(sum(!files_exist)>1){
+      message("Files not found:")
+      message(paste0(files[!files_exist][1:3], collapse = "\n"))
+      message("...and ", sum(!files_exist)-3, " more")
+      stop("Stopping!")
+    } else {
+      message(paste("File not found:", files[!files_exist]))
+      stop("Stopping!")
+    }
+  }
+
+  # Warn if originals are going to be overwritten
+  if(is.null(output_filenames)){
+    output_filenames <- files
+  }
+  if(all(sort(files)==sort(output_filenames))){
+    warning(paste("Output files would overwrite originals:",
+                  "adding '_mini' to each output filename"))
+    output_filenames <- gsub("\\.(?=mz[X]ML$)", replacement = "_mini\\.",
+                             output_filenames, perl = TRUE)
+  }
+
+  # Stop if input not same length as output
+  if(length(files)!=length(output_filenames)){
+    stop("`output_filenames` must be the same length as `files`")
+  }
+
+  # Check that output files are same type as input files
+  mzmls <- grepl("mzml", basename(files), ignore.case = TRUE)
+  mzxmls <- grepl("mzxml", basename(files), ignore.case = TRUE)
+  out_mzmls <- grepl("mzml", basename(output_filenames), ignore.case = TRUE)
+  out_mzxmls <- grepl("mzxml", basename(output_filenames), ignore.case = TRUE)
+  if(!all(mzmls==out_mzmls)|!all(mzxmls==out_mzxmls)){
+    stop("minifyMSdata cannot convert from mzML to mzXML or vice-versa")
+  }
+
+  # Provide some output if requested
+  if(is.null(verbosity)){
+    verbosity <- ifelse(length(files)==1, 2, 1)
+  }
+  if(verbosity>0){
+    if(length(files)>=2){
+      pb <- txtProgressBar(min = 0, max = length(files), style = 3)
+    }
+    start_time <- Sys.time()
+  }
+  for(i in seq_along(files)){
+    filename <- files[i]
+
+    if(grepl("mzML", basename(filename), ignore.case = TRUE)){
+      minifyMzml(filename, output_filename = output_filenames[i],
+                 mz_blacklist = mz_blacklist, mz_whitelist = mz_whitelist,
+                 ppm = ppm, warn = warn)
+    } else if(grepl("mzXML", basename(filename), ignore.case = TRUE)){
+      minifyMzxml(filename, output_filename = output_filenames[i],
+                  mz_blacklist = mz_blacklist, mz_whitelist = mz_whitelist,
+                  ppm = ppm)
+    } else {
+      stop(paste("Unable to determine file type for", filename))
+    }
+    if(verbosity>0 & length(files)>=2){
+      setTxtProgressBar(pb, i)
+    }
+  }
+  if(verbosity>0){
+    if(length(files)>=2){
+      close(pb)
+    }
+    time_total <- round(difftime(Sys.time(), start_time), digits = 2)
+    cat("Total time:", time_total, units(time_total), "\n")
+  }
+}
+
+
+
 
 # minifyMzml ----
 
