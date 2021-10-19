@@ -169,7 +169,10 @@ test_that("Fancy error when many files not found", {
 })
 
 test_that("Warn on overwrite", {
+  extdata_dir <- unique(dirname(mzML_filenames))
+  init_files <- list.files(extdata_dir, full.names = TRUE)
   expect_warning(minifyMSdata(files = mzML_filenames[2:4], ppm = 5, mz_whitelist=include_mzs))
+  file.remove(setdiff(list.files(extdata_dir, full.names = TRUE), init_files))
 })
 
 
@@ -183,3 +186,4 @@ test_that("Stop if types not same", {
     minifyMSdata(mzML_filenames[2:4], acc_files)
   )
 })
+
