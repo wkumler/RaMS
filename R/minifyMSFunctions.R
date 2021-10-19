@@ -23,6 +23,11 @@ minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
     }
   }
 
+  # Check that ppm is not NULL
+  if(is.null(ppm)){
+    stop("`ppm` must be provided by the user, but seems to still be NULL.")
+  }
+
   # Warn if originals are going to be overwritten
   if(is.null(output_filenames)){
     output_filenames <- files
@@ -30,7 +35,7 @@ minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
   if(all(sort(files)==sort(output_filenames))){
     warning(paste("Output files would overwrite originals:",
                   "adding '_mini' to each output filename"))
-    output_filenames <- gsub("\\.(?=mz[X]ML$)", replacement = "_mini\\.",
+    output_filenames <- gsub("\\.(?=mz[X]?ML)", replacement = "_mini\\.",
                              output_filenames, perl = TRUE)
   }
 
@@ -59,18 +64,16 @@ minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
     start_time <- Sys.time()
   }
   for(i in seq_along(files)){
-    filename <- files[i]
-
-    if(grepl("mzML", basename(filename), ignore.case = TRUE)){
-      minifyMzml(filename, output_filename = output_filenames[i],
+    if(grepl("mzML", basename(files[i]), ignore.case = TRUE)){
+      minifyMzml(files[i], output_filename = output_filenames[i],
                  mz_blacklist = mz_blacklist, mz_whitelist = mz_whitelist,
                  ppm = ppm, warn = warn, prefilter = prefilter)
-    } else if(grepl("mzXML", basename(filename), ignore.case = TRUE)){
-      minifyMzxml(filename, output_filename = output_filenames[i],
+    } else if(grepl("mzXML", basename(files[i]), ignore.case = TRUE)){
+      minifyMzxml(files[i], output_filename = output_filenames[i],
                   mz_blacklist = mz_blacklist, mz_whitelist = mz_whitelist,
                   ppm = ppm, prefilter = prefilter)
     } else {
-      stop(paste("Unable to determine file type for", filename))
+      stop(paste("Unable to determine file type for", files[i]))
     }
     if(verbosity>0 & length(files)>=2){
       setTxtProgressBar(pb, i)
@@ -137,9 +140,9 @@ minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
 #' minifyMzml(filename, output_filename, mz_blacklist=exclude_mzs, ppm=5)
 #' unlink(output_filename)
 #' }
-minifyMzml <- function(filename, output_filename,
+minifyMzml <- function(filename, output_filename, ppm,
                        mz_blacklist=NULL, mz_whitelist=NULL,
-                       ppm=NULL, warn=TRUE, prefilter=-1){
+                       warn=TRUE, prefilter=-1){
   xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzML")
@@ -358,8 +361,8 @@ minifyMzml <- function(filename, output_filename,
 #' minifyMzxml(filename, output_filename, mz_blacklist=exclude_mzs, ppm=5)
 #' unlink(output_filename)
 #' }
-minifyMzxml <- function(filename, output_filename, mz_blacklist=NULL,
-                        mz_whitelist=NULL, ppm=NULL, prefilter=-1){
+minifyMzxml <- function(filename, output_filename, ppm, mz_blacklist=NULL,
+                        mz_whitelist=NULL, prefilter=-1){
   xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzXML")
