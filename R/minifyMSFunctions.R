@@ -258,25 +258,16 @@ minifyMzml <- function(filename, output_filename, ppm,
   xml2::xml_attr(int_enclength_nodes, "encodedLength") <- ms1_minified$int_enclength
 
 
-  bpmz_xpath <- "d1:cvParam[@name='base peak m/z']"
-  init_bpmz_node <- xml2::xml_find_all(ms1_nodes, bpmz_xpath)
-  xml2::xml_attr(init_bpmz_node, "value") <- ms1_minified$bpmz
+  # Update scan metadata
+  param_xpath <- c("base peak m/z", "base peak intensity", "total ion current",
+                   "lowest observed m/z", "highest observed m/z")
+  param_cols <- c("bpmz", "bpint", "ticur", "minmz", "maxmz")
+  mapply(function(xpath, val){
+    full_xpath <- paste0("d1:cvParam[@name='", xpath, "']")
+    node <- xml2::xml_find_all(ms1_nodes, full_xpath)
+    xml2::xml_attr(node, "value") <- ms1_minified[[val]]
+  }, param_xpath, param_cols)
 
-  bpint_xpath <- "d1:cvParam[@name='base peak intensity']"
-  init_bpc_node <- xml2::xml_find_all(ms1_nodes, bpint_xpath)
-  xml2::xml_attr(init_bpc_node, "value") <- ms1_minified$bpint
-
-  ticur_xpath <- "d1:cvParam[@name='total ion current']"
-  init_tic_node <- xml2::xml_find_all(ms1_nodes, ticur_xpath)
-  xml2::xml_attr(init_tic_node, "value") <- ms1_minified$ticur
-
-  minmz_xpath <- "d1:cvParam[@name='lowest observed m/z']"
-  init_minmz_node <- xml2::xml_find_all(ms1_nodes, minmz_xpath)
-  xml2::xml_attr(init_minmz_node, "value") <- ms1_minified$minmz
-
-  maxmz_xpath <- "d1:cvParam[@name='highest observed m/z']"
-  init_maxmz_node <- xml2::xml_find_all(ms1_nodes, maxmz_xpath)
-  xml2::xml_attr(init_maxmz_node, "value") <- ms1_minified$maxmz
 
 
   # Add note that RaMS was used to shrink the file
