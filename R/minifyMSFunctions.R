@@ -143,6 +143,12 @@ minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
 minifyMzml <- function(filename, output_filename, ppm,
                        mz_blacklist=NULL, mz_whitelist=NULL,
                        warn=TRUE, prefilter=-1){
+  if(missing(ppm)){
+    stop("Must provide ppm value!")
+  }
+  if(is.null(mz_blacklist) & is.null(mz_whitelist)){
+    stop("Either `mz_whitelist` or `mz_blacklist` must not be NULL")
+  }
   xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzML")
