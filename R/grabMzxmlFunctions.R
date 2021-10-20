@@ -339,7 +339,7 @@ grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange){
 #' @return A `data.table` with columns for retention time (rt), and intensity (int).
 grabMzxmlBPC <- function(xml_data, TIC=FALSE, rtrange){
   scan_nodes <- xml2::xml_find_all(
-    xml_data, '//d1:scan[@msLevel="1" and @peaksCount>0]'
+    xml_data, '//d1:scan[@msLevel="1"]'
   )
   rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
   rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
