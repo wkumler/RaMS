@@ -165,7 +165,8 @@ minifyMzml <- function(filename, output_filename, ppm,
     xml_data <- xml2::xml_new_root(xml2::xml_find_first(xml_data, "//d1:mzML"))
   }
 
-  # Find MS1 intensity and m/z nodes
+  # MS1 things
+  ### Find MS1 intensity and m/z nodes
   ms1_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
                       '@value="1"]][d1:cvParam[@name="base peak intensity"]]')
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
@@ -174,7 +175,7 @@ minifyMzml <- function(filename, output_filename, ppm,
   int_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[2]/d1:binary'
   ms1_int_nodes <- xml2::xml_find_all(ms1_nodes, int_xpath)
 
-  # Convert MS1 nodes into data.tables
+  ### Convert MS1 nodes into data.tables
   ms1_minified <- mapply(function(ms1_mz_node, ms1_int_node){
     mzs <- getEncoded(xml2::xml_text(ms1_mz_node),
                       compression_type = file_metadata$compression,
@@ -208,7 +209,7 @@ minifyMzml <- function(filename, output_filename, ppm,
       }
       output_mat <- cbind(mzs=iterated_mzs, ints=iterated_ints)
     } else {
-      stop("Either `mz_whitelist` or `mz_blacklist` must not be NULL")
+      print("This should never show up!")
     }
     subfilter_idxs <- output_mat[,"ints"]<prefilter
     output_mat <- output_mat[!subfilter_idxs, ,drop=FALSE]
@@ -250,21 +251,18 @@ minifyMzml <- function(filename, output_filename, ppm,
   }, ms1_mz_nodes, ms1_int_nodes, SIMPLIFY = FALSE)
   ms1_minified <- do.call(what = "rbind", ms1_minified)
 
+  ### Replace with new data
   xml2::xml_text(ms1_mz_nodes) <- ms1_minified$mzs
   xml2::xml_text(ms1_int_nodes) <- ms1_minified$ints
-
   xml2::xml_attr(ms1_nodes, "defaultArrayLength") <- ms1_minified$arraylength
-
   mz_enclength_xpath <- "d1:binaryDataArrayList/d1:binaryDataArray[d1:cvParam[@name='m/z array']]"
   mz_enclength_nodes <- xml2::xml_find_all(ms1_nodes, mz_enclength_xpath)
   xml2::xml_attr(mz_enclength_nodes, "encodedLength") <- ms1_minified$mz_enclength
-
   int_enclength_xpath <- "d1:binaryDataArrayList/d1:binaryDataArray[d1:cvParam[@name='intensity array']]"
   int_enclength_nodes <- xml2::xml_find_all(ms1_nodes, int_enclength_xpath)
   xml2::xml_attr(int_enclength_nodes, "encodedLength") <- ms1_minified$int_enclength
 
-
-  # Update scan metadata
+  ### Update MS1 scan metadata
   param_xpath <- c("base peak m/z", "base peak intensity", "total ion current",
                    "lowest observed m/z", "highest observed m/z")
   param_cols <- c("bpmz", "bpint", "ticur", "minmz", "maxmz")
@@ -274,6 +272,29 @@ minifyMzml <- function(filename, output_filename, ppm,
     xml2::xml_attr(node, "value") <- ms1_minified[[val]]
   }, param_xpath, param_cols)
 
+
+  # MS2 things
+  ### Drop all nodes with a precursor m/z outside of bounds
+  ms2_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
+                      '@value="2"]][d1:cvParam[@name="base peak intensity"]]')
+  ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
+  pre_xpath <- paste0('d1:precursorList/d1:precursor/d1:selectedIonList/',
+                      'd1:selectedIon/d1:cvParam[@name="selected ion m/z"]')
+  ms2_pre_nodes <- xml2::xml_find_all(ms2_nodes, pre_xpath)
+  ms2_pre_vals <- as.numeric(xml2::xml_attr(ms2_pre_nodes, "value"))
+  if(!is.null(mz_whitelist)){
+    ms2_subset <- unlist(lapply(mz_whitelist, function(premz_i){
+      mzrange <- pmppm(premz_i, ppm)
+      which(data.table::between(ms2_pre_vals, mzrange[1], mzrange[2]))
+    }))
+    to_remove <- setdiff(seq_along(ms2_pre_vals), ms2_subset)
+  } else {
+    to_remove <- unlist(lapply(mz_blacklist, function(premz_i){
+      mzrange <- pmppm(premz_i, ppm)
+      which(data.table::between(ms2_pre_vals, mzrange[1], mzrange[2]))
+    }))
+  }
+  xml2::xml_remove(ms2_nodes[to_remove])
 
 
   # Add note that RaMS was used to shrink the file
