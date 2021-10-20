@@ -10,7 +10,8 @@ minifyMzxml(
   ppm,
   mz_blacklist = NULL,
   mz_whitelist = NULL,
-  prefilter = -1
+  prefilter = -1,
+  warn = TRUE
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ interest in the MS1 data. Data points with intensities below this threshold
 will be silently dropped, which can dramatically reduce the size of the
 final object. Currently only works with MS1 data, but could be expanded
 easily to handle more.}
+
+\item{warn}{Boolean. Should the function warn the user when removing an index from an mzML file?}
 }
 \value{
 Invisibly, the name of the new file.

@@ -325,6 +325,7 @@ minifyMzml <- function(filename, output_filename, ppm,
 #' must be used with the `ppm` argument and should not be used with mz_blacklist. For each mass provided, an
 #' m/z window of +/- `ppm` is calculated, and all data points within that window are kept.
 #' @param ppm The parts-per-million error of the instrument used to collect the original file.
+#' @param warn Boolean. Should the function warn the user when removing an index from an mzML file?
 #' @param prefilter A single number corresponding to the minimum intensity of
 #'   interest in the MS1 data. Data points with intensities below this threshold
 #'   will be silently dropped, which can dramatically reduce the size of the
@@ -353,7 +354,7 @@ minifyMzml <- function(filename, output_filename, ppm,
 #' unlink(output_filename)
 #' }
 minifyMzxml <- function(filename, output_filename, ppm, mz_blacklist=NULL,
-                        mz_whitelist=NULL, prefilter=-1){
+                        mz_whitelist=NULL, prefilter=-1, warn=TRUE){
   xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzXML")
@@ -450,6 +451,19 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_blacklist=NULL,
   proc_node <- xml2::xml_find_first(xml_data, "//dataProcessing")
   xml2::xml_add_child(proc_node, "software", type="minification", name="RaMS",
                       version=as.character(packageVersion("RaMS")))
+
+  # Remove index because the bytes will be off
+  index_node <- xml2::xml_find_first(xml_data, xpath = "/d1:mzXML/d1:indexs")
+  if(is.na(xml2::xml_type(index_node))){
+    if(warn){
+      warning(paste0("mzXML file ", basename(filename), " contains an index. ",
+                     "I don't know how to recompile indices so it's ",
+                     "getting dropped for the minified file."))
+    }
+    xml2::xml_remove(index_node)
+  }
+  offset_node <- xml2::xml_find_first(xml_data, xpath = "/d1:mzXML/d1:indexOffset")
+  xml2::xml_remove(offset_node)
 
   # And write out the new version
   xml2::write_xml(x = xml_data, file = output_filename)
