@@ -87,7 +87,7 @@ output_filename <- paste0(output_dir, "\\mini_mzXML.mzXML")
 
 # Test blacklist
 exclude_mzs <- c(118.0865, 138.0555)
-minifyMzxml(filename, output_filename, mz_blacklist=exclude_mzs, ppm=5)
+minifyMzxml(filename, output_filename, mz_blacklist=exclude_mzs, ppm=5, warn = FALSE)
 mini_msdata <- grabMSdata(output_filename)
 
 
@@ -113,7 +113,7 @@ test_that("blacklisted file has no data within bounds", {
 
 # Test whitelist
 include_mzs <- c(118.0865, 138.0555)
-minifyMzxml(filename, output_filename, mz_whitelist=include_mzs, ppm=5)
+minifyMzxml(filename, output_filename, mz_whitelist=include_mzs, ppm=5, warn = FALSE)
 mini_msdata <- grabMSdata(output_filename)
 
 test_that("minified file is smaller", {
