@@ -163,9 +163,9 @@ minifyMzml <- function(filename, output_filename, ppm,
   ms1_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
                       '@value="1"]][d1:cvParam[@name="base peak intensity"]]')
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
-  mz_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[1]/d1:binary//text()'
+  mz_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[1]/d1:binary'
   ms1_mz_nodes <- xml2::xml_find_all(ms1_nodes, mz_xpath)
-  int_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[2]/d1:binary//text()'
+  int_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[2]/d1:binary'
   ms1_int_nodes <- xml2::xml_find_all(ms1_nodes, int_xpath)
 
   # Convert MS1 nodes into data.tables
