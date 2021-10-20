@@ -1,4 +1,5 @@
-library(RaMS)
+devtools::load_all()
+library(tidyverse)
 library(data.table)
 
 # Load the defaults ----
