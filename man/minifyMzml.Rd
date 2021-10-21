@@ -8,8 +8,8 @@ minifyMzml(
   filename,
   output_filename,
   ppm,
-  mz_blacklist = NULL,
-  mz_whitelist = NULL,
+  mz_exclude = NULL,
+  mz_include = NULL,
   warn = TRUE,
   prefilter = -1
 )
@@ -22,12 +22,12 @@ or something similar.}
 
 \item{ppm}{The parts-per-million error of the instrument used to collect the original file.}
 
-\item{mz_blacklist}{A vector of m/z values that should be excluded from the minified file. This argument
-must be used with the `ppm` argument and should not be used with mz_whitelist. For each mass provided, an
+\item{mz_exclude}{A vector of m/z values that should be excluded from the minified file. This argument
+must be used with the `ppm` argument and should not be used with mz_include. For each mass provided, an
 m/z window of +/- `ppm` is calculated, and all data points within that window are removed.}
 
-\item{mz_whitelist}{A vector of m/z values that should be included in the minified file. This argument
-must be used with the `ppm` argument and should not be used with mz_blacklist. For each mass provided, an
+\item{mz_include}{A vector of m/z values that should be included in the minified file. This argument
+must be used with the `ppm` argument and should not be used with mz_exclude. For each mass provided, an
 m/z window of +/- `ppm` is calculated, and all data points within that window are kept.}
 
 \item{warn}{Boolean. Should the function warn the user when removing an index from an mzML file?}
@@ -57,14 +57,14 @@ library(RaMS)
 filename <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
 output_filename <- "mini_LB12HL_AB.mzML"
 include_mzs <- c(118.0865, 138.0555)
-minifyMzml(filename, output_filename, mz_whitelist=include_mzs, ppm=5)
+minifyMzml(filename, output_filename, mz_include=include_mzs, ppm=5)
 unlink(output_filename)
 
 # Exclude data corresponding to valine and homarine
 filename <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
 output_filename <- "mini_LB12HL_AB.mzML"
 exclude_mzs <- c(118.0865, 138.0555)
-minifyMzml(filename, output_filename, mz_blacklist=exclude_mzs, ppm=5)
+minifyMzml(filename, output_filename, mz_exclude=exclude_mzs, ppm=5)
 unlink(output_filename)
 }
 }

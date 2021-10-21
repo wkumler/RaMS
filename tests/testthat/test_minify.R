@@ -7,7 +7,7 @@ output_filename <- paste0(output_dir, "\\mini_mzML.mzML")
 
 # Test blacklist
 exclude_mzs <- c(118.0865, 138.0555)
-minifyMzml(filename, output_filename, mz_blacklist=exclude_mzs, ppm=5, warn = FALSE)
+minifyMzml(filename, output_filename, mz_exclude=exclude_mzs, ppm=5, warn = FALSE)
 mini_msdata <- grabMSdata(output_filename)
 
 
@@ -34,7 +34,7 @@ test_that("blacklisted file has no data within bounds", {
 
 # Test whitelist
 include_mzs <- c(118.0865, 138.0555)
-minifyMzml(filename, output_filename, mz_whitelist=include_mzs, ppm=5, warn = FALSE)
+minifyMzml(filename, output_filename, mz_include=include_mzs, ppm=5, warn = FALSE)
 mini_msdata <- grabMSdata(output_filename)
 
 test_that("minified file is smaller", {
@@ -87,7 +87,7 @@ output_filename <- paste0(output_dir, "\\mini_mzXML.mzXML")
 
 # Test blacklist
 exclude_mzs <- c(118.0865, 138.0555)
-minifyMzxml(filename, output_filename, mz_blacklist=exclude_mzs, ppm=5, warn = FALSE)
+minifyMzxml(filename, output_filename, mz_exclude=exclude_mzs, ppm=5, warn = FALSE)
 mini_msdata <- grabMSdata(output_filename)
 
 
@@ -113,7 +113,7 @@ test_that("blacklisted file has no data within bounds", {
 
 # Test whitelist
 include_mzs <- c(118.0865, 138.0555)
-minifyMzxml(filename, output_filename, mz_whitelist=include_mzs, ppm=5, warn = FALSE)
+minifyMzxml(filename, output_filename, mz_include=include_mzs, ppm=5, warn = FALSE)
 mini_msdata <- grabMSdata(output_filename)
 
 test_that("minified file is smaller", {
@@ -171,14 +171,14 @@ test_that("Fancy error when many files not found", {
 test_that("Warn on overwrite", {
   extdata_dir <- unique(dirname(mzML_filenames))
   init_files <- list.files(extdata_dir, full.names = TRUE)
-  expect_warning(minifyMSdata(files = mzML_filenames[2:4], ppm = 5, mz_whitelist=include_mzs))
+  expect_warning(minifyMSdata(files = mzML_filenames[2:4], ppm = 5, mz_include=include_mzs))
   file.remove(setdiff(list.files(extdata_dir, full.names = TRUE), init_files))
 })
 
 
 test_that("Stop if lengths not equal", {
   expect_error(minifyMSdata(files = mzML_filenames[2:4],
-                            output_filenames = "banana"))
+                            output_files = "banana"))
 })
 test_that("Stop if types not same", {
   acc_files <- gsub("mzML", "mzXML", mzML_filenames[2:4])
@@ -196,8 +196,8 @@ output_dir <- tempdir()
 filename <- mzML_filenames[1]
 output_filename <- paste0(output_dir, "\\mini_DDA.mzML")
 mz_include <- 118.0865
-minifyMSdata(filename, output_filenames = output_filename,
-             mz_whitelist = mz_include, ppm = 5)
+minifyMSdata(filename, output_files = output_filename,
+             mz_include = mz_include, ppm = 5)
 
 full_data <- grabMSdata(filename)
 mini_data <- grabMSdata(output_filename)

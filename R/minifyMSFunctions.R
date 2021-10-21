@@ -1,8 +1,8 @@
 # TO-DO:
 
 # minifyMSdata ----
-minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
-                         mz_whitelist=NULL, ppm=NULL, warn=TRUE,
+minifyMSdata <- function(files, output_files=NULL, mz_exclude=NULL,
+                         mz_include=NULL, ppm=NULL, warn=TRUE,
                          prefilter=-1, verbosity=NULL){
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
@@ -27,26 +27,26 @@ minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
   }
 
   # Warn if originals are going to be overwritten
-  if(is.null(output_filenames)){
-    output_filenames <- files
+  if(is.null(output_files)){
+    output_files <- files
   }
-  if(all(sort(files)==sort(output_filenames))){
+  if(all(sort(files)==sort(output_files))){
     warning(paste("Output files would overwrite originals:",
                   "adding '_mini' to each output filename"))
-    output_filenames <- gsub("\\.(?=mz[X]?ML)", replacement = "_mini\\.",
-                             output_filenames, perl = TRUE)
+    output_files <- gsub("\\.(?=mz[X]?ML)", replacement = "_mini\\.",
+                             output_files, perl = TRUE)
   }
 
   # Stop if input not same length as output
-  if(length(files)!=length(output_filenames)){
-    stop("`output_filenames` must be the same length as `files`")
+  if(length(files)!=length(output_files)){
+    stop("`output_files` must be the same length as `files`")
   }
 
   # Check that output files are same type as input files
   mzmls <- grepl("mzml", basename(files), ignore.case = TRUE)
   mzxmls <- grepl("mzxml", basename(files), ignore.case = TRUE)
-  out_mzmls <- grepl("mzml", basename(output_filenames), ignore.case = TRUE)
-  out_mzxmls <- grepl("mzxml", basename(output_filenames), ignore.case = TRUE)
+  out_mzmls <- grepl("mzml", basename(output_files), ignore.case = TRUE)
+  out_mzxmls <- grepl("mzxml", basename(output_files), ignore.case = TRUE)
   if(!all(mzmls==out_mzmls)|!all(mzxmls==out_mzxmls)){
     stop("minifyMSdata cannot convert from mzML to mzXML or vice-versa")
   }
@@ -63,12 +63,12 @@ minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
   }
   for(i in seq_along(files)){
     if(grepl("mzML", basename(files[i]), ignore.case = TRUE)){
-      minifyMzml(files[i], output_filename = output_filenames[i],
-                 mz_blacklist = mz_blacklist, mz_whitelist = mz_whitelist,
+      minifyMzml(files[i], output_filename = output_files[i],
+                 mz_exclude = mz_exclude, mz_include = mz_include,
                  ppm = ppm, warn = warn, prefilter = prefilter)
     } else if(grepl("mzXML", basename(files[i]), ignore.case = TRUE)){
-      minifyMzxml(files[i], output_filename = output_filenames[i],
-                  mz_blacklist = mz_blacklist, mz_whitelist = mz_whitelist,
+      minifyMzxml(files[i], output_filename = output_files[i],
+                  mz_exclude = mz_exclude, mz_include = mz_include,
                   ppm = ppm, prefilter = prefilter)
     } else {
       stop(paste("Unable to determine file type for", files[i]))
@@ -103,11 +103,11 @@ minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
 #' @param filename The name of a single file to be minified, usually produced by Proteowizard's `msconvert`
 #' or something similar.
 #' @param output_filename The name of the file to be written out.
-#' @param mz_blacklist A vector of m/z values that should be excluded from the minified file. This argument
-#' must be used with the `ppm` argument and should not be used with mz_whitelist. For each mass provided, an
+#' @param mz_exclude A vector of m/z values that should be excluded from the minified file. This argument
+#' must be used with the `ppm` argument and should not be used with mz_include. For each mass provided, an
 #' m/z window of +/- `ppm` is calculated, and all data points within that window are removed.
-#' @param mz_whitelist A vector of m/z values that should be included in the minified file. This argument
-#' must be used with the `ppm` argument and should not be used with mz_blacklist. For each mass provided, an
+#' @param mz_include A vector of m/z values that should be included in the minified file. This argument
+#' must be used with the `ppm` argument and should not be used with mz_exclude. For each mass provided, an
 #' m/z window of +/- `ppm` is calculated, and all data points within that window are kept.
 #' @param ppm The parts-per-million error of the instrument used to collect the original file.
 #' @param warn Boolean. Should the function warn the user when removing an index from an mzML file?
@@ -128,24 +128,24 @@ minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
 #' filename <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
 #' output_filename <- "mini_LB12HL_AB.mzML"
 #' include_mzs <- c(118.0865, 138.0555)
-#' minifyMzml(filename, output_filename, mz_whitelist=include_mzs, ppm=5)
+#' minifyMzml(filename, output_filename, mz_include=include_mzs, ppm=5)
 #' unlink(output_filename)
 #'
 #' # Exclude data corresponding to valine and homarine
 #' filename <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
 #' output_filename <- "mini_LB12HL_AB.mzML"
 #' exclude_mzs <- c(118.0865, 138.0555)
-#' minifyMzml(filename, output_filename, mz_blacklist=exclude_mzs, ppm=5)
+#' minifyMzml(filename, output_filename, mz_exclude=exclude_mzs, ppm=5)
 #' unlink(output_filename)
 #' }
 minifyMzml <- function(filename, output_filename, ppm,
-                       mz_blacklist=NULL, mz_whitelist=NULL,
+                       mz_exclude=NULL, mz_include=NULL,
                        warn=TRUE, prefilter=-1){
   if(missing(ppm)){
     stop("Must provide ppm value!")
   }
-  if(is.null(mz_blacklist) & is.null(mz_whitelist)){
-    stop("Either `mz_whitelist` or `mz_blacklist` must not be NULL")
+  if(is.null(mz_exclude) & is.null(mz_include)){
+    stop("Either `mz_include` or `mz_exclude` must not be NULL")
   }
   xml_data <- xml2::read_xml(filename)
 
@@ -193,8 +193,8 @@ minifyMzml <- function(filename, output_filename, ppm,
                        compression_type = file_metadata$compression,
                        bin_precision = file_metadata$int_precision,
                        endi_enc = file_metadata$endi_enc)
-    if(!is.null(mz_whitelist)){
-      whitelist_data <- lapply(mz_whitelist, function(mz_i){
+    if(!is.null(mz_include)){
+      whitelist_data <- lapply(mz_include, function(mz_i){
         range_i <- pmppm(mz_i, ppm)
         mz_idxs <- mzs>min(range_i)&mzs<max(range_i)
         ints <- ints[mz_idxs]
@@ -206,10 +206,10 @@ minifyMzml <- function(filename, output_filename, ppm,
       } else {
         output_mat <- do.call(what = "rbind", whitelist_data)
       }
-    } else if(!is.null(mz_blacklist)){
+    } else if(!is.null(mz_exclude)){
       iterated_mzs <- mzs
       iterated_ints <- ints
-      for(mz_i in unique(mz_blacklist)){
+      for(mz_i in unique(mz_exclude)){
         range_i <- pmppm(mz_i, ppm)
         iterate_idxs <- iterated_mzs>min(range_i)&iterated_mzs<max(range_i)
         iterated_mzs <- iterated_mzs[!iterate_idxs]
@@ -290,14 +290,14 @@ minifyMzml <- function(filename, output_filename, ppm,
                       'd1:selectedIon/d1:cvParam[@name="selected ion m/z"]')
   ms2_pre_nodes <- xml2::xml_find_all(ms2_nodes, pre_xpath)
   ms2_pre_vals <- as.numeric(xml2::xml_attr(ms2_pre_nodes, "value"))
-  if(!is.null(mz_whitelist)){
-    ms2_subset <- unlist(lapply(mz_whitelist, function(premz_i){
+  if(!is.null(mz_include)){
+    ms2_subset <- unlist(lapply(mz_include, function(premz_i){
       mzrange <- pmppm(premz_i, ppm)
       which(data.table::between(ms2_pre_vals, mzrange[1], mzrange[2]))
     }))
     to_remove <- setdiff(seq_along(ms2_pre_vals), ms2_subset)
   } else {
-    to_remove <- unlist(lapply(mz_blacklist, function(premz_i){
+    to_remove <- unlist(lapply(mz_exclude, function(premz_i){
       mzrange <- pmppm(premz_i, ppm)
       which(data.table::between(ms2_pre_vals, mzrange[1], mzrange[2]))
     }))
@@ -317,14 +317,14 @@ minifyMzml <- function(filename, output_filename, ppm,
   proc_node <- xml2::xml_find_all(proclist_node, '//dataProcessing[@id="RaMS_R_package"]')
   xml2::xml_add_child(proc_node, "processingMethod", order=0, softwareRef="RaMS")
   meth_node <- xml2::xml_find_all(proclist_node, '//processingMethod[@order="0"]')
-  if(!is.null(mz_whitelist)){
+  if(!is.null(mz_include)){
     xml2::xml_add_child(meth_node, "userParam", cvRef="MS", accession="MS:1009000",
                         name="Minification by m/z whitelist",
-                        value=paste0(mz_whitelist, collapse = "; "))
+                        value=paste0(mz_include, collapse = "; "))
   } else {
     xml2::xml_add_child(meth_node, "userParam", cvRef="MS", accession="MS:1009001",
                         name="Minification by m/z blacklist",
-                        value=paste0(mz_blacklist, collapse = "; "))
+                        value=paste0(mz_exclude, collapse = "; "))
   }
   xml2::xml_add_child(meth_node, "userParam", cvRef="MS", accession="MS:1009002",
                       name="ppm error for minification", value=ppm)
@@ -359,11 +359,11 @@ minifyMzml <- function(filename, output_filename, ppm,
 #' @param filename The name of a single file to be minified, usually produced by Proteowizard's `msconvert`
 #' or something similar.
 #' @param output_filename The name of the file to be written out.
-#' @param mz_blacklist A vector of m/z values that should be excluded from the minified file. This argument
-#' must be used with the `ppm` argument and should not be used with mz_whitelist. For each mass provided, an
+#' @param mz_exclude A vector of m/z values that should be excluded from the minified file. This argument
+#' must be used with the `ppm` argument and should not be used with mz_include. For each mass provided, an
 #' m/z window of +/- `ppm` is calculated, and all data points within that window are removed.
-#' @param mz_whitelist A vector of m/z values that should be included in the minified file. This argument
-#' must be used with the `ppm` argument and should not be used with mz_blacklist. For each mass provided, an
+#' @param mz_include A vector of m/z values that should be included in the minified file. This argument
+#' must be used with the `ppm` argument and should not be used with mz_exclude. For each mass provided, an
 #' m/z window of +/- `ppm` is calculated, and all data points within that window are kept.
 #' @param ppm The parts-per-million error of the instrument used to collect the original file.
 #' @param warn Boolean. Should the function warn the user when removing an index from an mzML file?
@@ -384,18 +384,18 @@ minifyMzml <- function(filename, output_filename, ppm,
 #' filename <- system.file("extdata", "LB12HL_AB.mzXML.gz", package = "RaMS")
 #' output_filename <- "mini_LB12HL_AB.mzXML"
 #' include_mzs <- c(118.0865, 138.0555)
-#' minifyMzxml(filename, output_filename, mz_whitelist=include_mzs, ppm=5)
+#' minifyMzxml(filename, output_filename, mz_include=include_mzs, ppm=5)
 #' unlink(output_filename)
 #'
 #' # Exclude data corresponding to valine and homarine
 #' filename <- system.file("extdata", "LB12HL_AB.mzXML.gz", package = "RaMS")
 #' output_filename <- "mini_LB12HL_AB.mzXML"
 #' exclude_mzs <- c(118.0865, 138.0555)
-#' minifyMzxml(filename, output_filename, mz_blacklist=exclude_mzs, ppm=5)
+#' minifyMzxml(filename, output_filename, mz_exclude=exclude_mzs, ppm=5)
 #' unlink(output_filename)
 #' }
-minifyMzxml <- function(filename, output_filename, ppm, mz_blacklist=NULL,
-                        mz_whitelist=NULL, prefilter=-1, warn=TRUE){
+minifyMzxml <- function(filename, output_filename, ppm, mz_exclude=NULL,
+                        mz_include=NULL, prefilter=-1, warn=TRUE){
   xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzXML")
@@ -413,8 +413,8 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_blacklist=NULL,
     mzs <- mz_int_val[,1]
     ints <- mz_int_val[,2]
 
-    if(!is.null(mz_whitelist)){
-      whitelist_data <- lapply(mz_whitelist, function(mz_i){
+    if(!is.null(mz_include)){
+      whitelist_data <- lapply(mz_include, function(mz_i){
         range_i <- pmppm(mz_i, ppm)
         mz_idxs <- mzs>min(range_i)&mzs<max(range_i)
         ints <- ints[mz_idxs]
@@ -426,10 +426,10 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_blacklist=NULL,
       } else {
         output_mat <- do.call(what = "rbind", whitelist_data)
       }
-    } else if(!is.null(mz_blacklist)){
+    } else if(!is.null(mz_exclude)){
       iterated_mzs <- mzs
       iterated_ints <- ints
-      for(mz_i in unique(mz_blacklist)){
+      for(mz_i in unique(mz_exclude)){
         range_i <- pmppm(mz_i, ppm)
         iterate_idxs <- iterated_mzs>min(range_i)&iterated_mzs<max(range_i)
         iterated_mzs <- iterated_mzs[!iterate_idxs]
@@ -440,7 +440,7 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_blacklist=NULL,
         browser("Found you an NA:")
       }
     } else {
-      stop("Either `mz_whitelist` or `mz_blacklist` must not be NULL")
+      stop("Either `mz_include` or `mz_exclude` must not be NULL")
     }
     subfilter_idxs <- output_mat[,"ints"]<prefilter
     output_mat <- output_mat[!subfilter_idxs, ,drop=FALSE]
@@ -490,14 +490,14 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_blacklist=NULL,
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   ms2_pre_nodes <- xml2::xml_find_all(ms2_nodes, "d1:precursorMz")
   ms2_pre_vals <- as.numeric(xml2::xml_text(ms2_pre_nodes))
-  if(!is.null(mz_whitelist)){
-    ms2_subset <- unlist(lapply(mz_whitelist, function(premz_i){
+  if(!is.null(mz_include)){
+    ms2_subset <- unlist(lapply(mz_include, function(premz_i){
       mzrange <- pmppm(premz_i, ppm)
       which(data.table::between(ms2_pre_vals, mzrange[1], mzrange[2]))
     }))
     to_remove <- setdiff(seq_along(ms2_pre_vals), ms2_subset)
   } else {
-    to_remove <- unlist(lapply(mz_blacklist, function(premz_i){
+    to_remove <- unlist(lapply(mz_exclude, function(premz_i){
       mzrange <- pmppm(premz_i, ppm)
       which(data.table::between(ms2_pre_vals, mzrange[1], mzrange[2]))
     }))
