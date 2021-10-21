@@ -164,6 +164,16 @@ minifyMzml <- function(filename, output_filename, ppm,
     }
     xml_data <- xml2::xml_new_root(xml2::xml_find_first(xml_data, "//d1:mzML"))
   }
+  # Check for chromatogramList and drop if present, with warning
+  chromlist_node <- xml_find_all(xml_data, "//d1:chromatogramList")
+  if(length(chromlist_node)>0){
+    if(warn){
+      warning(paste0("mzML file ", basename(filename), " has a compiled TIC. ",
+                     "This will be outdated after minification so it's ",
+                     "getting dropped"))
+    }
+    xml2::xml_remove(chromlist_node)
+  }
 
   # MS1 things
   ### Find MS1 intensity and m/z nodes
