@@ -187,3 +187,34 @@ test_that("Stop if types not same", {
   )
 })
 
+unlink(output_dir)
+
+# DDA tests ----
+output_dir <- tempdir()
+
+### mzML
+filename <- mzML_filenames[1]
+output_filename <- paste0(output_dir, "\\mini_DDA.mzML")
+mz_include <- 118.0865
+minifyMSdata(filename, output_filenames = output_filename,
+             mz_whitelist = mz_include, ppm = 5)
+
+full_data <- grabMSdata(filename)
+mini_data <- grabMSdata(output_filename)
+
+test_that("Minified file has MS2", {
+  expect_gt(nrow(mini_data$MS2), 0)
+})
+
+test_that("Mini data smaller than full data", {
+  expect_gt(nrow(full_data$MS1), nrow(mini_data$MS1))
+  expect_gt(nrow(full_data$MS2), nrow(mini_data$MS2))
+})
+
+test_that("Mini data has points only within bounds", {
+  expect_gte(min(mini_data$MS2$premz), min(pmppm(mz_include)))
+  expect_lte(max(mini_data$MS2$premz), max(pmppm(mz_include)))
+})
+
+unlink(output_filename)
+unlink(output_dir)

@@ -1,6 +1,4 @@
 # TO-DO:
-# Write MS2 tests
-# Publish new version to CRAN
 
 # minifyMSdata ----
 minifyMSdata <- function(files, output_filenames=NULL, mz_blacklist=NULL,
