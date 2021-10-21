@@ -1,6 +1,54 @@
 # TO-DO:
 
 # minifyMSdata ----
+#' Shrink MS data by including only data points near masses of interest
+#'
+#' MS files can be annoyingly large if only a few masses are of interest. This large size makes it
+#' difficult to share them online for debugging purposes and often means that untargeted algorithms
+#' spend a lot of time picking peaks in data that's irrelevant. minifyMSdata is a function designed to
+#' "minify" MS files by extracting only those data points that are within the ppm error of an m/z value
+#' of interest, and returns the file essentially otherwise unchanged.
+#'
+#' @param files The name of a single file to be minified, usually produced by Proteowizard's `msconvert`
+#' or something similar.
+#' @param output_files The name of the file to be written out.
+#' @param mz_exclude A vector of m/z values that should be excluded from the minified file. This argument
+#' must be used with the `ppm` argument and should not be used with mz_include. For each mass provided, an
+#' m/z window of +/- `ppm` is calculated, and all data points within that window are removed.
+#' @param mz_include A vector of m/z values that should be included in the minified file. This argument
+#' must be used with the `ppm` argument and should not be used with mz_exclude. For each mass provided, an
+#' m/z window of +/- `ppm` is calculated, and all data points within that window are kept.
+#' @param ppm The parts-per-million error of the instrument used to collect the original file.
+#' @param warn Boolean. Should the function warn the user when removing an index from an mzML file?
+#' @param prefilter A single number corresponding to the minimum intensity of
+#'   interest in the MS1 data. Data points with intensities below this threshold
+#'   will be silently dropped, which can dramatically reduce the size of the
+#'   final object. Currently only works with MS1 data, but could be expanded
+#'   easily to handle more.
+#' @param verbosity A single number with a sensible default behavior. If larger
+#' than 2, will render a progress bar as files are processed.
+#'
+#' @return Invisibly, the name of the new files.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' library(RaMS)
+#' # Extract data corresponding to only valine and homarine
+#' # m/z = 118.0865 and 138.0555, respectively
+#' filename <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
+#' output_filename <- "mini_LB12HL_AB.mzML"
+#' include_mzs <- c(118.0865, 138.0555)
+#' minifyMSdata(filename, output_filename, mz_include=include_mzs, ppm=5)
+#' unlink(output_filename)
+#'
+#' # Exclude data corresponding to valine and homarine
+#' filename <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
+#' output_filename <- "mini_LB12HL_AB.mzML"
+#' exclude_mzs <- c(118.0865, 138.0555)
+#' minifyMSdata(filename, output_filename, mz_exclude=exclude_mzs, ppm=5)
+#' unlink(output_filename)
+#' }
 minifyMSdata <- function(files, output_files=NULL, mz_exclude=NULL,
                          mz_include=NULL, ppm=NULL, warn=TRUE,
                          prefilter=-1, verbosity=NULL){
@@ -84,6 +132,7 @@ minifyMSdata <- function(files, output_files=NULL, mz_exclude=NULL,
     time_total <- round(difftime(Sys.time(), start_time), digits = 2)
     cat("Total time:", time_total, units(time_total), "\n")
   }
+  invisible(output_files)
 }
 
 

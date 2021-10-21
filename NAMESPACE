@@ -3,6 +3,7 @@
 export(grabMSdata)
 export(grabMzmlData)
 export(grabMzxmlData)
+export(minifyMSdata)
 export(minifyMzml)
 export(minifyMzxml)
 export(pmppm)
