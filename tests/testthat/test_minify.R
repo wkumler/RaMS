@@ -197,7 +197,7 @@ filename <- mzML_filenames[1]
 output_filename <- paste0(output_dir, "\\mini_DDA.mzML")
 mz_include <- 118.0865
 minifyMSdata(filename, output_files = output_filename,
-             mz_include = mz_include, ppm = 5)
+             mz_include = mz_include, ppm = 5, warn = FALSE)
 
 full_data <- grabMSdata(filename)
 mini_data <- grabMSdata(output_filename)
