@@ -1,5 +1,6 @@
 # TO-DO:
-# Write warning for MS2 data OR write MS2 code
+# Write MS2 mzXML
+# Write MS2 tests
 # Publish new version to CRAN
 
 # minifyMSdata ----
@@ -305,6 +306,12 @@ minifyMzml <- function(filename, output_filename, ppm,
     }))
   }
   xml2::xml_remove(ms2_nodes[to_remove])
+  ### Re-number spectra
+  spectrum_nodes <- xml2::xml_find_all(xml_data, "//d1:spectrum")
+  speclist_node <- xml2::xml_find_first(xml_data, "//d1:spectrumList")
+  xml2::xml_attr(speclist_node, "count") <- length(spectrum_nodes)
+  xml2::xml_attr(spectrum_nodes, "index") <- seq_along(spectrum_nodes)-1
+
 
 
   # Add note that RaMS was used to shrink the file
