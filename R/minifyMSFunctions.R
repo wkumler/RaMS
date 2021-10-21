@@ -1,5 +1,4 @@
 # TO-DO:
-# Write MS2 mzXML
 # Write MS2 tests
 # Publish new version to CRAN
 
@@ -486,6 +485,27 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_blacklist=NULL,
   xml2::xml_attr(ms1_nodes, "basePeakMz") <- ms1_minified$bpmz
   xml2::xml_attr(ms1_nodes, "basePeakIntensity") <- ms1_minified$bpint
   xml2::xml_attr(ms1_nodes, "totIonCurrent") <- ms1_minified$ticur
+
+
+  # MS2 things
+  ms2_xpath <- '//d1:scan[@msLevel="2"]'
+  ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
+  ms2_pre_nodes <- xml2::xml_find_all(ms2_nodes, "d1:precursorMz")
+  ms2_pre_vals <- as.numeric(xml2::xml_text(ms2_pre_nodes))
+  if(!is.null(mz_whitelist)){
+    ms2_subset <- unlist(lapply(mz_whitelist, function(premz_i){
+      mzrange <- pmppm(premz_i, ppm)
+      which(data.table::between(ms2_pre_vals, mzrange[1], mzrange[2]))
+    }))
+    to_remove <- setdiff(seq_along(ms2_pre_vals), ms2_subset)
+  } else {
+    to_remove <- unlist(lapply(mz_blacklist, function(premz_i){
+      mzrange <- pmppm(premz_i, ppm)
+      which(data.table::between(ms2_pre_vals, mzrange[1], mzrange[2]))
+    }))
+  }
+  xml2::xml_remove(ms2_nodes[to_remove])
+
 
 
 
