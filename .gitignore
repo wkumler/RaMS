@@ -12,3 +12,5 @@ README.Rmd
 inst/doc
 Meta
 doc
+/doc/
+/Meta/
