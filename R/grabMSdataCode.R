@@ -238,6 +238,44 @@ checkOutputQuality <- function(output_data, grab_what){
   return(invisible(NULL))
 }
 
+# grabAccessionData ----
+#' Get arbitrary metadata from an mzML file by accession number
+#'
+#' @param filename The name of the file for which metadata is requested. Both
+#'   absolute and relative paths are acceptable.
+#' @param accession_number The HUPO-PSI accession number for the metadata to
+#' be extracted. These accession numbers are typically of the form MS:#######
+#' and the full list can be found and searched at
+#' https://raw.githubusercontent.com/HUPO-PSI/psi-ms-CV/master/psi-ms.obo.
+#'
+#' @return A data frame with the name and value of the parameter requested,
+#' as deduced from the XML tag attributes corresponding to the accession
+#' number.
+#' @export
+#'
+#' @examples
+#' library(RaMS)
+#' sample_dir <- system.file("extdata", package = "RaMS")
+#' sample_file <- list.files(sample_dir, full.names=TRUE)[3]
+#' # Get ion injection time
+#' iit_df <- grabAccessionData(sample_file, "MS:1000927")
+#' # Manually create TIC
+#' int_df <- grabAccessionData(sample_file, "MS:1000285")
+#' rt_df <- grabAccessionData(sample_file, "MS:1000016")
+#' tic <- data.frame(rt=rt_df$value, int=int_df$value)
+#' plot(tic$rt, tic$int, type = "l")
+grabAccessionData <- function(filename, accession_number){
+  xml_data <- xml2::read_xml(filename)
+  arb_xpath <- paste0('//d1:cvParam[@accession="', accession_number, '"]')
+  arb_nodes <- xml2::xml_find_all(xml_data, arb_xpath)
+  out_df <- data.frame(name=xml2::xml_attr(arb_nodes, "name"),
+                       value=xml2::xml_attr(arb_nodes, "value"))
+  if(nrow(out_df)==0){
+    warning(paste("Accession number", accession_number, "not found"))
+  }
+  out_df
+}
+
 # Other functions ----
 checkFileType <- function(xml_data, node_to_check){
   # Check for mzML node
