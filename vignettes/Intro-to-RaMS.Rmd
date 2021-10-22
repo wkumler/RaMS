@@ -177,7 +177,7 @@ adenine_mz <- 136.06232
 
 adenine_data <- msdata$MS1[mz%between%pmppm(adenine_mz, ppm=5)]
 
-ggplot(adenine_data) + geom_line(aes(x=rt, y=int, color=filename))
+ggplot(adenine_data) + geom_line(aes(x=rt, y=int, color=filename)) + lims(x=c(4, 9))
 ```
 
 This makes it easy to grab the data for multiple compounds of interest with a
@@ -192,7 +192,8 @@ mass_data <- imap_dfr(mzs_of_interest, function(mz_i, name){
 
 ggplot(mass_data) + 
   geom_line(aes(x=rt, y=int, color=filename)) + 
-  facet_wrap(~name, ncol = 1, scales = "free_y")
+  facet_wrap(~name, ncol = 1, scales = "free_y") +
+  lims(x=c(4, 9))
 ```
 
 ### Moving along: MS2 data
@@ -218,12 +219,12 @@ homarine_MS2$int <- homarine_MS2$int/max(homarine_MS2$int)
 ggplot(homarine_MS2) +
   geom_point(aes(x=fragmz, y=int)) +
   geom_segment(aes(x=fragmz, xend=fragmz, y=int, yend=0)) +
-  scale_y_continuous(breaks = c(0, 50, 100), labels = c("0%", "50%", "100%"))
+  scale_y_continuous(breaks = c(0, .5, 1), labels = c("0%", "50%", "100%")) +
   labs(x="Fragment m/z", y="")
 ```
 
 This is also the perfect place to enable some interactivity with packages such
-as `plotly`, making data exploration not only simple but also enjoyable. 
+as `plotly`, making data exploration not only simple but also highly intuitive. 
 
 ```{r plotly, eval=FALSE}
 ## Not run to save space in the vignette:
@@ -265,9 +266,9 @@ msdata$MS2[fragmz%between%pmppm(homarine_frag_mz, ppm = 5)] %>%
 ```
 
 We find that there's not only homarine that produces that fragment,
-but several another compounds. Precursor masses like this can then
+but at least one other compound. Precursor masses like this can then
 be searched manually in online databases or, since the data is already in R,
-passed to a script that automatically searches them.
+passed to a script that automatically queries them.
 
 Similarly, we can easily search instead for neutral losses with this method. If
 we suspect other molecules are producing a similar neutral loss as homarine:
@@ -282,7 +283,7 @@ msdata$MS2[neutral_loss%between%pmppm(homarine_neutral_loss, ppm = 5)] %>%
 ```
 
 We can again confirm our suspicions that there's another signal with
-a similar neutral loss: one with a mass of 137.0470.
+a similar neutral loss: one with a mass of 104.0710.
 
 ## Advanced RaMS usage
 
@@ -322,33 +323,34 @@ all_data$MS1 %>%
   mutate(type="All data") %>%
   rbind(small_data$EIC %>% mutate(type="Extracted data only")) %>%
   filter(!str_detect(filename, "DDA")) %>%
+  filter(rt%between%c(5, 15)) %>%
   group_by(rt, filename, type) %>%
   summarise(TIC=sum(int), .groups="drop") %>%
   ggplot() +
   geom_line(aes(x=rt, y=TIC, color=filename)) +
-  facet_wrap(~type, ncol = 1) +
-  theme(legend.position = "top")
+  facet_wrap(~type, ncol = 1)
 
 # Size reduction factor:
 as.numeric(object.size(all_data)/object.size(small_data))
 ```
 
 As expected, the size of the `small_data` object is much smaller than the
-`all_data` object, here by a factor of about 50x. For files that haven't 
+`all_data` object, here by a factor of about 15x. For files that haven't 
 already been "minified", that size reduction will be even 
 more significant. Of course, this comes with the cost of needing to re-load
 the data a second time if a new mass feature becomes of interest but this 
-shrinkage is expecially valuable for targeted analyses where the analytes of
+shrinkage is especially valuable for targeted analyses where the analytes of
 interest are known in advance.
 
 A second way of reducing file size is to constrain the retention time dimension
 rather than the m/z dimension. This can be done with the `rtrange` argument,
 which expects a length-two vector corresponding to the upper and lower bounds
 on retention time. This is useful when a small time window is of interest, and
-only the data between those bounds is relevant.
+only the data between those bounds is relevant. Below, peaks are deliberately
+sliced in half to show that this is filtering on retention time instead of mass.
 
 ```{r rtrangedemo}
-small_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), rtrange = c(5.5, 7))
+small_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), rtrange = c(6, 8))
 
 all_data$MS1 %>%
   mutate(type="All data") %>%
@@ -358,15 +360,14 @@ all_data$MS1 %>%
   summarise(TIC=sum(int), .groups="drop") %>%
   ggplot() +
   geom_line(aes(x=rt, y=TIC, color=filename)) +
-  facet_wrap(~type, ncol = 1) +
-  theme(legend.position = "top")
+  facet_wrap(~type, ncol = 1)
 
 # Size reduction factor:
 as.numeric(object.size(all_data)/object.size(small_data))
 ```
 
-The savings are more modest here, but constraining
-the retention time actually speeds up data retrieval slightly. Since *m/z* and
+The savings are also worth noting here, but constraining
+the retention time also speeds up data retrieval slightly. Since *m/z* and
 intensity data is encoded in mzML and mzXML files while retention time 
 information is not, eliminating scans with a retention time window removes
 the need to decode the intensity and *m/z* information in those scans. 
@@ -512,11 +513,4 @@ specification at https://www.psidev.info/mzML.
 While many `RaMS` users will arrive at this vignette with their own data, 
 several small files are provided for demonstration. These files originate from the [Ingalls Lab](https://sites.google.com/view/anitra-ingalls) at the University of Washington, USA and are published in the manuscript [**"Metabolic consequences of cobalamin scarcity in diatoms as revealed through metabolomics"**](https://www.sciencedirect.com/science/article/pii/S1434461018301184). Files were downloaded from the corresponding [Metabolights repository](https://www.ebi.ac.uk/metabolights/MTBLS703/files).
 
-Due to CRAN's restrictions on package size, the original files cannot be included. Instead, MS1 data was compressed by extracting EICs for each compound in the Ingalls Lab [list of targeted compounds](https://github.com/IngallsLabUW/Ingalls_Standards/blob/b098927ea0089b6e7a31e1758e7c7eaad5408535/Ingalls_Lab_Standards_NEW.csv) as of August 24, 2020. EIC width was set with a ppm value of 10 and time data were filtered to fall between 4 and 9 minutes. These compressed files were then written out using [`MSnbase`'s](https://bioconductor.org/packages/release/bioc/html/MSnbase.html) `writeMSdata` function after coercing the existing data frame into an `MSnExp` object. Finally, they were gzip-compressed with [`R.utils`'s](https://cran.r-project.org/package=R.utils) `gzip` function and default parameters.
-
-MS2 data was processed via [Proteowizard's `msconvert` tool](http://proteowizard.sourceforge.net/tools/msconvert.html) instead. Files were converted with the flags `-gz` and `--noindex` to save space, and three filters were used: 
- - `--filter "scanTime [240,540]"`
- - `--filter "mzWindow [0,120]"`
- - `--filter "absolute 100000 most-intense"`
-
-These filters reduced the MS2 data to a sufficiently limited size that they could be published with the package. The mzXML file was created identically, but the `--mzXML` flag was added.
+Due to CRAN's restrictions on package size, the original files cannot be included. Instead, MS1 data was compressed by extracting EICs for each compound in the Ingalls Lab [list of targeted compounds](https://github.com/IngallsLabUW/Ingalls_Standards/blob/b098927ea0089b6e7a31e1758e7c7eaad5408535/Ingalls_Lab_Standards_NEW.csv) as of August 24, 2020. EIC width was set with a ppm value of 20. These compressed files were then minified using `RaMS`'s own `minifyMSdata`. Finally, they were gzip-compressed with [`R.utils`'s](https://cran.r-project.org/package=R.utils) `gzip` function and default parameters.

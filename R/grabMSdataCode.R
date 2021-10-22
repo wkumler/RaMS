@@ -44,6 +44,11 @@
 #'   containing an upper and lower bound on retention times of interest.
 #'   Providing a range here can speed up load times (although not enormously, as
 #'   the entire file must still be read) and reduce the final object's size.
+#' @param prefilter A single number corresponding to the minimum intensity of
+#'   interest in the MS1 data. Data points with intensities below this threshold
+#'   will be silently dropped, which can dramatically reduce the size of the
+#'   final object. Currently only works with MS1 data, but could be expanded
+#'   easily to handle more.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. $MS1 contains MS1 information, MS2 contains fragmentation info,
@@ -63,7 +68,7 @@
 #' # Extract MS1 data from a couple files
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
-#' multifile_data <- grabMSdata(sample_files[2:4], grab_what="MS1")
+#' multifile_data <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
 #'
 #' # "Stream" data from the internet (i.e. Metabolights)
 #' \dontrun{
@@ -77,7 +82,7 @@
 #' file_data <- grabMSdata(sample_url, grab_what="everything", verbosity=2)
 #' }
 grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
-                       mz=NULL, ppm=NULL, rtrange=NULL){
+                       mz=NULL, ppm=NULL, rtrange=NULL, prefilter=-1){
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
@@ -97,7 +102,7 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     verbosity <- ifelse(length(files)==1, 2, 1)
   }
   if(verbosity>0){
-    if(length(files)>2){
+    if(length(files)>=2){
       pb <- txtProgressBar(min = 0, max = length(files), style = 3)
     }
     start_time <- Sys.time()
@@ -108,11 +113,11 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     if(grepl("mzML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzmlData(filename = filename, grab_what = grab_what,
                                verbosity = verbosity, mz = mz, ppm = ppm,
-                               rtrange = rtrange)
+                               rtrange = rtrange, prefilter = prefilter)
     } else if(grepl("mzXML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzxmlData(filename = filename, grab_what = grab_what,
                                 verbosity = verbosity, mz = mz, ppm = ppm,
-                                rtrange = rtrange)
+                                rtrange = rtrange, prefilter = prefilter)
     } else {
       stop(paste("Unable to determine file type for", filename))
     }
@@ -126,16 +131,14 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     }, dt_i=out_data, fname_i=basename(filename), SIMPLIFY = FALSE)
     all_file_data[[i]] <- out_data_filenamed
     names(all_file_data)[[i]] <- basename(filename)
-    if(verbosity>0 & length(files)>2){
+    if(verbosity>0 & length(files)>=2){
       setTxtProgressBar(pb, i)
     }
   }
   if(verbosity>0){
-    if(length(files)>2){
+    if(length(files)>=2){
       close(pb)
     }
-    time_total <- round(difftime(Sys.time(), start_time), digits = 2)
-    cat("Total time:", time_total, units(time_total), "\n")
   }
 
   # Bind all the similar pieces together (e.g. stack MS1 from different files)
@@ -143,6 +146,11 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   invisible(checkOutputQuality(
     output_data = all_file_data_output, grab_what = grab_what
   ))
+
+  if(verbosity>0){
+    time_total <- round(difftime(Sys.time(), start_time), digits = 2)
+    cat("Total time:", time_total, units(time_total), "\n")
+  }
 
   all_file_data_output
 }
@@ -230,6 +238,44 @@ checkOutputQuality <- function(output_data, grab_what){
   return(invisible(NULL))
 }
 
+# grabAccessionData ----
+#' Get arbitrary metadata from an mzML file by accession number
+#'
+#' @param filename The name of the file for which metadata is requested. Both
+#'   absolute and relative paths are acceptable.
+#' @param accession_number The HUPO-PSI accession number for the metadata to
+#' be extracted. These accession numbers are typically of the form MS:#######
+#' and the full list can be found and searched at
+#' https://raw.githubusercontent.com/HUPO-PSI/psi-ms-CV/master/psi-ms.obo.
+#'
+#' @return A data frame with the name and value of the parameter requested,
+#' as deduced from the XML tag attributes corresponding to the accession
+#' number.
+#' @export
+#'
+#' @examples
+#' library(RaMS)
+#' sample_dir <- system.file("extdata", package = "RaMS")
+#' sample_file <- list.files(sample_dir, full.names=TRUE)[3]
+#' # Get ion injection time
+#' iit_df <- grabAccessionData(sample_file, "MS:1000927")
+#' # Manually create TIC
+#' int_df <- grabAccessionData(sample_file, "MS:1000285")
+#' rt_df <- grabAccessionData(sample_file, "MS:1000016")
+#' tic <- data.frame(rt=rt_df$value, int=int_df$value)
+#' plot(tic$rt, tic$int, type = "l")
+grabAccessionData <- function(filename, accession_number){
+  xml_data <- xml2::read_xml(filename)
+  arb_xpath <- paste0('//d1:cvParam[@accession="', accession_number, '"]')
+  arb_nodes <- xml2::xml_find_all(xml_data, arb_xpath)
+  out_df <- data.frame(name=xml2::xml_attr(arb_nodes, "name"),
+                       value=xml2::xml_attr(arb_nodes, "value"))
+  if(nrow(out_df)==0){
+    warning(paste("Accession number", accession_number, "not found"))
+  }
+  out_df
+}
+
 # Other functions ----
 checkFileType <- function(xml_data, node_to_check){
   # Check for mzML node
@@ -264,6 +310,38 @@ checkProvidedMzPpm <- function(mz, ppm){
   }
 }
 
+checkRTrange <- function(rtrange){
+  if(!is.null(rtrange)){
+    if("matrix"%in%class(rtrange)){
+      rtrange <- as.vector(rtrange)
+    }
+    if(length(rtrange)!=2){
+      stop("Please provide an rtrange of length 2")
+    }
+    if(class(rtrange)!="numeric"&&class(rtrange)!="integer"){
+      stop("Please provide a numeric rtrange")
+    }
+  }
+  rtrange
+}
+
+checkProvidedPrefilter <- function(prefilter){
+  if(!is.numeric(prefilter)){
+    warning(paste0("`prefilter` argument should be numeric, but instead it ",
+                   "seems to be ", class(prefilter), " with value ",
+                   prefilter, ". Replacing with -1..."))
+
+    prefilter <- -1
+  }
+  if(length(prefilter)>1){
+    warning(paste0("`prefilter` argument should be length 1, but instead it ",
+                   "seems to be ", length(prefilter), ". Ignoring all extra ",
+                   "values..."))
+    prefilter <- prefilter[1]
+  }
+  prefilter
+}
+
 
 #' Plus/minus parts per million
 #'
@@ -292,21 +370,6 @@ timeReport <- function(last_time, text=NULL){
   cat(time_total, units(time_total), "\n")
   cat(text)
   Sys.time()
-}
-
-checkRTrange <- function(rtrange){
-  if(!is.null(rtrange)){
-    if("matrix"%in%class(rtrange)){
-      rtrange <- as.vector(rtrange)
-    }
-    if(length(rtrange)!=2){
-      stop("Please provide an rtrange of length 2")
-    }
-    if(class(rtrange)!="numeric"&&class(rtrange)!="integer"){
-      stop("Please provide a numeric rtrange")
-    }
-  }
-  rtrange
 }
 
 

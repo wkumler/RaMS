@@ -38,6 +38,11 @@
 #'   retention times of interest. Providing a range here can speed up load times
 #'   (although not enormously, as the entire file must still be read) and reduce
 #'   the final object's size.
+#' @param prefilter A single number corresponding to the minimum intensity of
+#'   interest in the MS1 data. Data points with intensities below this threshold
+#'   will be silently dropped, which can dramatically reduce the size of the
+#'   final object. Currently only works with MS1 data, but could be expanded
+#'   easily to handle more.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. $MS1 contains MS1 information, $MS2 contains fragmentation info,
@@ -68,7 +73,7 @@
 #' sample_file <- system.file("extdata", "DDApos_2.mzML.gz", package = "RaMS")
 #' MS2_data <- grabMzmlData(sample_file, grab_what="MS2")
 grabMzmlData <- function(filename, grab_what, verbosity=0,
-                         mz=NULL, ppm=NULL, rtrange=NULL){
+                         mz=NULL, ppm=NULL, rtrange=NULL, prefilter=-1){
   if(verbosity>1){
     cat(paste0("\nReading file ", basename(filename), "... "))
     last_time <- Sys.time()
@@ -77,6 +82,7 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
 
   checkFileType(xml_data, "mzML")
   rtrange <- checkRTrange(rtrange)
+  prefilter <- checkProvidedPrefilter(prefilter)
   file_metadata <- grabMzmlEncodingData(xml_data)
 
   output_data <- list()
@@ -93,7 +99,8 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
   if("MS1"%in%grab_what){
     if(verbosity>1)last_time <- timeReport(last_time, text = "Reading MS1 data...")
     output_data$MS1 <- grabMzmlMS1(xml_data = xml_data, rtrange = rtrange,
-                                   file_metadata = file_metadata)
+                                   file_metadata = file_metadata,
+                                   prefilter = prefilter)
   }
 
   if("MS2"%in%grab_what){
@@ -120,7 +127,7 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
     }
     if(!"MS1"%in%grab_what){
       init_dt <- grabMzmlMS1(xml_data = xml_data, rtrange = rtrange,
-                             file_metadata = file_metadata)
+                             file_metadata = file_metadata, prefilter = prefilter)
     } else {
       init_dt <- output_data$MS1
       if(!nrow(init_dt))stop("Something weird - can't find MS1 data to subset")
@@ -277,7 +284,7 @@ grabMzmlEncodingData <- function(xml_data){
   if(is.na(mz_precision))mz_precision <- int_precision
 
   list(compression=compr, mz_precision=mz_precision,
-       int_precision=int_precision)
+       int_precision=int_precision, endi_enc="little")
 }
 
 
@@ -291,10 +298,12 @@ grabMzmlEncodingData <- function(xml_data){
 #'   the final object's size.
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information.
+#' @param prefilter The lowest intensity value of interest, used to reduce file
+#'   size (and especially useful for profile mode data with many 0 values)
 #'
 #' @return A `data.table` with columns for retention time (rt), m/z (mz), and
 #'   intensity (int).
-grabMzmlMS1 <- function(xml_data, rtrange, file_metadata){
+grabMzmlMS1 <- function(xml_data, rtrange, file_metadata, prefilter){
   ms1_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
                       '@value="1"]][d1:cvParam[@name="base peak intensity"]]')
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
@@ -311,9 +320,10 @@ grabMzmlMS1 <- function(xml_data, rtrange, file_metadata){
   mz_vals <- grabSpectraMz(ms1_nodes, file_metadata)
   int_vals <- grabSpectraInt(ms1_nodes, file_metadata)
 
-  data.table(rt=rep(rt_vals, sapply(mz_vals, length)),
-             mz=unlist(mz_vals), int=as.numeric(unlist(int_vals)))
-
+  int <- NULL #To prevent R CMD check "notes"  when using data.table syntax
+  all_data <- data.table(rt=rep(rt_vals, sapply(mz_vals, length)),
+                         mz=unlist(mz_vals), int=as.numeric(unlist(int_vals)))
+  all_data[int>prefilter]
 }
 
 

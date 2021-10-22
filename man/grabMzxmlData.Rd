@@ -10,7 +10,8 @@ grabMzxmlData(
   verbosity = 0,
   rtrange = NULL,
   mz = NULL,
-  ppm = NULL
+  ppm = NULL,
+  prefilter = -1
 )
 }
 \arguments{
@@ -44,6 +45,12 @@ masses can be provided.}
 \item{ppm}{A single number corresponding to the mass accuracy (in parts per
 million) of the instrument on which the data was collected. Only used when
 combined with `grab_what = "EIC"` (see above).}
+
+\item{prefilter}{A single number corresponding to the minimum intensity of
+interest in the MS1 data. Data points with intensities below this threshold
+will be silently dropped, which can dramatically reduce the size of the
+final object. Currently only works with MS1 data, but could be expanded
+easily to handle more.}
 }
 \value{
 A list of `data.table`s, each named after the arguments requested in

@@ -33,6 +33,9 @@ data](https://r4ds.had.co.nz/tidy-data.html). Tidy data neatly resolves
 the ragged arrays that mass spectrometers produce and plays nicely with
 other [tidy data packages](https://www.tidyverse.org/).
 
+![RaMS quick-start poster from Metabolomics Society conference
+2021](poster.png)
+
 ## Installation
 
 To install the stable version on CRAN:
@@ -79,11 +82,11 @@ library:
 knitr::kable(head(msdata$BPC, 3))
 ```
 
-|       rt |      int | filename           |
-|---------:|---------:|:-------------------|
-| 4.009000 | 11141859 | LB12HL\_AB.mzML.gz |
-| 4.024533 |  9982309 | LB12HL\_AB.mzML.gz |
-| 4.040133 | 10653922 | LB12HL\_AB.mzML.gz |
+|       rt |      int | filename          |
+|---------:|---------:|:------------------|
+| 4.009000 | 11141859 | LB12HL_AB.mzML.gz |
+| 4.024533 |  9982309 | LB12HL_AB.mzML.gz |
+| 4.040133 | 10653922 | LB12HL_AB.mzML.gz |
 
 ``` r
 plot(msdata$BPC$rt, msdata$BPC$int, type = "l")
@@ -110,11 +113,11 @@ ion measured, and has multiple entries per retention time:
 knitr::kable(head(msdata$MS1, 3))
 ```
 
-|    rt |       mz |        int | filename           |
-|------:|---------:|-----------:|:-------------------|
-| 4.009 | 104.0710 | 1297755.00 | LB12HL\_AB.mzML.gz |
-| 4.009 | 104.1075 |  140668.12 | LB12HL\_AB.mzML.gz |
-| 4.009 | 112.0509 |   67452.86 | LB12HL\_AB.mzML.gz |
+|    rt |       mz |        int | filename          |
+|------:|---------:|-----------:|:------------------|
+| 4.009 | 104.0710 | 1297755.00 | LB12HL_AB.mzML.gz |
+| 4.009 | 104.1075 |  140668.12 | LB12HL_AB.mzML.gz |
+| 4.009 | 112.0509 |   67452.86 | LB12HL_AB.mzML.gz |
 
 This tidy format means that it plays nicely with other tidy data
 packages. Here, we use \[data.table\] and a few other tidyverse packages
@@ -148,10 +151,10 @@ iso_data %>%
   knitr::kable()
 ```
 
-| isotope | avg\_ratio | sd\_ratio |
-|:--------|-----------:|----------:|
-| 13C     |  0.0543929 | 0.0006015 |
-| 15N     |  0.0033375 | 0.0001846 |
+| isotope | avg_ratio |  sd_ratio |
+|:--------|----------:|----------:|
+| 13C     | 0.0543929 | 0.0006015 |
+| 15N     | 0.0033375 | 0.0001846 |
 
 With [natural
 abundances](https://en.wikipedia.org/wiki/Natural_abundance) for
@@ -197,14 +200,14 @@ msdata$MS2[, neutral_loss:=premz-fragmz] %>%
   head() %>% knitr::kable()
 ```
 
-|       rt |    premz |    fragmz |        int | voltage | filename          | neutral\_loss |
-|---------:|---------:|----------:|-----------:|--------:|:------------------|--------------:|
-| 4.182333 | 118.0864 |  58.06590 | 390179.500 |      35 | DDApos\_2.mzML.gz |      60.02055 |
-| 4.276100 | 116.0709 |  56.05036 |   1093.988 |      35 | DDApos\_2.mzML.gz |      60.02050 |
-| 4.521367 | 118.0864 |  58.06589 | 343084.000 |      35 | DDApos\_2.mzML.gz |      60.02056 |
-| 4.649867 | 170.0810 | 110.06034 |   4792.479 |      35 | DDApos\_2.mzML.gz |      60.02070 |
-| 4.857983 | 118.0865 |  58.06590 | 314075.312 |      35 | DDApos\_2.mzML.gz |      60.02057 |
-| 5.195617 | 118.0865 |  58.06590 | 282611.688 |      35 | DDApos\_2.mzML.gz |      60.02057 |
+|       rt |    premz |    fragmz |        int | voltage | filename         | neutral_loss |
+|---------:|---------:|----------:|-----------:|--------:|:-----------------|-------------:|
+| 4.182333 | 118.0864 |  58.06590 | 390179.500 |      35 | DDApos_2.mzML.gz |     60.02055 |
+| 4.276100 | 116.0709 |  56.05036 |   1093.988 |      35 | DDApos_2.mzML.gz |     60.02050 |
+| 4.521367 | 118.0864 |  58.06589 | 343084.000 |      35 | DDApos_2.mzML.gz |     60.02056 |
+| 4.649867 | 170.0810 | 110.06034 |   4792.479 |      35 | DDApos_2.mzML.gz |     60.02070 |
+| 4.857983 | 118.0865 |  58.06590 | 314075.312 |      35 | DDApos_2.mzML.gz |     60.02057 |
+| 5.195617 | 118.0865 |  58.06590 | 282611.688 |      35 | DDApos_2.mzML.gz |     60.02057 |
 
 ## File types
 
@@ -245,4 +248,4 @@ Issues page](https://github.com/wkumler/RaMS/issues).
 
 ------------------------------------------------------------------------
 
-README last built on 2021-03-17
+README last built on 2021-10-05

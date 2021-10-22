@@ -4,7 +4,7 @@
 \alias{grabMzmlMS1}
 \title{Extract the MS1 data from an mzML nodeset}
 \usage{
-grabMzmlMS1(xml_data, rtrange, file_metadata)
+grabMzmlMS1(xml_data, rtrange, file_metadata, prefilter)
 }
 \arguments{
 \item{xml_data}{An `xml2` nodeset, usually created by applying `read_xml` to
@@ -17,6 +17,9 @@ the final object's size.}
 
 \item{file_metadata}{Information about the file used to decode the binary
 arrays containing m/z and intensity information.}
+
+\item{prefilter}{The lowest intensity value of interest, used to reduce file
+size (and especially useful for profile mode data with many 0 values)}
 }
 \value{
 A `data.table` with columns for retention time (rt), m/z (mz), and
