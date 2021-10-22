@@ -1,5 +1,14 @@
 # RaMS (development version)
 
+# RaMS 1.1.0
+## The minification release
+ - Added `minifyMSdata`, a function that shrinks MS files by excluding masses
+ - Restructured demo files using the new `minify*` functions to include more useful data
+ - Added `prefilter` argument to `grabMSdata` that drops masses below a user-provided intensity threshold
+ - Added quick-start poster to README.md
+ - Added `grabAccessionData`, a function that extracts arbitrary MS metadata by HUPO-PSI accession number
+ - Squashed some bugs
+
 # RaMS 1.0.0
 ## The first CRAN release
  - Enabled rtrange parameter for mzXML files
