@@ -115,9 +115,9 @@ knitr::kable(head(msdata$MS1, 3))
 
 |    rt |       mz |        int | filename          |
 |------:|---------:|-----------:|:------------------|
-| 4.009 | 104.0710 | 1297755.00 | LB12HL_AB.mzML.gz |
-| 4.009 | 104.1075 |  140668.12 | LB12HL_AB.mzML.gz |
-| 4.009 | 112.0509 |   67452.86 | LB12HL_AB.mzML.gz |
+| 4.009 | 139.0503 | 1800550.12 | LB12HL_AB.mzML.gz |
+| 4.009 | 148.0967 |  206310.81 | LB12HL_AB.mzML.gz |
+| 4.009 | 136.0618 |   71907.15 | LB12HL_AB.mzML.gz |
 
 This tidy format means that it plays nicely with other tidy data
 packages. Here, we use \[data.table\] and a few other tidyverse packages
@@ -200,14 +200,94 @@ msdata$MS2[, neutral_loss:=premz-fragmz] %>%
   head() %>% knitr::kable()
 ```
 
-|       rt |    premz |    fragmz |        int | voltage | filename         | neutral_loss |
-|---------:|---------:|----------:|-----------:|--------:|:-----------------|-------------:|
-| 4.182333 | 118.0864 |  58.06590 | 390179.500 |      35 | DDApos_2.mzML.gz |     60.02055 |
-| 4.276100 | 116.0709 |  56.05036 |   1093.988 |      35 | DDApos_2.mzML.gz |     60.02050 |
-| 4.521367 | 118.0864 |  58.06589 | 343084.000 |      35 | DDApos_2.mzML.gz |     60.02056 |
-| 4.649867 | 170.0810 | 110.06034 |   4792.479 |      35 | DDApos_2.mzML.gz |     60.02070 |
-| 4.857983 | 118.0865 |  58.06590 | 314075.312 |      35 | DDApos_2.mzML.gz |     60.02057 |
-| 5.195617 | 118.0865 |  58.06590 | 282611.688 |      35 | DDApos_2.mzML.gz |     60.02057 |
+|       rt |    premz |   fragmz |        int | voltage | filename         | neutral_loss |
+|---------:|---------:|---------:|-----------:|--------:|:-----------------|-------------:|
+| 4.182333 | 118.0864 | 58.06590 | 390179.500 |      35 | DDApos_2.mzML.gz |     60.02055 |
+| 4.276100 | 116.0709 | 56.05036 |   1093.988 |      35 | DDApos_2.mzML.gz |     60.02050 |
+| 4.521367 | 118.0864 | 58.06589 | 343084.000 |      35 | DDApos_2.mzML.gz |     60.02056 |
+| 4.857983 | 118.0865 | 58.06590 | 314075.312 |      35 | DDApos_2.mzML.gz |     60.02057 |
+| 5.195617 | 118.0865 | 58.06590 | 282611.688 |      35 | DDApos_2.mzML.gz |     60.02057 |
+| 5.536383 | 118.0865 | 58.06592 | 300432.906 |      35 | DDApos_2.mzML.gz |     60.02060 |
+
+#### Minifying MS files
+
+As of version 1.1.0, `RaMS` also has functions that allow irrelevant
+data to be removed from the file to reduce file sizes. Like
+`grabMSdata`, there’s one wrapper function `minifyMSdata` that accepts
+mzML or mzXML files, plus a vector of *m/z* values that should either be
+kept (`mz_include`) or removed (`mz_exclude`). The function then opens
+up the provided MS files and removes data points in the MS1 and MS2
+spectra that fall outside the accepted bounds. `mz_include` is useful
+when only a few masses are of interest, as in targeted metabolomics.
+`mz_exclude` is useful when many masses are known to be contaminants or
+interfere with peakpicking/plotting abilities. This minification can
+sometimes shrink a file up to an order of magnitude, decreasing both
+processing time and memory allocation later in the pipeline.
+
+This is also very useful for creating demo MS files - `RaMS` uses these
+functions to produce the sample data in `extdata`, with 6 MS files
+taking up less than 5 megabytes of disk space. Many other programs
+provide the ability to shrink files, but none (that are known) shrink
+files by excluding *m/z* values and instead can only remove certain
+retention times.
+
+Below, we begin with a large MS file and extract only the data
+corresponding to valine and homarine.
+
+``` r
+initial_filename <- msdata_files[1]
+output_filename <- tempfile(fileext = "mzML")
+
+masses_of_interest <- c(118.0865, 138.0555)
+minifyMSdata(files = initial_filename, output_files = output_filename, 
+             mz_include = masses_of_interest, ppm = 5, warn = FALSE)
+```
+
+    ## Total time: 2.67 secs
+
+Then, when we open the file up (with `RaMS` or other software) we are
+left with the data corresponding only to those compounds:
+
+``` r
+msdata <- grabMSdata(output_filename)
+```
+
+    ## 
+    ## Reading file file2ea45d3b1fb6mzML... 0.26 secs 
+    ## Reading MS1 data...0.24 secs 
+    ## Reading MS2 data...0.06 secs 
+    ## Reading BPC...0.15 secs 
+    ## Reading TIC...0.15 secs 
+    ## Reading file metadata...0.11 secs 
+    ## Total time: 0.96 secs
+
+``` r
+knitr::kable(head(msdata$MS1, 3))
+```
+
+|      rt |       mz |        int | filename             |
+|--------:|---------:|-----------:|:---------------------|
+| 4.00085 | 118.0865 | 15968431.0 | file2ea45d3b1fb6mzML |
+| 4.00085 | 138.0550 |   174591.6 | file2ea45d3b1fb6mzML |
+| 4.00085 | 138.0550 |   174591.6 | file2ea45d3b1fb6mzML |
+
+``` r
+knitr::kable(head(msdata$MS2, 3))
+```
+
+|       rt |    premz |   fragmz |        int | voltage | filename             |
+|---------:|---------:|---------:|-----------:|--------:|:---------------------|
+| 4.182333 | 118.0864 | 51.81098 |   3809.649 |      35 | file2ea45d3b1fb6mzML |
+| 4.182333 | 118.0864 | 58.06422 |  10133.438 |      35 | file2ea45d3b1fb6mzML |
+| 4.182333 | 118.0864 | 58.06590 | 390179.500 |      35 | file2ea45d3b1fb6mzML |
+
+``` r
+unlink(output_filename)
+```
+
+These new files are valid according to the validator provided in
+MSnbase, which means that most programs should be able to open them, but
+this feature is still experimental and may break on quirky data.
 
 ## File types
 
@@ -248,4 +328,4 @@ Issues page](https://github.com/wkumler/RaMS/issues).
 
 ------------------------------------------------------------------------
 
-README last built on 2021-10-05
+README last built on 2021-10-22
