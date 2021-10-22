@@ -68,7 +68,7 @@
 #' # Extract MS1 data from a couple files
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
-#' multifile_data <- grabMSdata(sample_files[2:4], grab_what="MS1")
+#' multifile_data <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
 #'
 #' # "Stream" data from the internet (i.e. Metabolights)
 #' \dontrun{
