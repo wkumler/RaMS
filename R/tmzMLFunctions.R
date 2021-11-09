@@ -165,7 +165,7 @@ node2dt <- function(dubset_node, ms_level){
 #'
 #' @return Messages, mostly
 #' @export
-"print.msdata_connection" <- function(msdata_obj){
+"print.msdata_connection" <- function(msdata_obj, ...){
   message("Hey, I'm not actually an object, sorry!")
   message("But you can pretend I'm a list containing data.tables:")
   message(paste(msdata_obj[["grab_what"]], collapse = "; "))
