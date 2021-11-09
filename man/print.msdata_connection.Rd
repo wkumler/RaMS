@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{An msdata_connection object containing files and grab_what}
+
+\item{...}{Other arguments to be passed to print.default, I guess}
 }
 \value{
 Messages, mostly

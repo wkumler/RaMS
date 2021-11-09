@@ -162,6 +162,7 @@ node2dt <- function(dubset_node, ms_level){
 #' S3 print option for msdata_connection objects
 #'
 #' @param x An msdata_connection object containing files and grab_what
+#' @param ... Other arguments to be passed to print.default, I guess
 #'
 #' @return Messages, mostly
 #' @export
