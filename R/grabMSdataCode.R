@@ -86,6 +86,24 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
+  tmzml_check <- grepl("\\.tmzML", files)
+  if(any(tmzml_check)){
+    if(!all(tmzml_check)){
+      stop("At this time, tmzMLs can't be mixed with mzML/mzXMLs")
+    }
+    if(grab_what=="everything"){
+      grab_what <- c("MS1", "MS2")
+    }
+    if(grab_what!="MS1"|grab_what!="MS2"|grab_what!=c("MS1", "MS2")){
+      stop("At this time, tmzMLs can only be used with MS1 or MS2 data")
+    }
+    msdata_con <- list(
+      files=files,
+      grab_what=grab_what
+    )
+    class(msdata_con) <- "msdata_connection"
+    return(msdata_con)
+  }
   # Add sanity check for EIC extraction
   if(!is.null(mz) & !any(c("EIC", "EIC_MS2")%in%grab_what)){
     warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
