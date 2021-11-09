@@ -4,6 +4,7 @@
 # Finish documentation
 # Add warnings/error handling
 # Add tests
+# Add tmzml minified file for demos and examples
 
 addEncNode <- function(parent_node, dubset, name){
   new_node <- xml2::xml_add_child(parent_node, name)
@@ -59,9 +60,16 @@ tmzmlMaker <- function(input_filename, output_filename=NULL,
   }
   split_MS1_mzs <- split(msdata$MS1, msdata$MS1$cat)
   if(verbosity>1){
-    pbapply::pbsapply(split_MS1_mzs, addMS1, ms1_node)
+    pb <- txtProgressBar(max = length(split_MS1_mzs), style = 3)
+    for(i in seq_along(split_MS1_mzs)){
+      addMS1(split_MS1_mzs[[i]], ms1_node)
+      setTxtProgressBar(pb, i)
+    }
+    close(pb)
   } else {
-    sapply(split_MS1_mzs, addMS1, ms1_node)
+    for(i in seq_along(split_MS1_mzs)){
+      addMS1(split_MS1_mzs[[i]], ms1_node)
+    }
   }
 
   # Handle MS2 data ----
@@ -72,9 +80,16 @@ tmzmlMaker <- function(input_filename, output_filename=NULL,
   }
   split_MS2_mzs <- split(msdata$MS2, msdata$MS2$cat)
   if(verbosity>1){
-    pbapply::pbsapply(split_MS2_mzs, addMS2, ms2_node)
+    pb <- txtProgressBar(max = length(split_MS1_mzs), style = 3)
+    for(i in seq_along(split_MS1_mzs)){
+      addMS2(split_MS2_mzs[[i]], ms2_node)
+      setTxtProgressBar(pb, i)
+    }
+    close(pb)
   } else {
-    sapply(split_MS2_mzs, addMS2, ms2_node)
+    for(i in seq_along(split_MS1_mzs)){
+      addMS2(split_MS2_mzs[[i]], ms2_node)
+    }
   }
 
   # Write out ----
@@ -188,7 +203,7 @@ node2dt <- function(dubset_node, ms_level){
     mz_lims <- c(eval(isub[[3]]), eval(isub[[4]]))
   }
 
-  allfile_list <- pbapply::pblapply(msdata_obj[["files"]], function(filename){
+  allfile_list <- lapply(msdata_obj[["files"]], function(filename){
     tmzml <- xml2::read_xml(filename)
 
     mz_selectors <- paste0("@minmz<", max(mz_lims), " and @maxmz>", min(mz_lims))
