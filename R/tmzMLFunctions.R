@@ -36,7 +36,7 @@ addMS2 <- function(dubset, ms2_node){
 tmzmlMaker <- function(input_filename, output_filename=NULL,
                        verbosity=0, binwidth=3){
   if(is.null(output_filename)){
-    output_filename <- gsub("\\.mzML", "\\.tmzML", input_filename)
+    output_filename <- gsub("\\.mzX?ML", ".tmzML", input_filename)
   }
 
   if(verbosity>0){
@@ -80,14 +80,14 @@ tmzmlMaker <- function(input_filename, output_filename=NULL,
   }
   split_MS2_mzs <- split(msdata$MS2, msdata$MS2$cat)
   if(verbosity>1){
-    pb <- txtProgressBar(max = length(split_MS1_mzs), style = 3)
-    for(i in seq_along(split_MS1_mzs)){
+    pb <- txtProgressBar(max = length(split_MS2_mzs), style = 3)
+    for(i in seq_along(split_MS2_mzs)){
       addMS2(split_MS2_mzs[[i]], ms2_node)
       setTxtProgressBar(pb, i)
     }
     close(pb)
   } else {
-    for(i in seq_along(split_MS1_mzs)){
+    for(i in seq_along(split_MS2_mzs)){
       addMS2(split_MS2_mzs[[i]], ms2_node)
     }
   }
