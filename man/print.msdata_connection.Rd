@@ -4,10 +4,10 @@
 \alias{print.msdata_connection}
 \title{S3 print option for msdata_connection objects}
 \usage{
-\method{print}{msdata_connection}(msdata_obj)
+\method{print}{msdata_connection}(x, ...)
 }
 \arguments{
-\item{msdata_obj}{An msdata_connection object containing files and grab_what}
+\item{x}{An msdata_connection object containing files and grab_what}
 }
 \value{
 Messages, mostly

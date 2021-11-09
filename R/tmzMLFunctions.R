@@ -161,16 +161,16 @@ node2dt <- function(dubset_node, ms_level){
 
 #' S3 print option for msdata_connection objects
 #'
-#' @param msdata_obj An msdata_connection object containing files and grab_what
+#' @param x An msdata_connection object containing files and grab_what
 #'
 #' @return Messages, mostly
 #' @export
-"print.msdata_connection" <- function(msdata_obj, ...){
+"print.msdata_connection" <- function(x, ...){
   message("Hey, I'm not actually an object, sorry!")
   message("But you can pretend I'm a list containing data.tables:")
-  message(paste(msdata_obj[["grab_what"]], collapse = "; "))
+  message(paste(x[["grab_what"]], collapse = "; "))
   message("from the following files:")
-  message(paste(msdata_obj[["files"]], collapse = "\n"))
+  message(paste(x[["files"]], collapse = "\n"))
   message("and access the data inside with $ and [ subsetting")
 }
 
