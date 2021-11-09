@@ -122,6 +122,9 @@ node2dt <- function(dubset_node, ms_level){
         mz=unlist(data_list[mz_idxs]),
         int=unlist(data_list[int_idxs])
       )
+      mz <- NULL #To prevent R CMD check "notes"  when using data.table syntax
+      rt <- NULL #To prevent R CMD check "notes"  when using data.table syntax
+
       disorg_table[order(rt, mz)]
     } else {
       stop("How???")
@@ -146,6 +149,7 @@ node2dt <- function(dubset_node, ms_level){
         voltage=unlist(data_list[mz_idxs]),
         int=unlist(data_list[int_idxs])
       )
+      rt <- NULL #To prevent R CMD check "notes"  when using data.table syntax
       disorg_table[order(rt)]
     } else {
       stop("How???")
@@ -203,8 +207,6 @@ node2dt <- function(dubset_node, ms_level){
     mz_lims <- c(eval(isub[[3]]), eval(isub[[4]]))
   }
 
-  mz <- NULL #To prevent R CMD check "notes"  when using data.table syntax
-  rt <- NULL #To prevent R CMD check "notes"  when using data.table syntax
   allfile_list <- lapply(msdata_obj[["files"]], function(filename){
     tmzml <- xml2::read_xml(filename)
 
