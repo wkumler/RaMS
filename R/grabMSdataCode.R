@@ -107,14 +107,15 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     }
     start_time <- Sys.time()
   }
+
   for(i in seq_along(files)){
     filename <- files[i]
 
-    if(grepl("mzML", basename(filename), ignore.case = TRUE)){
+    if(grepl("\\.mzML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzmlData(filename = filename, grab_what = grab_what,
                                verbosity = verbosity, mz = mz, ppm = ppm,
                                rtrange = rtrange, prefilter = prefilter)
-    } else if(grepl("mzXML", basename(filename), ignore.case = TRUE)){
+    } else if(grepl("\\.mzXML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzxmlData(filename = filename, grab_what = grab_what,
                                 verbosity = verbosity, mz = mz, ppm = ppm,
                                 rtrange = rtrange, prefilter = prefilter)
