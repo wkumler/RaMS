@@ -94,7 +94,8 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     if(grab_what=="everything"){
       grab_what <- c("MS1", "MS2")
     }
-    if(grab_what!="MS1"|grab_what!="MS2"|grab_what!=c("MS1", "MS2")){
+
+    if(!all(grab_what%in%c("MS1", "MS2"))){
       stop("At this time, tmzMLs can only be used with MS1 or MS2 data")
     }
     msdata_con <- list(
