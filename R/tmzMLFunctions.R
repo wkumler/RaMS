@@ -4,7 +4,7 @@
 # Finish documentation
 # Add warnings/error handling
 # Add tests
-# Add tmzml minified file for demos and examples
+# Add .tmzML minified file for demos and examples
 
 addEncNode <- function(parent_node, dubset, name){
   new_node <- xml2::xml_add_child(parent_node, name)
@@ -203,9 +203,9 @@ node2dt <- function(dubset_node, ms_level){
   if(!col_name%in%c("mz", "premz")){
     stop("tmzML documents currently only support subsetting by mz!")
   }
-  mz_lims <- eval(isub[[3]])
+  mz_lims <- eval.parent(isub[[3]])
   if(length(mz_lims)==1){
-    mz_lims <- c(eval(isub[[3]]), eval(isub[[4]]))
+    mz_lims <- c(eval.parent(isub[[3]]), eval.parent(isub[[4]]))
   }
 
   allfile_list <- lapply(msdata_obj[["files"]], function(filename){
