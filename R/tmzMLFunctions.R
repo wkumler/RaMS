@@ -171,7 +171,13 @@ node2dt <- function(dubset_node, ms_level){
   message("But you can pretend I'm a list containing data.tables:")
   message(paste(x[["connection"]][["grab_what"]], collapse = "; "))
   message("from the following files:")
-  message(paste(x[["connection"]][["files"]], collapse = "\n"))
+  n_files <- length(x[["connection"]][["files"]])
+  excess_file_message <- if(n_files>10){
+    message(paste(head(x[["connection"]][["files"]]), collapse = "\n"))
+    message(paste("and", n_files-6, "others"))
+  } else {
+    message(paste(x[["connection"]][["files"]], collapse = "\n"))
+  }
   message("and access the data inside with $ and [ subsetting")
 }
 
