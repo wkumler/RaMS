@@ -169,9 +169,9 @@ node2dt <- function(dubset_node, ms_level){
 "print.msdata_connection" <- function(x, ...){
   message("Hey, I'm not actually an object, sorry!")
   message("But you can pretend I'm a list containing data.tables:")
-  message(paste(x[["grab_what"]], collapse = "; "))
+  message(paste(x[["connection"]][["grab_what"]], collapse = "; "))
   message("from the following files:")
-  message(paste(x[["files"]], collapse = "\n"))
+  message(paste(x[["connection"]][["files"]], collapse = "\n"))
   message("and access the data inside with $ and [ subsetting")
 }
 
@@ -183,8 +183,8 @@ node2dt <- function(dubset_node, ms_level){
 #' @return An msdata_connection object with only a single MS level
 #' @export
 "$.msdata_connection" <- function(msdata_obj, ms_level){
-  if(ms_level%in%msdata_obj[["grab_what"]]){
-    msdata_obj[["grab_what"]] <- ms_level
+  if(ms_level%in%msdata_obj[["connection"]][["grab_what"]]){
+    msdata_obj[["connection"]][["grab_what"]] <- ms_level
   } else {
     stop(paste0("It doesn't look like you requested '", ms_level,
                 "' with grab_what when you created this object."))
@@ -213,25 +213,25 @@ node2dt <- function(dubset_node, ms_level){
     mz_lims <- c(eval.parent(isub[[3]]), eval.parent(isub[[4]]))
   }
 
-  if(msdata_obj[["verbosity"]]>0){
-    pb <- txtProgressBar(max = length(msdata_obj[["files"]]), style = 3)
+  if(msdata_obj[["connection"]][["verbosity"]]>0){
+    pb <- txtProgressBar(max = length(msdata_obj[["connection"]][["files"]]), style = 3)
   }
-  allfile_list <- lapply(msdata_obj[["files"]], function(filename){
+  allfile_list <- lapply(msdata_obj[["connection"]][["files"]], function(filename){
     tmzml <- xml2::read_xml(filename)
 
     mz_selectors <- paste0("@minmz<", max(mz_lims), " and @maxmz>", min(mz_lims))
-    mz_xpath <- paste0("data/", msdata_obj[["grab_what"]],
+    mz_xpath <- paste0("data/", msdata_obj[["connection"]][["grab_what"]],
                        "/dubset[", mz_selectors, "]")
     dubset_node <- xml2::xml_find_all(tmzml, mz_xpath)
-    dubset_data <- node2dt(dubset_node, ms_level=msdata_obj[["grab_what"]])
+    dubset_data <- node2dt(dubset_node, ms_level=msdata_obj[["connection"]][["grab_what"]])
     sub_data <- dubset_data[get(isub[[2]])%between%c(min(mz_lims), max(mz_lims))]
     sub_data$filename <- basename(filename)
-    if(msdata_obj[["verbosity"]]>0){
-      pb <- setTxtProgressBar(pb, which(msdata_obj[["files"]]==filename))
+    if(msdata_obj[["connection"]][["verbosity"]]>0){
+      pb <- setTxtProgressBar(pb, which(msdata_obj[["connection"]][["files"]]==filename))
     }
     sub_data
   })
-  if(msdata_obj[["verbosity"]]>0){
+  if(msdata_obj[["connection"]][["verbosity"]]>0){
     close(pb)
   }
   rbindlist(allfile_list)
