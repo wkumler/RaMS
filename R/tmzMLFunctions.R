@@ -186,8 +186,8 @@ node2dt <- function(dubset_node, ms_level){
   if(ms_level%in%msdata_obj[["grab_what"]]){
     msdata_obj[["grab_what"]] <- ms_level
   } else {
-    stop(paste0("It doesn't look like you requested grab_what = '", ms_level,
-                "'when you created this object."))
+    stop(paste0("It doesn't look like you requested '", ms_level,
+                "' with grab_what when you created this object."))
   }
   return(msdata_obj)
 }
