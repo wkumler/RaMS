@@ -103,11 +103,16 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     if(!all(grab_what%in%c("MS1", "MS2"))){
       stop("At this time, tmzMLs can only be used with MS1 or MS2 data")
     }
-    msdata_con <- list(
+    # Create a list object to hide connection values and allow
+    # RStudio to autocomplete MS1 and MS2
+    msdata_con <- vector("list", length = length(grab_what)+1)
+    msdata_con[[length(msdata_con)]] <- list(
       files=files,
       grab_what=grab_what,
       verbosity=verbosity
     )
+    names(msdata_con) <- c(grab_what, "connection")
+
     class(msdata_con) <- "msdata_connection"
     return(msdata_con)
   }
