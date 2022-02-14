@@ -30,6 +30,10 @@ test_that("tmzML warns if filename doesn't end in .tmzML", {
     verbosity = 0))
 })
 
+test_that("tmzmlMaker stops with multiple files", {
+  expect_error(tmzmlMaker(mzML_filenames, tmzml_filenames))
+})
+
 
 # Reading tmzMLs ----
 msdata <- grabMSdata(tmzml_filename)

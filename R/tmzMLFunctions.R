@@ -38,6 +38,10 @@ tmzmlMaker <- function(input_filename, output_filename=NULL,
   if(is.null(output_filename)){
     output_filename <- gsub("\\.mzX?ML", ".tmzML", input_filename)
   }
+  if(length(input_filename)>1){
+    stop(paste("tmzmlMaker is not vectorized and cannot handle multiple",
+               "files at once. Consider wrapping in 'mapply' instead."))
+  }
   if(!endsWith(output_filename, "tmzML")){
     warning("The provided output_filename does not end in tmzML.")
   }
