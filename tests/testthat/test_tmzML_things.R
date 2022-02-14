@@ -35,4 +35,15 @@ test_that("tmzML can be read", {
   expect_type(msdata, "list")
 })
 
+test_that("Requesting nonexistent dt throws error", {
+  expect_error(msdata$files)
+  expect_error(msdata$grab_what)
+  expect_error(msdata$blah)
+})
+
+test_that("Requesting connection returns expected", {
+  expect_type(msdata$connection, "list")
+  expect_named(msdata$connection, c("files", "grab_what", "verbosity"))
+})
+
 unlink(output_folder, recursive = TRUE, force = TRUE)

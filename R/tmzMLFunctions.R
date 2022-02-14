@@ -185,6 +185,8 @@ node2dt <- function(dubset_node, ms_level){
 "$.msdata_connection" <- function(msdata_obj, ms_level){
   if(ms_level%in%msdata_obj[["connection"]][["grab_what"]]){
     msdata_obj[["connection"]][["grab_what"]] <- ms_level
+  } else if(ms_level=="connection") {
+    return(msdata_obj[["connection"]])
   } else {
     stop(paste0("It doesn't look like you requested '", ms_level,
                 "' with grab_what when you created this object."))
