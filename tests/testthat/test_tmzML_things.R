@@ -4,23 +4,27 @@ dir.create(output_folder)
 # Writing tmzMLs ----
 output_filename <- paste(output_folder, basename(mzML_filenames[1]), sep = "/")
 tmzml_filename <- gsub(x = output_filename, "\\.mzML.*", ".tmzML")
+output_filenames <- paste(output_folder, basename(mzML_filenames), sep = "/")
+tmzml_filenames <- gsub(x = output_filenames, "\\.mzML.*", ".tmzML")
+
+mapply(tmzmlMaker, mzML_filenames, tmzml_filenames, verbosity==2)
 
 test_that("tmzML conversion works for mzMLs", {
-  expect_identical(RaMS:::tmzmlMaker(
+  expect_identical(tmzmlMaker(
     input_filename = mzML_filenames[1],
     output_filename = tmzml_filename,
     verbosity = 0), "temp_tmzMLs/DDApos_2.tmzML")
 })
 
 test_that("tmzML conversion works for mzXMLs", {
-  expect_identical(RaMS:::tmzmlMaker(
+  expect_identical(tmzmlMaker(
     input_filename = mzML_filenames[1],
     output_filename = tmzml_filename,
     verbosity = 0), "temp_tmzMLs/DDApos_2.tmzML")
 })
 
 test_that("tmzML warns if filename doesn't end in .tmzML", {
-  expect_warning(RaMS:::tmzmlMaker(
+  expect_warning(tmzmlMaker(
     input_filename = mzML_filenames[1],
     output_filename = output_filename,
     verbosity = 0))
@@ -44,6 +48,18 @@ test_that("Requesting nonexistent dt throws error", {
 test_that("Requesting connection returns expected", {
   expect_type(msdata$connection, "list")
   expect_named(msdata$connection, c("files", "grab_what", "verbosity"))
+})
+
+
+
+
+test_that("Verbosity flags work", {
+  expect_silent(grabMSdata(tmzml_filename)$MS1[mz%between%pmppm(118.0865)])
+  expect_silent(grabMSdata(tmzml_filename, verbosity = 0)$MS1[mz%between%pmppm(118.0865)])
+  expect_output(grabMSdata(tmzml_filename, verbosity = 1)$MS1[mz%between%pmppm(118.0865)])
+  expect_output(grabMSdata(tmzml_filename, verbosity = 2)$MS1[mz%between%pmppm(118.0865)])
+  expect_silent(grabMSdata(tmzml_filenames, verbosity = 0)$MS1[mz%between%pmppm(118.0865)])
+  expect_output(grabMSdata(tmzml_filenames)$MS1[mz%between%pmppm(118.0865)])
 })
 
 unlink(output_folder, recursive = TRUE, force = TRUE)
