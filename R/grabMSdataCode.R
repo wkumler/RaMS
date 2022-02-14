@@ -86,11 +86,6 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
-  # Handle null verbosity flag with intelligent defaults
-  if(is.null(verbosity)){
-    verbosity <- ifelse(length(files)==1, 2, 1)
-  }
-
   tmzml_check <- grepl("\\.tmzML", files)
   if(any(tmzml_check)){
     if(!all(tmzml_check)){
@@ -103,6 +98,12 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     if(!all(grab_what%in%c("MS1", "MS2"))){
       stop("At this time, tmzMLs can only be used with MS1 or MS2 data")
     }
+
+    # Handle null verbosity flag with intelligent defaults
+    if(is.null(verbosity)){
+      verbosity <- ifelse(length(files)==1, 0, 1)
+    }
+
     # Create a list object to hide connection values and allow
     # RStudio to autocomplete MS1 and MS2
     msdata_con <- vector("list", length = length(grab_what)+1)
@@ -124,6 +125,11 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   if(!is.null(ppm) & !any(c("EIC", "EIC_MS2")%in%grab_what)){
     warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
                    '"EIC_MS2" and will be ignored in the current call'))
+  }
+
+  # Handle null verbosity flag with intelligent defaults
+  if(is.null(verbosity)){
+    verbosity <- ifelse(length(files)==1, 2, 1)
   }
 
   # Define outer control loop so multiple files can be read in simultaneously
