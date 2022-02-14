@@ -82,7 +82,7 @@ tmzmlMaker <- function(input_filename, output_filename=NULL,
     message("Indexing MS2 data by m/z...")
   }
   split_MS2_mzs <- split(msdata$MS2, msdata$MS2$cat)
-  if(verbosity>1){
+  if(verbosity>1 & nrow(msdata$MS2)>0){
     pb <- txtProgressBar(max = length(split_MS2_mzs), style = 3)
     for(i in seq_along(split_MS2_mzs)){
       addMS2(split_MS2_mzs[[i]], ms2_node)

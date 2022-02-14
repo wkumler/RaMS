@@ -7,7 +7,7 @@ tmzml_filename <- gsub(x = output_filename, "\\.mzML.*", ".tmzML")
 output_filenames <- paste(output_folder, basename(mzML_filenames), sep = "/")
 tmzml_filenames <- gsub(x = output_filenames, "\\.mzML.*", ".tmzML")
 
-mapply(tmzmlMaker, mzML_filenames, tmzml_filenames, verbosity==2)
+mapply(tmzmlMaker, mzML_filenames, tmzml_filenames, verbosity=2)
 
 test_that("tmzML conversion works for mzMLs", {
   expect_identical(tmzmlMaker(
