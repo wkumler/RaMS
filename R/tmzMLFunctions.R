@@ -197,6 +197,9 @@ node2dt <- function(dubset_node, ms_level){
 #' @return A data.table with columns rt, mz, int, and filename
 #' @export
 "[.msdata_connection" <- function(msdata_obj, sub_func){
+  verbosity <- options("tmzML_progress")$tmzML_progress
+  if(is.null(verbosity))verbosity <- 0
+
   isub <- substitute(sub_func)
   function_name <- as.character(isub[[1]])
   col_name <- as.character(isub[[2]])
@@ -208,6 +211,9 @@ node2dt <- function(dubset_node, ms_level){
     mz_lims <- c(eval.parent(isub[[3]]), eval.parent(isub[[4]]))
   }
 
+  if(verbosity>0){
+    pb <- txtProgressBar(max = length(msdata_obj[["files"]]), style = 3)
+  }
   allfile_list <- lapply(msdata_obj[["files"]], function(filename){
     tmzml <- xml2::read_xml(filename)
 
@@ -218,8 +224,14 @@ node2dt <- function(dubset_node, ms_level){
     dubset_data <- node2dt(dubset_node, ms_level=msdata_obj[["grab_what"]])
     sub_data <- dubset_data[get(isub[[2]])%between%c(min(mz_lims), max(mz_lims))]
     sub_data$filename <- basename(filename)
+    if(verbosity>0){
+      pb <- setTxtProgressBar(pb, which(msdata_obj[["files"]]==filename))
+    }
     sub_data
   })
+  if(verbosity>0){
+    close(pb)
+  }
   rbindlist(allfile_list)
 }
 
