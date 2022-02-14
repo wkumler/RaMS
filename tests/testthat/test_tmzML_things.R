@@ -50,9 +50,6 @@ test_that("Requesting connection returns expected", {
   expect_named(msdata$connection, c("files", "grab_what", "verbosity"))
 })
 
-
-
-
 test_that("Verbosity flags work", {
   expect_silent(grabMSdata(tmzml_filename)$MS1[mz%between%pmppm(118.0865)])
   expect_silent(grabMSdata(tmzml_filename, verbosity = 0)$MS1[mz%between%pmppm(118.0865)])
@@ -60,6 +57,15 @@ test_that("Verbosity flags work", {
   expect_output(grabMSdata(tmzml_filename, verbosity = 2)$MS1[mz%between%pmppm(118.0865)])
   expect_silent(grabMSdata(tmzml_filenames, verbosity = 0)$MS1[mz%between%pmppm(118.0865)])
   expect_output(grabMSdata(tmzml_filenames)$MS1[mz%between%pmppm(118.0865)])
+})
+
+test_that("tmzML files not found throw error", {
+  expect_error(grabMSdata("blah.tmzML"))
+  expect_error(grabMSdata(c("blah.tmzML", "blah2.tmzML")))
+})
+
+test_that("mz(X)ML and tmzML mixing throws error", {
+  expect_error(grabMSdata(c(mzML_filenames, tmzml_filename)))
 })
 
 unlink(output_folder, recursive = TRUE, force = TRUE)

@@ -104,6 +104,13 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
       verbosity <- ifelse(length(files)==1, 0, 1)
     }
 
+    # Check for missing files before creating object
+    file_exists <- file.exists(files)
+    if(!all(file_exists)){
+      stop(paste("Unable to find all files, e.g.\n",
+                 paste(head(files[!file_exists]), collapse = "\n ")))
+    }
+
     # Create a list object to hide connection values and allow
     # RStudio to autocomplete MS1 and MS2
     msdata_con <- vector("list", length = length(grab_what)+1)
