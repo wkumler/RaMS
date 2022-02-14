@@ -104,11 +104,11 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     if(!is.null(ppm)){
       warning("Argument 'ppm' has no function when used with tmzML files, ignoring")
     }
-    if(!is.null(prefilter)){
-      warning("Argument 'prefilter' has no function when used with tmzML files, ignoring")
-    }
     if(!is.null(rtrange)){
       warning("Argument 'rtrange' has no function when used with tmzML files, ignoring")
+    }
+    if(prefilter>-1){
+      warning("Argument 'prefilter' has no function when used with tmzML files, ignoring")
     }
 
     # Handle null verbosity flag with intelligent defaults
