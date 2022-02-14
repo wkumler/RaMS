@@ -38,6 +38,9 @@ tmzmlMaker <- function(input_filename, output_filename=NULL,
   if(is.null(output_filename)){
     output_filename <- gsub("\\.mzX?ML", ".tmzML", input_filename)
   }
+  if(!endsWith(output_filename, "tmzML")){
+    warning("The provided output_filename does not end in tmzML.")
+  }
 
   if(verbosity>0){
     message("Reading in original file...")

@@ -31,7 +31,6 @@ test_that("tmzML warns if filename doesn't end in .tmzML", {
 })
 
 
-
 # Reading tmzMLs ----
 msdata <- grabMSdata(tmzml_filename)
 test_that("tmzML can be read", {
