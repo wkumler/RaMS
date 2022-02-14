@@ -68,4 +68,11 @@ test_that("mz(X)ML and tmzML mixing throws error", {
   expect_error(grabMSdata(c(mzML_filenames, tmzml_filename)))
 })
 
+test_that("Additional args throw error with tmzMLs", {
+  expect_warning(grabMSdata(tmzml_filename, mz=118.0865))
+  expect_warning(grabMSdata(tmzml_filename, ppm=5))
+  expect_warning(grabMSdata(tmzml_filename, rtrange = c(0, 10)))
+  expect_warning(grabMSdata(tmzml_filename, prefilter = 1))
+})
+
 unlink(output_folder, recursive = TRUE, force = TRUE)

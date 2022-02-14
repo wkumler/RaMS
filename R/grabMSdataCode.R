@@ -86,6 +86,7 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
+  # Handle tmzMLs first
   tmzml_check <- grepl("\\.tmzML", files)
   if(any(tmzml_check)){
     if(!all(tmzml_check)){
@@ -94,9 +95,20 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     if(grab_what=="everything"){
       grab_what <- c("MS1", "MS2")
     }
-
     if(!all(grab_what%in%c("MS1", "MS2"))){
       stop("At this time, tmzMLs can only be used with MS1 or MS2 data")
+    }
+    if(!is.null(mz)){
+      warning("Argument 'mz' has no function when used with tmzML files, ignoring")
+    }
+    if(!is.null(ppm)){
+      warning("Argument 'ppm' has no function when used with tmzML files, ignoring")
+    }
+    if(!is.null(prefilter)){
+      warning("Argument 'prefilter' has no function when used with tmzML files, ignoring")
+    }
+    if(!is.null(rtrange)){
+      warning("Argument 'rtrange' has no function when used with tmzML files, ignoring")
     }
 
     # Handle null verbosity flag with intelligent defaults
@@ -124,6 +136,8 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     class(msdata_con) <- "msdata_connection"
     return(msdata_con)
   }
+
+  # Handle mzMLs and mzXMLs below
   # Add sanity check for EIC extraction
   if(!is.null(mz) & !any(c("EIC", "EIC_MS2")%in%grab_what)){
     warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
