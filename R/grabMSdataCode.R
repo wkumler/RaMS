@@ -86,6 +86,11 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
+  # Handle null verbosity flag with intelligent defaults
+  if(is.null(verbosity)){
+    verbosity <- ifelse(length(files)==1, 2, 1)
+  }
+
   tmzml_check <- grepl("\\.tmzML", files)
   if(any(tmzml_check)){
     if(!all(tmzml_check)){
@@ -100,7 +105,8 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     }
     msdata_con <- list(
       files=files,
-      grab_what=grab_what
+      grab_what=grab_what,
+      verbosity=verbosity
     )
     class(msdata_con) <- "msdata_connection"
     return(msdata_con)
@@ -117,9 +123,6 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
 
   # Define outer control loop so multiple files can be read in simultaneously
   all_file_data <- list()
-  if(is.null(verbosity)){
-    verbosity <- ifelse(length(files)==1, 2, 1)
-  }
   if(verbosity>0){
     if(length(files)>=2){
       pb <- txtProgressBar(min = 0, max = length(files), style = 3)
