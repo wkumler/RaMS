@@ -42,6 +42,10 @@ test_that("tmzML can be read", {
   expect_type(msdata, "list")
 })
 
+test_that("tmzML prints expectedly (mostly for coverage)", {
+  expect_message(print(msdata))
+})
+
 test_that("Requesting nonexistent dt throws error", {
   expect_error(msdata$files)
   expect_error(msdata$grab_what)
@@ -76,6 +80,10 @@ test_that("Additional args throw error with tmzMLs", {
   expect_warning(grabMSdata(tmzml_filename, ppm=5))
   expect_warning(grabMSdata(tmzml_filename, rtrange = c(0, 10)))
   expect_warning(grabMSdata(tmzml_filename, prefilter = 1))
+})
+
+test_that("MS2 data also works", {
+  grabMSdata(tmzml_filename)$MS2[premz%between%pmppm(118.0865)]
 })
 
 unlink(output_folder, recursive = TRUE, force = TRUE)
