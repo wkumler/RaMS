@@ -236,14 +236,14 @@ corresponding to valine and homarine.
 
 ``` r
 initial_filename <- msdata_files[1]
-output_filename <- tempfile(fileext = "mzML")
+output_filename <- tempfile(fileext = ".mzML")
 
 masses_of_interest <- c(118.0865, 138.0555)
 minifyMSdata(files = initial_filename, output_files = output_filename, 
              mz_include = masses_of_interest, ppm = 5, warn = FALSE)
 ```
 
-    ## Total time: 2.67 secs
+    ## Total time: 2.72 secs
 
 Then, when we open the file up (with `RaMS` or other software) we are
 left with the data corresponding only to those compounds:
@@ -253,33 +253,33 @@ msdata <- grabMSdata(output_filename)
 ```
 
     ## 
-    ## Reading file file2ea45d3b1fb6mzML... 0.26 secs 
+    ## Reading file file426844a96230.mzML... 0.25 secs 
     ## Reading MS1 data...0.24 secs 
-    ## Reading MS2 data...0.06 secs 
-    ## Reading BPC...0.15 secs 
-    ## Reading TIC...0.15 secs 
+    ## Reading MS2 data...0.05 secs 
+    ## Reading BPC...0.14 secs 
+    ## Reading TIC...0.13 secs 
     ## Reading file metadata...0.11 secs 
-    ## Total time: 0.96 secs
+    ## Total time: 0.93 secs
 
 ``` r
 knitr::kable(head(msdata$MS1, 3))
 ```
 
-|      rt |       mz |        int | filename             |
-|--------:|---------:|-----------:|:---------------------|
-| 4.00085 | 118.0865 | 15968431.0 | file2ea45d3b1fb6mzML |
-| 4.00085 | 138.0550 |   174591.6 | file2ea45d3b1fb6mzML |
-| 4.00085 | 138.0550 |   174591.6 | file2ea45d3b1fb6mzML |
+|      rt |       mz |        int | filename              |
+|--------:|---------:|-----------:|:----------------------|
+| 4.00085 | 118.0865 | 15968431.0 | file426844a96230.mzML |
+| 4.00085 | 138.0550 |   174591.6 | file426844a96230.mzML |
+| 4.00085 | 138.0550 |   174591.6 | file426844a96230.mzML |
 
 ``` r
 knitr::kable(head(msdata$MS2, 3))
 ```
 
-|       rt |    premz |   fragmz |        int | voltage | filename             |
-|---------:|---------:|---------:|-----------:|--------:|:---------------------|
-| 4.182333 | 118.0864 | 51.81098 |   3809.649 |      35 | file2ea45d3b1fb6mzML |
-| 4.182333 | 118.0864 | 58.06422 |  10133.438 |      35 | file2ea45d3b1fb6mzML |
-| 4.182333 | 118.0864 | 58.06590 | 390179.500 |      35 | file2ea45d3b1fb6mzML |
+|       rt |    premz |   fragmz |        int | voltage | filename              |
+|---------:|---------:|---------:|-----------:|--------:|:----------------------|
+| 4.182333 | 118.0864 | 51.81098 |   3809.649 |      35 | file426844a96230.mzML |
+| 4.182333 | 118.0864 | 58.06422 |  10133.438 |      35 | file426844a96230.mzML |
+| 4.182333 | 118.0864 | 58.06590 | 390179.500 |      35 | file426844a96230.mzML |
 
 ``` r
 unlink(output_filename)
@@ -289,11 +289,42 @@ These new files are valid according to the validator provided in
 MSnbase, which means that most programs should be able to open them, but
 this feature is still experimental and may break on quirky data.
 
+#### Using tmzML documents
+
+Version 1.2.0 of RaMS introduced a new file type, the “transposed mzML”
+or “tmzML” file. Traditional mass-spec data is organized by scan number,
+corresponding to retention time, but this isn’t always the most sensible
+format. Often, it makes more sense to organize a mass-spec file by m/z
+ratio instead. This allows parsers to scan and decode a much smaller
+portion of the file when searching for a specific mass, as opposed to
+the traditional format which requires that every scan be opened,
+searched, and subset. The tmzML document implements this strategy and
+allows the creation of MS object representations that use essentially
+zero memory because the data is read off the disk instead of being
+stored in RAM. RaMS has been designed to interface with these new file
+types identically to traditional files, allowing all your favorite
+tidyverse tricks to work just as well and much more quickly.
+
+This introduction also resolves one of the major issues of RaMS: its
+large memory requirement when working with multiple files. Because RaMS
+previously loaded all of the mass-spec files into memory to enable rapid
+searches, the computer memory required was astronomical and most
+computers were unable to handle more than a few dozen files very well.
+The tmzML document has been introduced to resolve this issue as well as
+enabling the benefits described above. Below is a graphic showing some
+benchmark tests between RaMS (reading from both the default mzML and the
+new tmzML) and MSnbase’s MSnExp and OnDiskMSnExp.
+
+![Speed comparison between various load methods, showing the new tmzML
+type to be faster than other methods for most functions and requiring
+several orders of magnitude less memory.](speedsizecomp.png)
+
 ## File types
 
 RaMS is currently limited to the modern **mzML** data format and the
-slightly older **mzXML** format. Tools to convert data from other
-formats are available through
+slightly older **mzXML** format, as well as the custom **tmzML** format
+as of version 1.2.0. Tools to convert data from other formats are
+available through
 [Proteowizard](http://proteowizard.sourceforge.net/tools.shtml)’s
 `msconvert` tool. Data can, however, be gzip compressed (file ending
 .gz) and this compression actually speeds up data retrieval
@@ -328,4 +359,4 @@ Issues page](https://github.com/wkumler/RaMS/issues).
 
 ------------------------------------------------------------------------
 
-README last built on 2021-10-22
+README last built on 2022-02-14
