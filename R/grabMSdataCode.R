@@ -86,6 +86,58 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
+  # Handle tmzMLs first
+  tmzml_check <- grepl("\\.tmzML", files)
+  if(any(tmzml_check)){
+    if(!all(tmzml_check)){
+      stop("At this time, tmzMLs can't be mixed with mzML/mzXMLs")
+    }
+    if(grab_what=="everything"){
+      grab_what <- c("MS1", "MS2")
+    }
+    if(!all(grab_what%in%c("MS1", "MS2"))){
+      stop("At this time, tmzMLs can only be used with MS1 or MS2 data")
+    }
+    if(!is.null(mz)){
+      warning("Argument 'mz' has no function when used with tmzML files, ignoring")
+    }
+    if(!is.null(ppm)){
+      warning("Argument 'ppm' has no function when used with tmzML files, ignoring")
+    }
+    if(!is.null(rtrange)){
+      warning("Argument 'rtrange' has no function when used with tmzML files, ignoring")
+    }
+    if(prefilter>-1){
+      warning("Argument 'prefilter' has no function when used with tmzML files, ignoring")
+    }
+
+    # Handle null verbosity flag with intelligent defaults
+    if(is.null(verbosity)){
+      verbosity <- ifelse(length(files)==1, 0, 1)
+    }
+
+    # Check for missing files before creating object
+    file_exists <- file.exists(files)
+    if(!all(file_exists)){
+      stop(paste("Unable to find all files, e.g.\n",
+                 paste(head(files[!file_exists]), collapse = "\n ")))
+    }
+
+    # Create a list object to hide connection values and allow
+    # RStudio to autocomplete MS1 and MS2
+    msdata_con <- vector("list", length = length(grab_what)+1)
+    msdata_con[[length(msdata_con)]] <- list(
+      files=files,
+      grab_what=grab_what,
+      verbosity=verbosity
+    )
+    names(msdata_con) <- c(grab_what, "connection")
+
+    class(msdata_con) <- "msdata_connection"
+    return(msdata_con)
+  }
+
+  # Handle mzMLs and mzXMLs below
   # Add sanity check for EIC extraction
   if(!is.null(mz) & !any(c("EIC", "EIC_MS2")%in%grab_what)){
     warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
@@ -96,25 +148,28 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
                    '"EIC_MS2" and will be ignored in the current call'))
   }
 
-  # Define outer control loop so multiple files can be read in simultaneously
-  all_file_data <- list()
+  # Handle null verbosity flag with intelligent defaults
   if(is.null(verbosity)){
     verbosity <- ifelse(length(files)==1, 2, 1)
   }
+
+  # Define outer control loop so multiple files can be read in simultaneously
+  all_file_data <- list()
   if(verbosity>0){
     if(length(files)>=2){
       pb <- txtProgressBar(min = 0, max = length(files), style = 3)
     }
     start_time <- Sys.time()
   }
+
   for(i in seq_along(files)){
     filename <- files[i]
 
-    if(grepl("mzML", basename(filename), ignore.case = TRUE)){
+    if(grepl("\\.mzML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzmlData(filename = filename, grab_what = grab_what,
                                verbosity = verbosity, mz = mz, ppm = ppm,
                                rtrange = rtrange, prefilter = prefilter)
-    } else if(grepl("mzXML", basename(filename), ignore.case = TRUE)){
+    } else if(grepl("\\.mzXML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzxmlData(filename = filename, grab_what = grab_what,
                                 verbosity = verbosity, mz = mz, ppm = ppm,
                                 rtrange = rtrange, prefilter = prefilter)
@@ -379,4 +434,8 @@ timeReport <- function(last_time, text=NULL){
 #' @import xml2
 #' @import data.table
 #' @importFrom base64enc base64decode
+#' @export
+data.table::between
+#' @export
+data.table::`%between%`
 NULL

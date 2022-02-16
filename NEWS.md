@@ -1,5 +1,11 @@
 # RaMS (development version)
 
+# RaMS 1.2.0
+## The tmzML release
+ - Added `tmzmlMaker`, a function that converts mzML and mzXML files to the new tmzML file type
+ - Imported `between()` and `%between%` from `data.table` to avoid the extra `library()` call every time
+ - Squashed some bugs
+
 # RaMS 1.1.0
 ## The minification release
  - Added `minifyMSdata`, a function that shrinks MS files by excluding masses
