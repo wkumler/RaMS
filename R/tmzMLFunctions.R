@@ -284,6 +284,9 @@ node2dt <- function(dubset_node, ms_level){
 #' @return A data.table with columns rt, mz, int, and filename
 #' @export
 "[.msdata_connection" <- function(msdata_obj, sub_func){
+  if(length(msdata_obj[["connection"]][["grab_what"]])!=1){
+    stop("tmzML objects must first be indexed with $ to specify which data you'd like")
+  }
   isub <- substitute(sub_func)
   function_name <- as.character(isub[[1]])
   col_name <- as.character(isub[[2]])
