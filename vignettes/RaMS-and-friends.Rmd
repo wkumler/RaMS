@@ -84,6 +84,11 @@ functionality.
 
 ```{r}
 library(DBI)
+# Get data from multiple files to show off
+mzml_files <- system.file(c("extdata/LB12HL_AB.mzML.gz", 
+                            "extdata/LB12HL_CD.mzML.gz"), 
+                          package = "RaMS")
+msdata <- grabMSdata(mzml_files)
 
 # Create the sqlite database and connect to it
 MSdb <- dbConnect(RSQLite::SQLite(), "MSdata.sqlite")
@@ -100,6 +105,16 @@ dbGetQuery(MSdb, 'SELECT * FROM MS1 LIMIT 3')
 EIC_query <- 'SELECT * FROM MS1 WHERE mz BETWEEN :lower_bound AND :upper_bound'
 query_params <- list(lower_bound=118.086, upper_bound=118.087)
 EIC <- dbGetQuery(MSdb, EIC_query, params = query_params)
+
+# Append with additional files
+extra_file <- system.file("extdata", "LB12HL_EF.mzML.gz", package = "RaMS")
+extra_msdata <- grabMSdata(extra_file, grab_what = "everything")
+dbGetQuery(MSdb, 'SELECT COUNT(*) FROM MS1') # Initial number of rows
+dbAppendTable(MSdb, "MS1", extra_msdata$MS1)
+# Confirm three different files exist in DB
+dbGetQuery(MSdb, 'SELECT DISTINCT filename FROM MS1')
+# Confirm new rows have been added
+dbGetQuery(MSdb, 'SELECT COUNT(*) FROM MS1')
 
 # Disconnect after export
 dbDisconnect(MSdb)
