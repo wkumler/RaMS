@@ -1,0 +1,81 @@
+---
+title: "Minifying files with RaMS"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Minifying-files-with-RaMS}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<!-- This vignette is created from a .Rmd file: please edit that instead. -->
+
+```{r, include = FALSE}
+options(rmarkdown.html_vignette.check_title = FALSE)
+options(tidyverse.quiet = TRUE)
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  out.width = "80%",
+  fig.align = 'center',
+  fig.height = 3,
+  fig.width = 6.5
+)
+```
+
+**Table of contents:**
+
+Like `grabMSdata`, there's one
+wrapper function `minifyMSdata` that accepts mzML or mzXML files, plus a vector
+of *m/z* values that should either be kept (`mz_include`) or removed 
+(`mz_exclude`). The function then opens up the provided MS files and removes
+data points in the MS1 and MS2 spectra that fall outside the accepted bounds.
+`mz_include` is useful when only a few masses are of interest, as in targeted
+metabolomics. `mz_exclude` is useful when many masses are known to be 
+contaminants or interfere with peakpicking/plotting abilities. This minification
+can sometimes shrink a file up to an order of magnitude, decreasing both
+processing time and memory allocation later in the pipeline.
+
+This is also very useful for creating demo MS files - `RaMS` uses these
+functions to produce the sample data in `extdata`, with 6 MS files taking up
+less than 5 megabytes of disk space. Many other programs provide the ability
+to shrink files, but none (that are known) shrink files by excluding *m/z*
+values and instead can only remove certain retention times.
+
+Below, we begin with a large MS file and extract only the data corresponding to
+valine and homarine.
+
+```{r minifyfile, results='hide'}
+initial_filename <- msdata_files[1]
+output_filename <- tempfile(fileext = ".mzML")
+
+masses_of_interest <- c(118.0865, 138.0555)
+minifyMSdata(files = initial_filename, output_files = output_filename, 
+             mz_include = masses_of_interest, ppm = 5, warn = FALSE)
+```
+
+Then, when we open the file up (with `RaMS` or other software) we are left with
+the data corresponding only to those compounds:
+
+```{r openmini, results='hide'}
+msdata <- grabMSdata(output_filename)
+```
+
+
+```{r showmini}
+knitr::kable(head(msdata$MS1, 3))
+knitr::kable(head(msdata$MS2, 3))
+```
+
+
+```{r cleanmini, include=FALSE}
+unlink(output_filename)
+```
+
+These new files are valid according to the validator provided in MSnbase, which
+means that most programs should be able to open them, but this feature is still
+experimental and may break on quirky data.
+
+***
+
+README last built on `r Sys.Date()`
