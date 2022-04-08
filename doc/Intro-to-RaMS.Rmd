@@ -1,0 +1,515 @@
+---
+title: "Intro to RaMS"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Intro-to-RaMS}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<!-- This vignette is created from a .Rmd file: please edit that instead. -->
+
+```{r, include = FALSE}
+options(rmarkdown.html_vignette.check_title = FALSE)
+options(tidyverse.quiet = TRUE)
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  out.width = "80%",
+  fig.align = 'center',
+  fig.height = 3,
+  fig.width = 6.5
+)
+```
+
+**Table of contents:**
+
+* **[Basic RaMS usage]**
+  + [TICs, BPCs, and metadata]
+  + [Adding a column: MS1 data]
+  + [Moving along: MS2 data]
+* **[Advanced RaMS usage]**
+  + [Saving space: EICs and rtrange]
+  + [Speeding things up]
+  + [Finer control: grabMzmlData, grabMzxmlData]
+  + [The nitty-gritty details]
+  + [Minified file details]
+
+## Basic RaMS usage
+
+Welcome to `RaMS`! This vignette is designed to provide examples using 
+the package at various levels of complexity. Let's jump right in.
+
+If you have your own data, feel free to load it here. If not, there's a couple
+small example files you're welcome to use in the "extdata" folder. The first of 
+these contains DDA data from a pooled sample, while the others are individual 
+samples. I'll be using these throughout. For more details on the origin of these
+files, see the [minification vignette](doc/Minifying-files-with-RaMS.html).
+
+```{r findfiles, message=FALSE}
+library(RaMS)
+
+# Locate the file directory
+msdata_dir <- system.file("extdata", package = "RaMS")
+
+# Identify the files of interest
+data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
+
+# Check that the files identified are the ones expected
+basename(data_files)
+```
+
+There's only one function to worry about in `RaMS`: the aptly named `grabMSdata`.
+This function has a couple arguments with sensible defaults, but you'll always
+need to tell it two things: one, which files you'd like to process; and two,
+the data you'd like to obtain from those files.
+
+Let's start simple, with a single file and the most basic information about it.
+
+### TICs, BPCs, and metadata
+
+A TIC reports the total intensity measured by the mass analyzer during each 
+scan, so the data is parsed into two columns: retention time (rt) and intensity
+(int). This makes it easy to read and simple to plot:
+
+```{r loadTIC}
+single_file <- data_files[2]
+
+msdata <- grabMSdata(single_file, grab_what = "TIC")
+
+knitr::kable(head(msdata$TIC, 3))
+```
+
+Since we asked for a single thing, the TIC, our `file_data` object is a list
+with a single entry: the TIC. Let's plot that data:
+
+```{r headerTIC}
+plot(msdata$TIC$rt, msdata$TIC$int, type = "l")
+```
+
+Simple enough!
+
+A BPC is just like a TIC except that it records the *maximum* intensity measured,
+rather than the sum of all intensities. This data is also collected by the mass
+analyzer and doesn't need to be calculated.
+
+```{r loadBPC, fig.height=3}
+msdata <- grabMSdata(single_file, grab_what = "BPC")
+```
+
+Since the data is parsed in a ["tidy" format](https://r4ds.had.co.nz/tidy-data.html), 
+it plays nicely with popular packages such as `ggplot2`. Let's use that to plot
+our BPC instead of the base R plotting system:
+
+```{r plotBPC, warning=FALSE}
+library(tidyverse)
+ggplot(msdata$BPC) + geom_line(aes(x=rt, y=int))
+```
+
+The advantages of tidy data and `ggplot` become clear when we load more than
+one file at a time because we can group and color by the third column, the
+name of the file from which the data was read. `RaMS` will also automatically
+enable a loading bar if more than one file is loaded; this can be disabled by
+setting the `verbosity` parameter to 0.
+
+```{r loadmultiBPC}
+msdata <- grabMSdata(data_files[2:4], grab_what = "BPC")
+
+ggplot(msdata$BPC) + geom_line(aes(x=rt, y=int, color=filename))
+```
+
+And of course, this means that all of `ggplot`'s aesthetic power can be brought
+to your chromatograms as well, so customize away!
+
+```{r ggplotdemo, dpi=144}
+ggplot(msdata$BPC) + 
+  geom_polygon(aes(x=rt, y=int, color=filename), lwd=1, fill="#FFFFFF44") +
+  theme(legend.position = c(0.8, 0.7), plot.title = element_text(face="bold"),
+        axis.title = element_text(size = 15)) +
+  scale_y_continuous(labels = c(0, "250M", "500M"), breaks = c(0, 2.5e8, 5e8)) +
+  scale_colour_manual(values = c("#2596be", "#6c25be", "#bea925")) +
+  labs(x="Retention time (minutes)", y="Intensity", 
+       title = "Base peak chromatogram", color="Files:") +
+  coord_cartesian(xlim = c(7.50, 9), ylim = c(0, 5e8))
+```
+
+`RaMS` also provides some basic file metadata extraction capability, although
+the focus for this package is on the actual data and other MS packages handle
+file metadata much more elegantly. This is one area where there are major
+differences between mzML and mzXML file types - the mzXML file type simply
+doesn't encode as much metadata as the mzML filetype, so `RaMS` can't extract
+it.
+
+```{r metadatademo}
+# Since the minification process strips some metadata, I use the 
+# less-minified DDA file here
+grabMSdata(files = data_files[1], grab_what = "metadata")
+```
+
+### Adding a column: MS1 data
+
+MS1 data can be extracted just as easily, by supplying "MS1" to the `grab_what`
+argument of `grabMSdata` function.
+
+```{r MS1demo}
+msdata <- grabMSdata(data_files[2:4], grab_what = "MS1")
+
+knitr::kable(head(msdata$MS1, 3))
+```
+
+So we've now got the *mz* column, corresponding to the mass-to-charge ratio 
+(*m/z*) of an ion. This means that we can now filter our data for specific
+masses and separate out molecules with different masses.
+
+Note that this also makes the data much larger in R's memory - so don't go
+loading hundreds of files simultaneously. If that's necessary, check out the
+section below on saving space.
+
+Because `RaMS` returns [data.tables](https://cran.r-project.org/package=data.table) rather than normal `data.frame`s, indexing
+is super-fast and a bit more intuitive than with base R. Below, I also use the
+`pmppm` function from `RaMS` to produce a mass range from an initial mass and
+spectrometer accuracy (here, 5 parts-per-million).
+
+```{r adenineplot, warning=FALSE, message=FALSE}
+library(data.table)
+
+adenine_mz <- 136.06232
+
+adenine_data <- msdata$MS1[mz%between%pmppm(adenine_mz, ppm=5)]
+
+ggplot(adenine_data) + geom_line(aes(x=rt, y=int, color=filename)) + lims(x=c(4, 9))
+```
+
+This makes it easy to grab the data for multiple compounds of interest with a
+simple loop, provided here by the `purrr` package of the tidyverse:
+
+```{r multicmpdplot}
+mzs_of_interest <- c(adenine=136.06232, valine=118.0865, homarine=138.055503)
+
+mass_data <- imap_dfr(mzs_of_interest, function(mz_i, name){
+  cbind(msdata$MS1[mz%between%pmppm(mz_i, ppm=10)], name)
+})
+
+ggplot(mass_data) + 
+  geom_line(aes(x=rt, y=int, color=filename)) + 
+  facet_wrap(~name, ncol = 1, scales = "free_y") +
+  lims(x=c(4, 9))
+```
+
+### Moving along: MS2 data
+
+`RaMS` also handles MS<sup>2</sup> data elegantly. Request it with the "MS2" 
+option for `grab_what`, although it's often a good idea to grab the MS1 data
+alongside.
+
+```{r MS2data}
+msdata <- grabMSdata(data_files[1], grab_what = "everything")
+knitr::kable(head(msdata$MS2, 3))
+```
+
+DDA data can be plotted nicely with `ggplot2` as well. Typically it makes sense
+to filter for a precursor mass, then render the fragments obtained.
+
+```{r MS2demo}
+homarine_mz <- 137.047678+1.007276
+
+homarine_MS2 <- msdata$MS2[premz%between%pmppm(homarine_mz, 5)]
+homarine_MS2$int <- homarine_MS2$int/max(homarine_MS2$int)
+
+ggplot(homarine_MS2) +
+  geom_point(aes(x=fragmz, y=int)) +
+  geom_segment(aes(x=fragmz, xend=fragmz, y=int, yend=0)) +
+  scale_y_continuous(breaks = c(0, .5, 1), labels = c("0%", "50%", "100%")) +
+  labs(x="Fragment m/z", y="")
+```
+
+This is also the perfect place to enable some interactivity with packages such
+as `plotly`, making data exploration not only simple but also highly intuitive. 
+
+```{r plotly, eval=FALSE}
+## Not run to save space in the vignette:
+library(plotly)
+msdata <- grabMSdata(data_files, grab_what = c("MS1", "MS2", "BPC"))
+
+compound_MS1 <- msdata$MS1 %>% 
+  filter(mz%between%pmppm(homarine_mz, 10)) %>%
+  filter(!str_detect(filename, "DDA"))
+
+compound_MS2 <- msdata$MS2[premz%between%pmppm(homarine_mz, 10)] %>% 
+  group_by(rt) %>%
+  arrange(desc(int)) %>%
+  summarise(frags=paste(
+    paste(round(fragmz, digits = 3), round(int), sep = ": "), collapse = "\n"),
+    .groups="drop"
+  ) %>%
+  mutate(int=approx(x = compound_MS1$rt, y=compound_MS1$int, xout = rt)$y)
+plot_ly(compound_MS1) %>%
+  add_trace(type="scatter", mode="lines", x=~rt, y=~int, color=~filename,
+            hoverinfo="none") %>%
+  add_trace(type="scatter", mode="markers", x=~rt, y=~int,
+            text=~frags, hoverinfo="text", showlegend=FALSE,
+            marker=list(color="black"), data = compound_MS2) %>%
+  layout(annotations=list(x=min(compound_MS2$rt), y=median(compound_MS2$int)*10, 
+                          text="Mouse over to see\nMSMS fragments"))
+```
+
+Easy access to MS<sup>2</sup> data also allows us to rapidly perform 
+simple operations such as searching for a
+specific fragment mass. For example, if we know that homarine typically
+produces a fragment with a mass of 94.06567, we simply subset the MS<sup>2</sup> data
+for fragments in a range around that mass:
+
+```{r homarine_fragsearch}
+homarine_frag_mz <- 94.06567
+msdata$MS2[fragmz%between%pmppm(homarine_frag_mz, ppm = 5)] %>%
+  head() %>% knitr::kable()
+```
+
+We find that there's not only homarine that produces that fragment,
+but at least one other compound. Precursor masses like this can then
+be searched manually in online databases or, since the data is already in R,
+passed to a script that automatically queries them.
+
+Similarly, we can easily search instead for neutral losses with this method. If
+we suspect other molecules are producing a similar neutral loss as homarine:
+
+```{r homarine_neutsearch}
+homarine_neutral_loss <- homarine_mz - homarine_frag_mz
+
+msdata$MS2 <- mutate(msdata$MS2, neutral_loss=premz-fragmz) %>%
+  select("rt", "premz", "fragmz", "neutral_loss", "int", "voltage", "filename")
+msdata$MS2[neutral_loss%between%pmppm(homarine_neutral_loss, ppm = 5)] %>%
+  arrange(desc(int)) %>% head() %>% knitr::kable()
+```
+
+We can again confirm our suspicions that there's another signal with
+a similar neutral loss: one with a mass of 104.0710.
+
+## Advanced RaMS usage
+
+The sections below will likely be of interest to users who are already familiar
+with `RaMS` and are looking to optimize speed, reduce memory requirements, or 
+are otherwise interested in the details of what `RaMS` does under the hood. If
+you're just getting started, I strongly recommend applying `RaMS` to your own
+data before you read on.
+
+### Saving space: EICs and rtrange
+
+Mass-spec files are typically tens or hundreds of megabytes in size, which means
+that the simultaneous analysis of many files can easily exceed a computer's
+memory. Since `RaMS` stores all data in R's working memory, this can become a
+problem for large analyses.
+
+However, much of the usage envisioned for `RaMS` on this scale doesn't require
+access to the entire file, the entire time. Instead, users are typically 
+interested in a few masses of interest or a specific time window. This means
+that while each file still needs to be read into R in full to find the data
+of interest, extraneous data can be discarded before the next file is loaded.
+
+This functionality can be enabled by passing "EIC" and/or "EIC_MS2" to the
+`grab_what` argument of `grabMSdata`, along with a vector of masses to extract
+(mz) and the instrument's ppm accuracy. When this is enabled, files are read
+into R's memory sequentially, the mass window is extracted, and the rest of
+the data is discarded.
+
+```{r EICdemo}
+all_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"))
+
+mzs_of_interest <- c(adenine=136.06232, valine=118.0865)
+small_data <- grabMSdata(data_files, grab_what = c("EIC", "EIC_MS2"),
+                         mz=mzs_of_interest, ppm = 5)
+
+all_data$MS1 %>%
+  mutate(type="All data") %>%
+  rbind(small_data$EIC %>% mutate(type="Extracted data only")) %>%
+  filter(!str_detect(filename, "DDA")) %>%
+  filter(rt%between%c(5, 15)) %>%
+  group_by(rt, filename, type) %>%
+  summarise(TIC=sum(int), .groups="drop") %>%
+  ggplot() +
+  geom_line(aes(x=rt, y=TIC, color=filename)) +
+  facet_wrap(~type, ncol = 1)
+
+# Size reduction factor:
+as.numeric(object.size(all_data)/object.size(small_data))
+```
+
+As expected, the size of the `small_data` object is much smaller than the
+`all_data` object, here by a factor of about 15x. For files that haven't 
+already been "minified", that size reduction will be even 
+more significant. Of course, this comes with the cost of needing to re-load
+the data a second time if a new mass feature becomes of interest but this 
+shrinkage is especially valuable for targeted analyses where the analytes of
+interest are known in advance.
+
+A second way of reducing file size is to constrain the retention time dimension
+rather than the m/z dimension. This can be done with the `rtrange` argument,
+which expects a length-two vector corresponding to the upper and lower bounds
+on retention time. This is useful when a small time window is of interest, and
+only the data between those bounds is relevant. Below, peaks are deliberately
+sliced in half to show that this is filtering on retention time instead of mass.
+
+```{r rtrangedemo}
+small_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), rtrange = c(6, 8))
+
+all_data$MS1 %>%
+  mutate(type="All data") %>%
+  rbind(small_data$MS1 %>% mutate(type="Extracted data only")) %>%
+  filter(!str_detect(filename, "DDA")) %>%
+  group_by(rt, filename, type) %>%
+  summarise(TIC=sum(int), .groups="drop") %>%
+  ggplot() +
+  geom_line(aes(x=rt, y=TIC, color=filename)) +
+  facet_wrap(~type, ncol = 1)
+
+# Size reduction factor:
+as.numeric(object.size(all_data)/object.size(small_data))
+```
+
+The savings are also worth noting here, but constraining
+the retention time also speeds up data retrieval slightly. Since *m/z* and
+intensity data is encoded in mzML and mzXML files while retention time 
+information is not, eliminating scans with a retention time window removes
+the need to decode the intensity and *m/z* information in those scans. 
+
+However, decoding is rarely the rate-limiting step and for more information 
+about speeding things up, continue to the next section.
+
+### Speeding things up
+
+So, `RaMS` isn't fast enough for you? Let's see what we can do to improve that.
+The first step in speeding things up is discovering what's slow. Typically,
+this is the process of reading in the mzML/mzXML file rather than any processing 
+that occurs afterward, but this is not always the case. To examine bottlenecks,
+`RaMS` includes timing information that's produced if the `verbosity` argument
+is set to 2 or higher.
+
+```{r verbosedemo}
+all_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), verbosity = 2)
+```
+
+In general, slow file read times can be improved by compressing the data. mzML
+files are highly compressible, with options to compress both the data itself
+using the `zlib` method and the files as a whole using `gzip`. 
+
+`gzip` is the simplest one to use, as a plethora of methods exist to compress
+files this way, including online sites. `RaMS` can read the data directly
+from a gzipped file, no decompression necessary, so this is an easy way to
+reduce file size and read times. Sharp-eyed users will have noticed that the
+demo files are already gzipped, which is part of the reason they are so small.
+
+`zlib` compression is slightly trickier, and is most often performed with tools
+such as [Proteowizard](http://proteowizard.sourceforge.net/doc_users.html)'s 
+`msconvert` tool with the option "-z". 
+
+Read times may also be slow if files are being accessed via the Internet, either
+through a VPN or network drive. If your files are stored elsewhere,
+consider first moving those files somewhere more local before reading data from
+them.
+
+If the bottleneck appears when reading MS<sup>1</sup> data, consider restricting
+the retention time range with the `rtrange` argument or using more detailed
+profiling tools such as RStudio's "Profile" options or the `profvis` package.
+Pull requests that improve data processing speed are always welcome!
+
+While the package is not currently set up for parallel processing, this is
+a potential future feature if a strong need is demonstrated.
+
+### Finer control: grabMzmlData, grabMzxmlData
+
+While there's only one main function (`grabMSdata`) in `RaMS`, you may have noticed that two
+other functions have been exposed that perform similar tasks: `grabMzmlData`
+and `grabMzxmlData`. The main function `grabMSdata` serves as a wrapper around
+these two functions, which detects the file type, adds the "filename"
+column to the data, and loops over multiple files if provided. However, there's
+often reason to use these internal functions separately.
+
+For one, the objects themselves are smaller because they don't have the filename
+column attached yet. You as the user will need to keep track of which data
+belongs to which files in this case.
+
+Another use case might be applying functions to each file individually, perhaps
+aligning to a reference chromatogram or identifying peaks. Rather than spending
+the time to bind the files together and immediately separate them again, these
+functions have been exposed to skip that step.
+
+Finally, these functions are useful for parallelization. Because iterating
+over each mass-spec file is often the largest reasonable chunk, these functions
+can be passed directly to parallel processes like `mclapply` or `doParallel`.
+However, parallelization is a beast best handled by individual users because
+its actual implementation often differs wildly and its utility depends strongly
+on individual setups (remember that parallelization won't help with slow I/O
+times, so it may not always improve data processing speed.)
+
+```{r, eval=FALSE}
+## Not run:
+library(parallel)
+cl <- makeCluster(getOption("cl.cores", detectCores()-1))
+output_data <- parLapply(data_files, grabMzmlData, grab_what="everything", cl = cl)
+
+library(foreach)
+library(doParallel)
+registerDoParallel(detectCores()-1)
+output_data <- foreach (i=data_files) %dopar% {
+  RaMS::grabMzmlData(i, grab_what="everything")
+}
+stopImplicitCluster()
+```
+
+### The nitty-gritty details
+
+`RaMS` is possible because mzML and mzXML documents are fundamentally
+[XML](https://en.wikipedia.org/wiki/XML)-based. This means that we can leverage
+speedy and robust XML parsing packages such as `xml2` to extract the data.
+Fundamentally, `RaMS` relies on [XPath](https://www.w3schools.com/xml/xpath_intro.asp)
+navigation to collect various bits of mass-spec data, and the format of mzML
+and mzXML files provides the tags necessary. That means a lot of `RaMS` code
+consists of lines like the following:
+
+```{r, eval=FALSE}
+## Not run:
+data_nodes <- xml2::xml_find_all(mzML_nodes, xpath="//d1:precursorMz")
+raw_data <- xml2::xml_attr(data_nodes, "value")
+```
+
+...plus a lot of data handling to get the output into the tidy format.
+
+The other tricky bit of data extraction is converting the (possibly compressed)
+binary data into R-friendly objects. This is usually handled with code like that
+shown below. Many of the settings can be deduced from the file, but sometimes
+compression types need to be guessed at and will throw a warning if so.
+
+```{r, eval=FALSE}
+## Not run:
+decoded_binary <- base64enc::base64decode(binary)
+raw_binary <- as.raw(decoded_binary)
+decomp_binary <- memDecompress(raw_binary, type = file_metadata$compression)
+final_binary <- readBin(decomp_binary, what = "double",
+                        n=length(decomp_binary)/file_metadata$mz_precision,
+                        size = file_metadata$mz_precision)
+
+# See https://github.com/ProteoWizard/pwiz/issues/1301
+```
+
+Fundamentally, mass-spectrometry data is formatted as a 
+[ragged array](https://en.wikipedia.org/wiki/Jagged_array), with an unknown
+number of *m/z* and intensity values for a given scan. This makes it difficult
+to encode neatly without interpolating, but tidy data provides a solution by
+stacking those arrays rather than aligning them into some sort of matrix.
+
+This ragged shape is also the reason that subsetting mass-spec data by retention
+time is trivial - grab the scans that correspond to the desired retention times
+and you're done. Subsetting by mass, on the other hand, requires decoding each
+and every scan's *m/z* and intensity data. If you're reading a book and only
+want a couple chapters, it's easy to flip to those sections. If you're looking
+instead for every time a specific word shows up, you've gotta read the whole
+thing.
+
+For more information about the mzML data format and its history, check out the
+specification at https://www.psidev.info/mzML.
+
+
+***
+
+Vignette last built on `r Sys.Date()`
