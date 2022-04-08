@@ -44,7 +44,8 @@ the package at various levels of complexity. Let's jump right in.
 If you have your own data, feel free to load it here. If not, there's a couple
 small example files you're welcome to use in the "extdata" folder. The first of 
 these contains DDA data from a pooled sample, while the others are individual 
-samples. I'll be using these throughout.
+samples. I'll be using these throughout. For more details on the origin of these
+files, see the [minification vignette](doc/Minifying-files-with-RaMS.html).
 
 ```{r findfiles, message=FALSE}
 library(RaMS)
@@ -508,13 +509,7 @@ thing.
 For more information about the mzML data format and its history, check out the
 specification at https://www.psidev.info/mzML.
 
-### Minified file details
-
-While many `RaMS` users will arrive at this vignette with their own data, 
-several small files are provided for demonstration. These files originate from the [Ingalls Lab](https://sites.google.com/view/anitra-ingalls) at the University of Washington, USA and are published in the manuscript [**"Metabolic consequences of cobalamin scarcity in diatoms as revealed through metabolomics"**](https://www.sciencedirect.com/science/article/pii/S1434461018301184). Files were downloaded from the corresponding [Metabolights repository](https://www.ebi.ac.uk/metabolights/MTBLS703/files).
-
-Due to CRAN's restrictions on package size, the original files cannot be included. Instead, MS1 data was compressed by extracting EICs for each compound in the Ingalls Lab [list of targeted compounds](https://github.com/IngallsLabUW/Ingalls_Standards/blob/b098927ea0089b6e7a31e1758e7c7eaad5408535/Ingalls_Lab_Standards_NEW.csv) as of August 24, 2020. EIC width was set with a ppm value of 20. These compressed files were then minified using `RaMS`'s own `minifyMSdata`. Finally, they were gzip-compressed with [`R.utils`'s](https://cran.r-project.org/package=R.utils) `gzip` function and default parameters.
 
 ***
 
-README last built on `r Sys.Date()`
+Vignette last built on `r Sys.Date()`
