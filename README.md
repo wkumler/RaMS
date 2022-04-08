@@ -10,12 +10,9 @@ status](https://github.com/wkumler/RaMS/workflows/R-CMD-check/badge.svg)](https:
 coverage](https://codecov.io/gh/wkumler/RaMS/branch/master/graph/badge.svg)](https://codecov.io/gh/wkumler/RaMS)
 <!-- badges: end -->
 
-**Table of contents:**
-[Overview](https://github.com/wkumler/RaMS#overview) -
-[Installation](https://github.com/wkumler/RaMS#installation) -
-[Usage](https://github.com/wkumler/RaMS#usage) - [File
-types](https://github.com/wkumler/RaMS#file-types) -
-[Contact](https://github.com/wkumler/RaMS#contact)
+**Table of contents:** [Overview](.#overview) -
+[Installation](.#installation) - [Usage](.#usage) - [File
+types](.#file-types) - [Contact](.#contact)
 
 ## Overview
 
@@ -71,6 +68,9 @@ msdata_files <- list.files(msdata_dir, pattern = "mzML", full.names=TRUE)
 msdata <- grabMSdata(files = msdata_files[2:4], grab_what = c("BPC", "MS1"))
 ```
 
+Some additional examples can be found below, but a more thorough
+introduction can be found in [the vignette](doc/Intro-to-RaMS.Rmd).
+
 #### BPC/TIC data:
 
 Base peak chromatograms (BPCs) and total ion chromatograms (TICs) have
@@ -89,7 +89,7 @@ knitr::kable(head(msdata$BPC, 3))
 | 4.040133 | 10653922 | LB12HL_AB.mzML.gz |
 
 ``` r
-plot(msdata$BPC$rt, msdata$BPC$int, type = "l")
+plot(msdata$BPC$rt, msdata$BPC$int, type = "l", ylab="Intensity")
 ```
 
 ![](man/figures/README-showbaseplot-1.png)<!-- -->
@@ -120,9 +120,11 @@ knitr::kable(head(msdata$MS1, 3))
 | 4.009 | 136.0618 |   71907.15 | LB12HL_AB.mzML.gz |
 
 This tidy format means that it plays nicely with other tidy data
-packages. Here, we use \[data.table\] and a few other tidyverse packages
-to compare a molecule’s <sup>13</sup>C and <sup>15</sup>N peak areas to
-that of the base peak, giving us some clue as to its molecular formula.
+packages. Here, we use
+[data.table](https://cran.r-project.org/package=data.table) and a few
+other tidyverse packages to compare a molecule’s <sup>13</sup>C and
+<sup>15</sup>N peak areas to that of the base peak, giving us some clue
+as to its molecular formula.
 
 ``` r
 library(data.table)
@@ -192,12 +194,12 @@ msdata$MS2[premz%between%pmppm(118.0865) & int>mean(int)] %>%
 
 ![](man/figures/README-plotfragdata-1.png)<!-- -->
 
-Or want to search for a specific neutral loss:
+Or want to search for precursors with a specific neutral loss:
 
 ``` r
 msdata$MS2[, neutral_loss:=premz-fragmz] %>%
   filter(neutral_loss%between%pmppm(60.02064, 5)) %>%
-  head() %>% knitr::kable()
+  head(3) %>% knitr::kable()
 ```
 
 |       rt |    premz |   fragmz |        int | voltage | filename         | neutral_loss |
@@ -205,127 +207,27 @@ msdata$MS2[, neutral_loss:=premz-fragmz] %>%
 | 4.182333 | 118.0864 | 58.06590 | 390179.500 |      35 | DDApos_2.mzML.gz |     60.02055 |
 | 4.276100 | 116.0709 | 56.05036 |   1093.988 |      35 | DDApos_2.mzML.gz |     60.02050 |
 | 4.521367 | 118.0864 | 58.06589 | 343084.000 |      35 | DDApos_2.mzML.gz |     60.02056 |
-| 4.857983 | 118.0865 | 58.06590 | 314075.312 |      35 | DDApos_2.mzML.gz |     60.02057 |
-| 5.195617 | 118.0865 | 58.06590 | 282611.688 |      35 | DDApos_2.mzML.gz |     60.02057 |
-| 5.536383 | 118.0865 | 58.06592 | 300432.906 |      35 | DDApos_2.mzML.gz |     60.02060 |
 
 #### Minifying MS files
 
 As of version 1.1.0, `RaMS` also has functions that allow irrelevant
-data to be removed from the file to reduce file sizes. Like
-`grabMSdata`, there’s one wrapper function `minifyMSdata` that accepts
-mzML or mzXML files, plus a vector of *m/z* values that should either be
-kept (`mz_include`) or removed (`mz_exclude`). The function then opens
-up the provided MS files and removes data points in the MS1 and MS2
-spectra that fall outside the accepted bounds. `mz_include` is useful
-when only a few masses are of interest, as in targeted metabolomics.
-`mz_exclude` is useful when many masses are known to be contaminants or
-interfere with peakpicking/plotting abilities. This minification can
-sometimes shrink a file up to an order of magnitude, decreasing both
-processing time and memory allocation later in the pipeline.
+data to be removed from the file to reduce file sizes. See the
+[vignette](doc/Minifying-files-with-RaMS.html) for more details.
 
-This is also very useful for creating demo MS files - `RaMS` uses these
-functions to produce the sample data in `extdata`, with 6 MS files
-taking up less than 5 megabytes of disk space. Many other programs
-provide the ability to shrink files, but none (that are known) shrink
-files by excluding *m/z* values and instead can only remove certain
-retention times.
-
-Below, we begin with a large MS file and extract only the data
-corresponding to valine and homarine.
-
-``` r
-initial_filename <- msdata_files[1]
-output_filename <- tempfile(fileext = ".mzML")
-
-masses_of_interest <- c(118.0865, 138.0555)
-minifyMSdata(files = initial_filename, output_files = output_filename, 
-             mz_include = masses_of_interest, ppm = 5, warn = FALSE)
-```
-
-    ## Total time: 2.72 secs
-
-Then, when we open the file up (with `RaMS` or other software) we are
-left with the data corresponding only to those compounds:
-
-``` r
-msdata <- grabMSdata(output_filename)
-```
-
-    ## 
-    ## Reading file file426844a96230.mzML... 0.25 secs 
-    ## Reading MS1 data...0.24 secs 
-    ## Reading MS2 data...0.05 secs 
-    ## Reading BPC...0.14 secs 
-    ## Reading TIC...0.13 secs 
-    ## Reading file metadata...0.11 secs 
-    ## Total time: 0.93 secs
-
-``` r
-knitr::kable(head(msdata$MS1, 3))
-```
-
-|      rt |       mz |        int | filename              |
-|--------:|---------:|-----------:|:----------------------|
-| 4.00085 | 118.0865 | 15968431.0 | file426844a96230.mzML |
-| 4.00085 | 138.0550 |   174591.6 | file426844a96230.mzML |
-| 4.00085 | 138.0550 |   174591.6 | file426844a96230.mzML |
-
-``` r
-knitr::kable(head(msdata$MS2, 3))
-```
-
-|       rt |    premz |   fragmz |        int | voltage | filename              |
-|---------:|---------:|---------:|-----------:|--------:|:----------------------|
-| 4.182333 | 118.0864 | 51.81098 |   3809.649 |      35 | file426844a96230.mzML |
-| 4.182333 | 118.0864 | 58.06422 |  10133.438 |      35 | file426844a96230.mzML |
-| 4.182333 | 118.0864 | 58.06590 | 390179.500 |      35 | file426844a96230.mzML |
-
-``` r
-unlink(output_filename)
-```
-
-These new files are valid according to the validator provided in
-MSnbase, which means that most programs should be able to open them, but
-this feature is still experimental and may break on quirky data.
-
-#### Using tmzML documents
+#### tmzML documents
 
 Version 1.2.0 of RaMS introduced a new file type, the “transposed mzML”
-or “tmzML” file. Traditional mass-spec data is organized by scan number,
-corresponding to retention time, but this isn’t always the most sensible
-format. Often, it makes more sense to organize a mass-spec file by m/z
-ratio instead. This allows parsers to scan and decode a much smaller
-portion of the file when searching for a specific mass, as opposed to
-the traditional format which requires that every scan be opened,
-searched, and subset. The tmzML document implements this strategy and
-allows the creation of MS object representations that use essentially
-zero memory because the data is read off the disk instead of being
-stored in RAM. RaMS has been designed to interface with these new file
-types identically to traditional files, allowing all your favorite
-tidyverse tricks to work just as well and much more quickly.
-
-This introduction also resolves one of the major issues of RaMS: its
-large memory requirement when working with multiple files. Because RaMS
-previously loaded all of the mass-spec files into memory to enable rapid
-searches, the computer memory required was astronomical and most
-computers were unable to handle more than a few dozen files very well.
-The tmzML document has been introduced to resolve this issue as well as
-enabling the benefits described above. Below is a graphic showing some
-benchmark tests between RaMS (reading from both the default mzML and the
-new tmzML) and MSnbase’s MSnExp and OnDiskMSnExp.
-
-![Speed comparison between various load methods, showing the new tmzML
-type to be faster than other methods for most functions and requiring
-several orders of magnitude less memory.](speedsizecomp.png)
+or “tmzML” file to resolve the large memory requirement when working
+with many files. See [the vignette](doc/Intro-to-tmzML.html) for more
+details.
 
 ## File types
 
 RaMS is currently limited to the modern **mzML** data format and the
-slightly older **mzXML** format, as well as the custom **tmzML** format
-as of version 1.2.0. Tools to convert data from other formats are
-available through
-[Proteowizard](http://proteowizard.sourceforge.net/tools.shtml)’s
+slightly older **mzXML** format, as well as the custom [**tmzML**
+format](doc/Intro-to-tmzML.html) as of version 1.2.0. Tools to convert
+data from other formats are available through
+[Proteowizard’s](http://proteowizard.sourceforge.net/tools.shtml)
 `msconvert` tool. Data can, however, be gzip compressed (file ending
 .gz) and this compression actually speeds up data retrieval
 significantly as well as reducing file sizes.
@@ -359,4 +261,4 @@ Issues page](https://github.com/wkumler/RaMS/issues).
 
 ------------------------------------------------------------------------
 
-README last built on 2022-02-14
+README last built on 2022-04-08
