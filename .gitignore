@@ -6,11 +6,7 @@
 *.mzML
 *.mzXML
 
-msdata_making/
 .Rproj.user
 README.Rmd
-inst/doc
 Meta
-doc
-/doc/
 /Meta/
