@@ -28,6 +28,8 @@ Suggests:
     knitr,
     rmarkdown,
     tidyverse,
+    ggplot2,
+    dplyr,
     plotly,
     openxlsx,
     DBI,
