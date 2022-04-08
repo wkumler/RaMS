@@ -19,6 +19,9 @@ Other useful functions in the package include \code{\link[=minifyMSdata]{minifyM
 \code{\link[=tmzmlMaker]{tmzmlMaker()}} which have their own documentation pages and vignettes. Two
 small helper functions are also included, \code{\link[=pmppm]{pmppm()}} and \code{\link[=between]{between()}} (with the
 alias \verb{\%between\%}) imported from \code{data.table}.
+
+See the package intro on GitHub at https://github.com/wkumler/RaMS and
+explore the vignettes with \code{vignette("help", package = "mypkg")}
 }
 \seealso{
 Useful links:

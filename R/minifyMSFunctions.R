@@ -167,7 +167,6 @@ minifyMSdata <- function(files, output_files=NULL, mz_exclude=NULL,
 #'   easily to handle more.
 #'
 #' @return Invisibly, the name of the new file.
-#' @export
 #'
 #' @examples
 #' \dontrun{
@@ -423,7 +422,6 @@ minifyMzml <- function(filename, output_filename, ppm,
 #'   easily to handle more.
 #'
 #' @return Invisibly, the name of the new file.
-#' @export
 #'
 #' @examples
 #' \dontrun{
