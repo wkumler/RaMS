@@ -44,7 +44,7 @@ install.packages('RaMS')
 To install the current development version:
 
 ``` r
-devtools::install_github("wkumler/RaMS")
+devtools::install_github("wkumler/RaMS", build_vignettes = TRUE)
 ```
 
 Finally, load RaMS like every other package:
@@ -69,7 +69,8 @@ msdata <- grabMSdata(files = msdata_files[2:4], grab_what = c("BPC", "MS1"))
 ```
 
 Some additional examples can be found below, but a more thorough
-introduction can be found in [the vignette](doc/Intro-to-RaMS.Rmd).
+introduction can be found in [the
+vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Intro-to-RaMS.html).
 
 #### BPC/TIC data:
 
@@ -212,21 +213,24 @@ msdata$MS2[, neutral_loss:=premz-fragmz] %>%
 
 As of version 1.1.0, `RaMS` also has functions that allow irrelevant
 data to be removed from the file to reduce file sizes. See the
-[vignette](doc/Minifying-files-with-RaMS.html) for more details.
+[vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Minifying-files-with-RaMS.html)
+for more details.
 
 #### tmzML documents
 
 Version 1.2.0 of RaMS introduced a new file type, the “transposed mzML”
 or “tmzML” file to resolve the large memory requirement when working
-with many files. See [the vignette](doc/Intro-to-tmzML.html) for more
-details.
+with many files. See [the
+vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Intro-to-tmzML.html)
+for more details.
 
 ## File types
 
 RaMS is currently limited to the modern **mzML** data format and the
 slightly older **mzXML** format, as well as the custom [**tmzML**
-format](doc/Intro-to-tmzML.html) as of version 1.2.0. Tools to convert
-data from other formats are available through
+format](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Intro-to-tmzML.html)
+as of version 1.2.0. Tools to convert data from other formats are
+available through
 [Proteowizard’s](http://proteowizard.sourceforge.net/tools.shtml)
 `msconvert` tool. Data can, however, be gzip compressed (file ending
 .gz) and this compression actually speeds up data retrieval

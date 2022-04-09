@@ -71,8 +71,8 @@ unlink("mini_mzMLs", recursive = TRUE)
 ## ----download the mzXMLs, eval=FALSE------------------------------------------
 #  if(!dir.exists("vignettes/data"))dir.create("vignettes/data")
 #  base_url <- "ftp://ftp.ebi.ac.uk/pub/databases/metabolights/studies/public/MTBLS703/"
-#  chosen_files <- paste0(base_url, "161024_Smp_LB12HL_", c("AB", "CD", "EF"), "_pos.mzXML")
-#  new_names <- gsub(x=basename(chosen_files), "161024_Smp_", "")
+#  chosen_files <- paste0(base_url, "170223_Smp_LB12HL_", c("AB", "CD", "EF"), "_pos.mzXML")
+#  new_names <- gsub(x=basename(chosen_files), "170223_Smp_", "")
 #  
 #  mapply(download.file, chosen_files, paste0("vignettes/data/", new_names),
 #         mode = "wb", method = "libcurl")
@@ -87,7 +87,7 @@ unlink("mini_mzMLs", recursive = TRUE)
 ## ----minify, warning=FALSE, eval=FALSE----------------------------------------
 #  library(RaMS)
 #  
-#  if(!dir.exists("inst/extdata"))dir.create("inst/extdata")
+#  if(!dir.exists("inst/extdata"))dir.create("inst/extdata", recursive = TRUE)
 #  init_files <- list.files("vignettes/data/", full.names = TRUE)
 #  out_files <- paste0("inst/extdata/", basename(init_files))
 #  minifyMSdata(files = init_files, output_files = out_files, warn = FALSE,

@@ -170,7 +170,7 @@ Then we can actually perform the minification:
 ```{r minify, warning=FALSE, eval=FALSE}
 library(RaMS)
 
-if(!dir.exists("inst/extdata"))dir.create("inst/extdata")
+if(!dir.exists("inst/extdata"))dir.create("inst/extdata", recursive = TRUE)
 init_files <- list.files("vignettes/data/", full.names = TRUE)
 out_files <- paste0("inst/extdata/", basename(init_files))
 minifyMSdata(files = init_files, output_files = out_files, warn = FALSE,
