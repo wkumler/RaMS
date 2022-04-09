@@ -156,7 +156,6 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li><a href="#speeding-things-up">Speeding things up</a></li>
 <li><a href="#finer-control-grabmzmldata-grabmzxmldata">Finer control: grabMzmlData, grabMzxmlData</a></li>
 <li><a href="#the-nitty-gritty-details">The nitty-gritty details</a></li>
-<li>[Minified file details]</li>
 </ul></li>
 </ul>
 <div id="basic-rams-usage" class="section level2">
@@ -184,9 +183,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(single_file, <span class="at">grab_what =</span> <span class="st">&quot;TIC&quot;</span>)</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_AB.mzML.gz... 0.13 secs </span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading TIC...0.08 secs </span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 0.2 secs</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_AB.mzML.gz... 0.09 secs </span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading TIC...0.05 secs </span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 0.15 secs</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(msdata<span class="sc">$</span>TIC, <span class="dv">3</span>))</span></code></pre></div>
 <table>
@@ -222,9 +221,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>A BPC is just like a TIC except that it records the <em>maximum</em> intensity measured, rather than the sum of all intensities. This data is also collected by the mass analyzer and doesn’t need to be calculated.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(single_file, <span class="at">grab_what =</span> <span class="st">&quot;BPC&quot;</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_AB.mzML.gz... 0.12 secs </span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading BPC...0.06 secs </span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 0.19 secs</span></span></code></pre></div>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_AB.mzML.gz... 0.1 secs </span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading BPC...0.05 secs </span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 0.15 secs</span></span></code></pre></div>
 <p>Since the data is parsed in a <a href="https://r4ds.had.co.nz/tidy-data.html">“tidy” format</a>, it plays nicely with popular packages such as <code>ggplot2</code>. Let’s use that to plot our BPC instead of the base R plotting system:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(msdata<span class="sc">$</span>BPC) <span class="sc">+</span> <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x=</span>rt, <span class="at">y=</span>int))</span></code></pre></div>
@@ -240,7 +239,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="er">|===============================================</span>                       <span class="er">|</span>  <span class="dv">67</span>%</span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 0.56 secs</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 0.46 secs</span></span>
 <span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(msdata<span class="sc">$</span>BPC) <span class="sc">+</span> <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x=</span>rt, <span class="at">y=</span>int, <span class="at">color=</span>filename))</span></code></pre></div>
 <p><img src="data:image/png;base64,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" width="80%" style="display: block; margin: auto;" /></p>
@@ -260,9 +259,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># less-minified DDA file here</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">grabMSdata</span>(<span class="at">files =</span> data_files[<span class="dv">1</span>], <span class="at">grab_what =</span> <span class="st">&quot;metadata&quot;</span>)</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file DDApos_2.mzML.gz... 0.39 secs </span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file metadata...0.13 secs </span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 0.52 secs</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file DDApos_2.mzML.gz... 0.33 secs </span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file metadata...0.11 secs </span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 0.44 secs</span></span>
 <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $metadata</span></span>
 <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                                   source_file  inst_data       config_data</span></span>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1: 170223_Poo_AllCyanoAqExtracts_DDApos_2.raw None found &lt;data.frame[1x3]&gt;</span></span>
@@ -282,7 +281,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="er">|===============================================</span>                       <span class="er">|</span>  <span class="dv">67</span>%</span>
 <span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 0.83 secs</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 0.78 secs</span></span>
 <span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(msdata<span class="sc">$</span>MS1, <span class="dv">3</span>))</span></code></pre></div>
 <table>
@@ -345,13 +344,13 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p><code>RaMS</code> also handles MS<sup>2</sup> data elegantly. Request it with the “MS2” option for <code>grab_what</code>, although it’s often a good idea to grab the MS1 data alongside.</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(data_files[<span class="dv">1</span>], <span class="at">grab_what =</span> <span class="st">&quot;everything&quot;</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file DDApos_2.mzML.gz... 0.38 secs </span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.3 secs </span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS2 data...0.13 secs </span></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading BPC...0.18 secs </span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading TIC...0.17 secs </span></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file metadata...0.14 secs </span></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 1.3 secs</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file DDApos_2.mzML.gz... 0.35 secs </span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.26 secs </span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS2 data...0.1 secs </span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading BPC...0.16 secs </span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading TIC...0.15 secs </span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file metadata...0.11 secs </span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 1.13 secs</span></span>
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(msdata<span class="sc">$</span>MS2, <span class="dv">3</span>))</span></code></pre></div>
 <table>
 <thead>
@@ -594,7 +593,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="er">|====================================================</span>                  <span class="er">|</span>  <span class="dv">75</span>%</span>
 <span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 1.73 secs</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 1.44 secs</span></span>
 <span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>mzs_of_interest <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">adenine=</span><span class="fl">136.06232</span>, <span class="at">valine=</span><span class="fl">118.0865</span>)</span>
 <span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>small_data <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(data_files, <span class="at">grab_what =</span> <span class="fu">c</span>(<span class="st">&quot;EIC&quot;</span>, <span class="st">&quot;EIC_MS2&quot;</span>),</span>
@@ -610,7 +609,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>  <span class="er">|====================================================</span>                  <span class="er">|</span>  <span class="dv">75</span>%</span>
 <span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
-<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 1.65 secs</span></span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 1.27 secs</span></span>
 <span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a>all_data<span class="sc">$</span>MS1 <span class="sc">%&gt;%</span></span>
 <span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">type=</span><span class="st">&quot;All data&quot;</span>) <span class="sc">%&gt;%</span></span>
@@ -641,7 +640,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="er">|====================================================</span>                  <span class="er">|</span>  <span class="dv">75</span>%</span>
 <span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 1.31 secs</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 1.06 secs</span></span>
 <span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>all_data<span class="sc">$</span>MS1 <span class="sc">%&gt;%</span></span>
 <span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">type=</span><span class="st">&quot;All data&quot;</span>) <span class="sc">%&gt;%</span></span>
@@ -667,31 +666,31 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="er">|</span>                                                                      <span class="er">|</span>   <span class="dv">0</span>%</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file DDApos_2.mzML.gz... 0.43 secs </span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.31 secs </span></span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS2 data...0.14 secs </span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file DDApos_2.mzML.gz... 0.32 secs </span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.25 secs </span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS2 data...0.11 secs </span></span>
 <span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>  <span class="er">|==================</span>                                                    <span class="er">|</span>  <span class="dv">25</span>%</span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_AB.mzML.gz... 0.13 secs </span></span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.12 secs </span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_AB.mzML.gz... 0.12 secs </span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.11 secs </span></span>
 <span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS2 data...0.01 secs </span></span>
 <span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>  <span class="er">|===================================</span>                                   <span class="er">|</span>  <span class="dv">50</span>%</span>
 <span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_CD.mzML.gz... 0.12 secs </span></span>
-<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.14 secs </span></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.11 secs </span></span>
 <span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS2 data...0.01 secs </span></span>
 <span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>  <span class="er">|====================================================</span>                  <span class="er">|</span>  <span class="dv">75</span>%</span>
-<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_EF.mzML.gz... 0.12 secs </span></span>
-<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.11 secs </span></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_EF.mzML.gz... 0.1 secs </span></span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.1 secs </span></span>
 <span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Reading MS2 data...0.01 secs </span></span>
 <span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
-<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 1.67 secs</span></span></code></pre></div>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total time: 1.39 secs</span></span></code></pre></div>
 <p>In general, slow file read times can be improved by compressing the data. mzML files are highly compressible, with options to compress both the data itself using the <code>zlib</code> method and the files as a whole using <code>gzip</code>.</p>
 <p><code>gzip</code> is the simplest one to use, as a plethora of methods exist to compress files this way, including online sites. <code>RaMS</code> can read the data directly from a gzipped file, no decompression necessary, so this is an easy way to reduce file size and read times. Sharp-eyed users will have noticed that the demo files are already gzipped, which is part of the reason they are so small.</p>
 <p><code>zlib</code> compression is slightly trickier, and is most often performed with tools such as <a href="http://proteowizard.sourceforge.net/doc_users.html">Proteowizard</a>’s <code>msconvert</code> tool with the option “-z”.</p>

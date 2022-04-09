@@ -62,7 +62,7 @@ from each one of them, all on a basic laptop. Within a minute. Below are some
 benchmarking tests comparing the new tmzML file type to the traditional RaMS
 code and MSnbase's MSnExp and OnDiskMSnExp.
 
-![Speed comparison between various load methods, showing the new tmzML type to be faster than other methods for most functions and requiring several orders of magnitude less memory.](../vignettes/figures/speedsizecomp.png)
+![Speed comparison between various load methods, showing the new tmzML type to be faster than other methods for most functions and requiring several orders of magnitude less memory.](../vignettes/figures/speedsizecomp.png){width=100%}
 
 The tmzML documents take essentially no time to load and require barely
 kilobytes of memory. This is because we aren't doing any data handling yet -
