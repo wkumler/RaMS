@@ -1,5 +1,15 @@
 ## ----setup, include = FALSE---------------------------------------------------
 options(rmarkdown.html_vignette.check_title = FALSE)
+options(tidyverse.quiet = TRUE)
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  out.width = "80%",
+  fig.align = 'center',
+  fig.height = 3,
+  fig.width = 6.5
+)
 
 ## ----listfiles----------------------------------------------------------------
 files_to_convert <- list.files(
@@ -23,12 +33,12 @@ files_to_create <- gsub(x = files_to_create, "\\.mzML.*", ".tmzML")
 created_files <- mapply(tmzmlMaker, files_to_convert, files_to_create)
 
 ## ----grabmsdata---------------------------------------------------------------
-msdata <- grabMSdata(created_files)
+msdata <- grabMSdata(created_files, verbosity=0)
 
 ## ----subset$------------------------------------------------------------------
 ms_data_table <- msdata$MS1[mz%between%pmppm(152.05723, 5)]
 
-## ----ggplot-------------------------------------------------------------------
+## ----ggplot, fig.width=8, warning=FALSE---------------------------------------
 library(ggplot2)
 ggplot(ms_data_table) + geom_line(aes(x=rt, y=int, color=filename)) + xlim(8, 9.5)
 

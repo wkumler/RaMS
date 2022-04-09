@@ -7,10 +7,20 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
+<!-- This vignette.md is generated from an .Rmd file. Please edit that file instead -->
 
 ```{r setup, include = FALSE}
 options(rmarkdown.html_vignette.check_title = FALSE)
+options(tidyverse.quiet = TRUE)
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  out.width = "80%",
+  fig.align = 'center',
+  fig.height = 3,
+  fig.width = 6.5
+)
 ```
 
 **Warning:**
@@ -62,7 +72,7 @@ from each one of them, all on a basic laptop. Within a minute. Below are some
 benchmarking tests comparing the new tmzML file type to the traditional RaMS
 code and MSnbase's MSnExp and OnDiskMSnExp.
 
-![Speed comparison between various load methods, showing the new tmzML type to be faster than other methods for most functions and requiring several orders of magnitude less memory.](../vignettes/figures/speedsizecomp.png){width=100%}
+![Alt text: Speed comparison between various load methods, showing the new tmzML type to be faster than other methods for most functions and requiring several orders of magnitude less memory](../vignettes/figures/speedsizecomp.png){width=100%}
 
 The tmzML documents take essentially no time to load and require barely
 kilobytes of memory. This is because we aren't doing any data handling yet -
@@ -127,7 +137,7 @@ so you can reuse the exact same function as before. However, unlike when
 loading mzMLs this step should be instantaneous.
 
 ```{r grabmsdata}
-msdata <- grabMSdata(created_files)
+msdata <- grabMSdata(created_files, verbosity=0)
 ```
 
 If you're planning to extract a chromatogram, the syntax is identical to 
@@ -140,7 +150,7 @@ ms_data_table <- msdata$MS1[mz%between%pmppm(152.05723, 5)]
 Which is a perfectly normal `data.table` object ready to be passed to more 
 familiar functions:
 
-```{r ggplot}
+```{r ggplot, fig.width=8, warning=FALSE}
 library(ggplot2)
 ggplot(ms_data_table) + geom_line(aes(x=rt, y=int, color=filename)) + xlim(8, 9.5)
 ```
