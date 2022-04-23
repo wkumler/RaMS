@@ -117,10 +117,11 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     }
 
     # Check for missing files before creating object
-    file_exists <- file.exists(files)
+    url_files <- grepl(x = files, "^(http|ftp)")
+    file_exists <- file.exists(files[!url_files])
     if(!all(file_exists)){
       stop(paste("Unable to find all files, e.g.\n",
-                 paste(head(files[!file_exists]), collapse = "\n ")))
+                 paste(head(files[!url_files][!file_exists]), collapse = "\n ")))
     }
 
     # Create a list object to hide connection values and allow
