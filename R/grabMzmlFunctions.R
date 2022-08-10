@@ -256,8 +256,9 @@ grabMzmlMetadata <- function(xml_data){
 #'
 #' @return A list of values used by other parsing functions, currently
 #' compression, mz_precision, int_precision
-grabMzmlEncodingData <- function(xml_data){
-  init_node <- xml2::xml_find_first(xml_data, xpath = "//d1:spectrum")
+grabMzmlEncodingData <- function(xml_data, node_type="spectrum"){
+  init_xpath <- paste0("//d1:", node_type)
+  init_node <- xml2::xml_find_first(xml_data, xpath = init_xpath)
   compr_xpath <- paste0('//d1:cvParam[@accession="MS:1000574"]|',
                         '//d1:cvParam[@accession="MS:1000576"]')
   compr_node <- xml2::xml_find_first(init_node, compr_xpath)
@@ -520,6 +521,8 @@ grabSpectraInt <- function(xml_nodes, file_metadata){
 }
 
 
+
+# Get chromatogram things (functions of xml_nodes) ----
 
 # Other helper functions ----
 shrinkRTrangemzML <- function(xml_nodes, rtrange){
