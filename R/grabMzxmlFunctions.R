@@ -79,7 +79,6 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
   checkFileType(xml_data, "mzXML")
   rtrange <- checkRTrange(rtrange)
   prefilter <- checkProvidedPrefilter(prefilter)
-  file_metadata <- grabMzxmlEncodingData(xml_data)
 
   output_data <- list()
 
@@ -90,6 +89,10 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
       message("Ignoring additional grabs")
     }
     grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
+  }
+
+  if(TRUE%in%(c("MS1", "MS2", "EIC", "EIC_MS2")%in%grab_what)){
+    file_metadata <- grabMzxmlEncodingData(xml_data)
   }
 
   if("MS1"%in%grab_what){
