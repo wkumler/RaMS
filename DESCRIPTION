@@ -22,7 +22,7 @@ Imports:
     base64enc,
     data.table,
     utils
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1
 Suggests: 
     testthat,
     knitr,
