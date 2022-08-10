@@ -431,7 +431,7 @@ timeReport <- function(last_time, text=NULL){
 
 # Import area ----
 
-#' @import utils
+#' @importFrom utils txtProgressBar setTxtProgressBar
 #' @import xml2
 #' @import data.table
 #' @importFrom base64enc base64decode
