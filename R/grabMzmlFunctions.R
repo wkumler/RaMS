@@ -95,7 +95,7 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
     grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
   }
 
-  if(TRUE%in%(c("MS1", "MS2", "EIC", "EIC_MS2")%in%grab_what)){
+  if(any(c("MS1", "MS2", "EIC", "EIC_MS2")%in%grab_what)){
     file_metadata <- grabMzmlEncodingData(xml_data)
   }
 
@@ -314,7 +314,8 @@ grabMzmlMetadata <- function(xml_data){
 #' @return A list of values used by other parsing functions, currently
 #' compression, mz_precision, int_precision
 grabMzmlEncodingData <- function(xml_data){
-  init_node <- xml2::xml_find_first(xml_data, xpath = "//d1:spectrum")
+  init_xpath <- "//*[self::d1:spectrum or self::d1:chromatogram]"
+  init_node <- xml2::xml_find_first(xml_data, xpath = init_xpath)
   compr_xpath <- paste0('//d1:cvParam[@accession="MS:1000574"]|',
                         '//d1:cvParam[@accession="MS:1000576"]')
   compr_node <- xml2::xml_find_first(init_node, compr_xpath)
