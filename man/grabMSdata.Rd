@@ -19,9 +19,12 @@ grabMSdata(
 absolute and relative paths are acceptable.}
 
 \item{grab_what}{What data should be read from the file? Options include
+"metadata" for the extraction of instrumental and run metadata,
 "MS1" for data only from the first spectrometer, "MS2" for fragmentation
 data, "BPC" for rapid access to the base peak chromatogram, and "TIC" for
-rapid access to the total ion chromatogram. These options can be combined
+rapid access to the total ion chromatogram. In version 1.3 of RaMS, the
+"chroms" option was added to allow the extraction of intact chromatograms
+stored in mzML documents. These options can be combined
 (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or this argument can be set to
 "everything" to extract all of the above. Options "EIC" and "EIC_MS2" are
 useful when working with files whose total size exceeds working memory -
@@ -59,7 +62,7 @@ easily to handle more.}
 }
 \value{
 A list of `data.table`s, each named after the arguments requested in
-  grab_what. $MS1 contains MS1 information, MS2 contains fragmentation info,
+  grab_what. E.g. $MS1 contains MS1 information, $MS2 contains fragmentation info,
   etc. MS1 data has four columns: retention time (rt), mass-to-charge (mz),
   intensity (int), and filename. MS2 data has six: retention time (rt),
   precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
@@ -67,7 +70,11 @@ A list of `data.table`s, each named after the arguments requested in
   exist in the provided files (such as MS2 data requested from MS1-only
   files) will return an empty (length zero) data.table. The data.tables
   extracted from each of the individual files are collected into one large
-  table using data.table's `rbindlist`.
+  table using data.table's `rbindlist`. $metadata is a little weirder
+  because the metadata doesn't fit neatly into a tidy format but things are
+  hopefully named helpfully. $chroms was added in 1.3 and contains 7 columns:
+  chromatogram type (usually TIC, BPC or SRM info), chromatogram index,
+  target mz, product mz, retention time (rt), and intensity (int).
 }
 \description{
 The main `RaMS` function. This function accepts a list of the files that will
