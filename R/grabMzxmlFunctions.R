@@ -201,9 +201,9 @@ grabMzxmlMetadata <- function(xml_data){
   n_spectra <- length(scan_nodes)
 
   if(n_spectra>0){
-
     centroided <- as.integer(unique(xml2::xml_attr(scan_nodes, "centroided")))
-    if (1 %in% centroided) { #note to delete: profile data is set to 0
+    # 1 if centroided, 0 if not (i.e. profile mode)
+    if (1 %in% centroided) {
       centroided <- TRUE
     } else {
       centroided <- FALSE
@@ -228,7 +228,6 @@ grabMzxmlMetadata <- function(xml_data){
     polarities[polarities %in% "-"] <- "negative"
 
   } else {
-    # note to delete, NA based values are better than text for downstream processing
     centroided <- NA
     ms_levels <- NA_integer_
     mz_lowest <- NA_real_
