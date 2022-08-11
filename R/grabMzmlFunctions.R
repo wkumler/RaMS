@@ -316,6 +316,10 @@ grabMzmlMetadata <- function(xml_data){
 grabMzmlEncodingData <- function(xml_data){
   init_xpath <- "//*[self::d1:spectrum or self::d1:chromatogram]"
   init_node <- xml2::xml_find_first(xml_data, xpath = init_xpath)
+  if(length(init_node)==0){
+    stop(paste("Unable to find a spectrum or chromatogram node from",
+               "which to extract metadata"))
+  }
   compr_xpath <- paste0('//d1:cvParam[@accession="MS:1000574"]|',
                         '//d1:cvParam[@accession="MS:1000576"]')
   compr_node <- xml2::xml_find_first(init_node, compr_xpath)
