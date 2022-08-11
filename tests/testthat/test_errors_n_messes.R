@@ -13,6 +13,15 @@ test_that("error if weird files", {
   file.remove("blah.txt")
 })
 
+test_that("error if grab_what is weird", {
+  expect_error(grabMSdata(files = mzML_filenames[2], grab_what = "banana"))
+  expect_error(grabMSdata(files = mzML_filenames[2], grab_what = "SM1"))
+  expect_error(grabMSdata(files = mzML_filenames[1], grab_what = c(
+    "MS1", "MS2", "MS3"
+  )))
+  expect_error(grabMSdata(files = mzML_filenames[2], grab_what = ""))
+})
+
 test_that("checkOutputQuality detects things", {
   grab_what <- "everything"
   output_data <- list(MS1=data.table(runif(100)))

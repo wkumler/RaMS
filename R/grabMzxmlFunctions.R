@@ -79,7 +79,6 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
   checkFileType(xml_data, "mzXML")
   rtrange <- checkRTrange(rtrange)
   prefilter <- checkProvidedPrefilter(prefilter)
-  file_metadata <- grabMzxmlEncodingData(xml_data)
 
   output_data <- list()
 
@@ -90,6 +89,10 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
       message("Ignoring additional grabs")
     }
     grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
+  }
+
+  if(any(c("MS1", "MS2", "EIC", "EIC_MS2")%in%grab_what)){
+    file_metadata <- grabMzxmlEncodingData(xml_data)
   }
 
   if("MS1"%in%grab_what){
@@ -193,27 +196,57 @@ grabMzxmlMetadata <- function(xml_data){
     names(inst_vals) <- "Instrument data"
   }
 
-  mslevel_nodes <- xml2::xml_find_all(xml_data, xpath = "//d1:scan")
-  if(length(mslevel_nodes)>0){
-    mslevels <- paste0("MS", unique(xml2::xml_attr(mslevel_nodes, "msLevel")),
-                       collapse = ", ")
-  } else {
-    mslevels <- "None found"
-  }
+  scan_nodes <- xml2::xml_find_all(xml_data, xpath = "//d1:scan")
 
-  polarity_nodes <- xml2::xml_find_all(xml_data, xpath = "//d1:scan")
-  if(length(polarity_nodes)>0){
-    polarities <- paste0(unique(xml2::xml_attr(polarity_nodes, "polarity")),
-                         collapse = ", ")
-  } else {
-    polarities <- "None found"
-  }
+  n_spectra <- length(scan_nodes)
 
+  if(n_spectra>0){
+    centroided <- as.integer(unique(xml2::xml_attr(scan_nodes, "centroided")))
+    # 1 if centroided, 0 if not (i.e. profile mode)
+    if (1 %in% centroided) {
+      centroided <- TRUE
+    } else {
+      centroided <- FALSE
+    }
+
+    ms_levels <- paste0("MS", unique(xml2::xml_attr(scan_nodes, "msLevel")),
+                        collapse = ", ")
+
+    mz_lowest <- min(as.numeric(xml2::xml_attr(scan_nodes, "lowMz")))
+
+    mz_highest <- max(as.numeric(xml2::xml_attr(scan_nodes, "highMz")))
+
+    rt <- xml2::xml_attr(scan_nodes, "retentionTime")
+    rt <- gsub("[^0-9.-]", "", rt)
+    rt <- as.numeric(rt)
+
+    rt_start <- min(rt)
+    rt_end <- max(rt)
+
+    polarities <- unique(xml2::xml_attr(scan_nodes, "polarity"))
+    polarities[polarities %in% "+"] <- "positive"
+    polarities[polarities %in% "-"] <- "negative"
+
+  } else {
+    centroided <- NA
+    ms_levels <- NA_integer_
+    mz_lowest <- NA_real_
+    mz_highest <- NA_real_
+    rt_start <- NA_real_
+    rt_end <- NA_real_
+    polarities <- NA_character_
+  }
 
   metadata <- data.table(
     source_file=source_file,
     inst_data=list(inst_vals),
-    mslevels=mslevels,
+    n_spectra=n_spectra,
+    ms_levels=ms_levels,
+    mz_lowest=mz_lowest,
+    mz_highest=mz_highest,
+    rt_start=rt_start,
+    rt_end=rt_end,
+    centroided=centroided,
     polarity=polarities
   )
 }

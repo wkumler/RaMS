@@ -83,7 +83,6 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
   checkFileType(xml_data, "mzML")
   rtrange <- checkRTrange(rtrange)
   prefilter <- checkProvidedPrefilter(prefilter)
-  file_metadata <- grabMzmlEncodingData(xml_data)
 
   output_data <- list()
 
@@ -94,6 +93,10 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
       message("Ignoring additional grabs")
     }
     grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
+  }
+
+  if(any(c("MS1", "MS2", "EIC", "EIC_MS2")%in%grab_what)){
+    file_metadata <- grabMzmlEncodingData(xml_data)
   }
 
   if("MS1"%in%grab_what){
@@ -220,10 +223,51 @@ grabMzmlMetadata <- function(xml_data){
   mslevel_xpath <- '//d1:spectrum/d1:cvParam[@name="ms level"]'
   mslevel_nodes <- xml2::xml_find_all(xml_data, xpath = mslevel_xpath)
   if(length(mslevel_nodes)>0){
-    mslevels <- paste0("MS", unique(xml2::xml_attr(mslevel_nodes, "value")),
+    ms_levels <- paste0("MS", unique(xml2::xml_attr(mslevel_nodes, "value")),
                       collapse = ", ")
   } else {
-    mslevels <- "None found"
+    ms_levels <- "None found"
+  }
+
+  mzlow_xpath <- '//d1:spectrum/d1:cvParam[@name="lowest observed m/z"]'
+  mzlow_nodes <- xml2::xml_find_all(xml_data, xpath = mzlow_xpath)
+  if(length(mzlow_nodes)>0){
+    mz_lowest <- min(as.numeric(xml2::xml_attr(mzlow_nodes, "value")))
+  } else {
+    mz_lowest <- NA_real_
+  }
+
+  mzhigh_xpath <- '//d1:spectrum/d1:cvParam[@name="highest observed m/z"]'
+  mzhigh_nodes <- xml2::xml_find_all(xml_data, xpath = mzhigh_xpath)
+  if(length(mzhigh_nodes)>0){
+    mz_highest <- max(as.numeric(xml2::xml_attr(mzhigh_nodes, "value")))
+  } else {
+    mz_highest <- NA_real_
+  }
+
+  rt_xpath <- '//d1:spectrum/d1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
+  rt_nodes <- xml2::xml_find_all(xml_data, xpath = rt_xpath)
+  rt <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
+  if(length(rt) > 0){
+    rt_start <- min(rt)
+    rt_end <- max(rt)
+  } else {
+    rt_start <- NA_real_
+    rt_end <- NA_real_
+  }
+
+  centroided_xpath <- '//d1:spectrum/d1:cvParam[@accession="MS:1000127"]'
+  centroided_nodes <- xml2::xml_find_all(xml_data, xpath = centroided_xpath)
+  if (length(centroided_nodes) > 0) {
+    centroided <- TRUE
+  } else {
+    profile_xpath <- '//d1:spectrum/d1:cvParam[@accession="MS:1000128"]'
+    profile_nodes <- xml2::xml_find_all(xml_data, xpath = profile_xpath)
+    if (length(profile_nodes) > 0) {
+      centroided <- FALSE
+    } else {
+      centroided <- NA
+    }
   }
 
   polarity_xpath <- '//d1:spectrum/d1:cvParam[@accession="MS:1000130"]'
@@ -236,6 +280,12 @@ grabMzmlMetadata <- function(xml_data){
     polarities <- "None found"
   }
 
+  n_spectra <- length(rt_nodes)
+
+  chrom_xpath <- '//d1:chromatogram'
+  chrom_nodes <- xml2::xml_find_all(xml_data, chrom_xpath)
+  n_chromatograms <- length(chrom_nodes)
+
   metadata <- data.table(
     source_file=source_file,
     inst_data=inst_val,
@@ -245,7 +295,14 @@ grabMzmlMetadata <- function(xml_data){
       name=config_names
     )),
     timestamp = time_stamp,
-    mslevels=paste0(mslevels, collapse = ", "),
+    n_spectra=n_spectra,
+    n_chromatograms=n_chromatograms,
+    ms_levels=ms_levels,
+    mz_lowest=mz_lowest,
+    mz_highest=mz_highest,
+    rt_start=rt_start,
+    rt_end=rt_end,
+    centroided=centroided,
     polarity=polarities
   )
 }
@@ -256,8 +313,8 @@ grabMzmlMetadata <- function(xml_data){
 #'
 #' @return A list of values used by other parsing functions, currently
 #' compression, mz_precision, int_precision
-grabMzmlEncodingData <- function(xml_data, node_type="spectrum"){
-  init_xpath <- paste0("//d1:", node_type)
+grabMzmlEncodingData <- function(xml_data){
+  init_xpath <- "//*[self::d1:spectrum or self::d1:chromatogram]"
   init_node <- xml2::xml_find_first(xml_data, xpath = init_xpath)
   compr_xpath <- paste0('//d1:cvParam[@accession="MS:1000574"]|',
                         '//d1:cvParam[@accession="MS:1000576"]')
