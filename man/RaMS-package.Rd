@@ -34,5 +34,10 @@ Useful links:
 \author{
 \strong{Maintainer}: William Kumler \email{wkumler@uw.edu} [copyright holder]
 
+Other contributors:
+\itemize{
+  \item Ricardo Cunha [contributor]
+}
+
 }
 \keyword{internal}
