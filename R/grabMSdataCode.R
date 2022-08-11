@@ -86,6 +86,14 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
+  # Check that grab_what is one of the approved options
+  good_grabs <- c("MS1", "MS2", "EIC", "EIC_MS2", "everything", "metadata",
+                  "BPC", "TIC")
+  if(any(!grab_what%in%good_grabs)){
+    bad_grabs <- paste(grab_what[!grab_what%in%good_grabs], collapse = ", ")
+    stop(paste0("`grab_what = ", bad_grabs, "` is not currently supported"))
+  }
+
   # Handle tmzMLs first
   tmzml_check <- grepl("\\.tmzML", files)
   if(any(tmzml_check)){
@@ -431,9 +439,9 @@ timeReport <- function(last_time, text=NULL){
 
 # Import area ----
 
-#' @import utils
 #' @import xml2
 #' @import data.table
+#' @import utils
 #' @importFrom base64enc base64decode
 #' @export
 data.table::between
