@@ -4,10 +4,14 @@ dir.create(output_folder)
 # Writing tmzMLs ----
 output_filename <- paste(output_folder, basename(mzML_filenames[1]), sep = "/")
 tmzml_filename <- gsub(x = output_filename, "\\.mzML.*", ".tmzML")
-output_filenames <- paste(output_folder, basename(mzML_filenames), sep = "/")
+output_filenames <- paste(output_folder, basename(mzML_filenames[1:4]), sep = "/")
 tmzml_filenames <- gsub(x = output_filenames, "\\.mzML.*", ".tmzML")
 
-mapply(tmzmlMaker, mzML_filenames, tmzml_filenames, verbosity=2)
+mapply(tmzmlMaker, mzML_filenames[1:4], tmzml_filenames[1:4], verbosity=2)
+
+test_that("tmzML conversion warns if no spectra found", {
+  expect_warning(expect_error(tmzmlMaker(mzML_filenames[5])))
+})
 
 test_that("tmzML conversion works for mzMLs", {
   expect_identical(tmzmlMaker(
@@ -62,8 +66,8 @@ test_that("Verbosity flags work", {
   expect_silent(grabMSdata(tmzml_filename, verbosity = 0)$MS1[mz%between%pmppm(118.0865)])
   expect_output(grabMSdata(tmzml_filename, verbosity = 1)$MS1[mz%between%pmppm(118.0865)])
   expect_output(grabMSdata(tmzml_filename, verbosity = 2)$MS1[mz%between%pmppm(118.0865)])
-  expect_silent(grabMSdata(tmzml_filenames, verbosity = 0)$MS1[mz%between%pmppm(118.0865)])
-  expect_output(grabMSdata(tmzml_filenames)$MS1[mz%between%pmppm(118.0865)])
+  expect_silent(grabMSdata(tmzml_filenames[1:4], verbosity = 0)$MS1[mz%between%pmppm(118.0865)])
+  expect_output(grabMSdata(tmzml_filenames[1:4])$MS1[mz%between%pmppm(118.0865)])
 })
 
 test_that("tmzML files not found throw error", {
@@ -83,7 +87,7 @@ test_that("Additional args throw error with tmzMLs", {
 })
 
 test_that("MS2 data also works", {
-  grabMSdata(tmzml_filename)$MS2[premz%between%pmppm(118.0865)]
+  expect_length(grabMSdata(tmzml_filename)$MS2[premz%between%pmppm(118.0865)], 6)
 })
 
 unlink(output_folder, recursive = TRUE, force = TRUE)
