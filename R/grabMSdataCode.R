@@ -244,7 +244,7 @@ checkOutputQuality <- function(output_data, grab_what){
   }
   missing_data <- !grab_what%in%names(output_data)
   if(any(missing_data)){
-    stop(paste("Not all data collected; missing",
+    warning(paste("Not all data collected; missing",
                   paste(grab_what[missing_data], collapse = ", ")))
   }
 
