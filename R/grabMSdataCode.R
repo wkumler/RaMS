@@ -18,13 +18,14 @@
 #'   absolute and relative paths are acceptable.
 #' @param grab_what What data should be read from the file? Options include
 #'   "MS1" for data only from the first spectrometer, "MS2" for fragmentation
-#'   data, "BPC" for rapid access to the base peak chromatogram, and "TIC" for
-#'   rapid access to the total ion chromatogram. These options can be combined
-#'   (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or this argument can be set to
-#'   "everything" to extract all of the above. Options "EIC" and "EIC_MS2" are
-#'   useful when working with files whose total size exceeds working memory -
-#'   they first extracts all relevant MS1 and MS2 data, then discard data
-#'   outside of the mass range(s) calculated from the provided mz and ppm.
+#'   data, "DAD" for diode array (uv) data, "BPC" for rapid access to the base
+#'   peak chromatogram, and "TIC" for rapid access to the total ion chromatogram.
+#'   These options can be combined (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or
+#'   this argument can be set to "everything" to extract all of the above.
+#'   Options "EIC" and "EIC_MS2" are useful when working with files whose total
+#'   size exceeds working memory - they first extracts all relevant MS1 and MS2
+#'   data, then discard data outside of the mass range(s) calculated from the
+#'   provided mz and ppm.
 #' @param verbosity Three levels of processing output to the R console are
 #'   available, with increasing verbosity corresponding to higher integers. A
 #'   verbosity of zero means that no output will be produced, useful when
@@ -87,7 +88,7 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   if(!length(files)>0)stop("No files provided")
 
   # Check that grab_what is one of the approved options
-  good_grabs <- c("MS1", "MS2", "EIC", "EIC_MS2", "everything", "metadata",
+  good_grabs <- c("MS1", "MS2", "DAD", "EIC", "EIC_MS2", "everything", "metadata",
                   "BPC", "TIC")
   if(any(!grab_what%in%good_grabs)){
     bad_grabs <- paste(grab_what[!grab_what%in%good_grabs], collapse = ", ")
@@ -266,6 +267,8 @@ checkOutputQuality <- function(output_data, grab_what){
       proper_names <- c("rt", "mz", "int", "filename")
     } else if(nms=="MS2"){
       proper_names <- c("rt", "premz", "fragmz", "int", "voltage", "filename")
+    } else if (nms=="DAD"){
+      proper_names <- c("rt", "lambda", "int", "filename")
     } else if (nms=="EIC"){
       proper_names <- c("rt", "mz", "int", "filename")
     } else if (nms=="EIC_MS2"){
