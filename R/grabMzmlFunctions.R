@@ -247,7 +247,11 @@ grabMzmlMetadata <- function(xml_data){
 
   rt_xpath <- '//d1:spectrum/d1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
   rt_nodes <- xml2::xml_find_all(xml_data, xpath = rt_xpath)
+  rt_unit <- unique(xml_attr(rt_nodes, "unitName"))
   rt <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
+
+  if (!"minute" %in% rt_unit) rt=rt/60
+
   if(length(rt) > 0){
     rt_start <- min(rt)
     rt_end <- max(rt)
@@ -480,12 +484,16 @@ grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE){
 grabSpectraRt <- function(xml_nodes){
   rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
   rt_nodes <- xml2::xml_find_all(xml_nodes, rt_xpath)
+  rt_unit <- unique(xml_attr(rt_nodes, "unitName"))
   rt_vals <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
-  if(any(rt_vals>150)){
-    # Guess RT is in seconds if the run is more than 150 long
-    # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
-    rt_vals <- rt_vals/60
-  }
+
+  if(!"minute"%in%rt_unit) rt_vals=rt_vals/60
+  # if(any(rt_vals>150)){
+  #   # Guess RT is in seconds if the run is more than 150 long
+  #   # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
+  #   rt_vals <- rt_vals/60
+  # }
+
   rt_vals
 }
 
