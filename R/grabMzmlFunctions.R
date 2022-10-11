@@ -270,14 +270,20 @@ grabMzmlMetadata <- function(xml_data){
     }
   }
 
-  polarity_xpath <- '//d1:spectrum/d1:cvParam[@accession="MS:1000130"]'
-  polarity_nodes <- xml2::xml_find_all(xml_data, polarity_xpath)
-  if(length(polarity_nodes)>0){
-    polarities <- unique(
-      gsub(" scan", "", xml2::xml_attr(polarity_nodes, "name"))
+  polarity_pos <- '//d1:spectrum/d1:cvParam[@accession="MS:1000130"]'
+  polarity_pos <- xml_find_all(xml_data, polarity_pos)
+
+  polarity_neg <- '//d1:spectrum/d1:cvParam[@accession="MS:1000129"]'
+  polarity_neg <- xml_find_all(xml_data, polarity_neg)
+
+
+  if(length(polarity_pos)>0|length(polarity_neg)>0) {
+    polarities <- c(
+      unique(gsub(" scan", "", xml_attr(polarity_pos, "name"))),
+      unique(gsub(" scan", "", xml_attr(polarity_neg, "name")))
     )
   } else {
-    polarities <- "None found"
+    polarities <- NA_character_
   }
 
   n_spectra <- length(rt_nodes)
