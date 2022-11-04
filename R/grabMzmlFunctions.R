@@ -15,8 +15,8 @@
 #'   relative paths are acceptable.
 #' @param grab_what What data should be read from the file? Options include
 #'   "MS1" for data only from the first spectrometer, "MS2" for fragmentation
-#'   data, "BPC" for rapid access to the base peak chromatogram, and "TIC" for
-#'   rapid access to the total ion chromatogram. These options can be combined
+#'   data, "BPC" for rapid access to the base peak chromatogram, "TIC" for
+#'   rapid access to the total ion chromatogram, and "DAD" for DAD data. These options can be combined
 #'   (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or this argument can be set to
 #'   "everything" to extract all of the above. Option "EIC" is useful when
 #'   working with files whose total size exceeds working memory - it first
@@ -49,9 +49,10 @@
 #'   etc. MS1 data has three columns: retention time (rt), mass-to-charge (mz),
 #'   and intensity (int). MS2 data has five: retention time (rt), precursor m/z
 #'   (premz), fragment m/z (fragmz), fragment intensity (int), and collision
-#'   energy (voltage). Data requested that does not exist in the provided files
-#'   (such as MS2 data requested from MS1-only files) will return an empty
-#'   (length zero) data.table.
+#'   energy (voltage). DAD data has three: retention time (rt), wavelength
+#'   (lambda),and intensity (int). Data requested that does not exist in the
+#'   provided files (such as MS2 data requested from MS1-only files) will return
+#'    an empty (length zero) data.table.
 #'
 #' @export
 #'
@@ -95,7 +96,7 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
     grab_what <- c("MS1", "MS2", "BPC", "TIC", "chroms", "metadata")
   }
 
-  if(any(c("MS1", "MS2", "EIC", "EIC_MS2", "chroms")%in%grab_what)){
+  if(any(c("MS1", "MS2", "DAD", "EIC", "EIC_MS2")%in%grab_what)){
     file_metadata <- grabMzmlEncodingData(xml_data)
   }
 
@@ -109,6 +110,12 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
   if("MS2"%in%grab_what){
     if(verbosity>1)last_time <- timeReport(last_time, text = "Reading MS2 data...")
     output_data$MS2 <- grabMzmlMS2(xml_data = xml_data, rtrange = rtrange,
+                                   file_metadata = file_metadata)
+  }
+
+  if("DAD"%in%grab_what){
+    if(verbosity>1)last_time <- timeReport(last_time, text = "Reading DAD data...")
+    output_data$DAD <- grabMzmlDAD(xml_data = xml_data, rtrange = rtrange,
                                    file_metadata = file_metadata)
   }
 
@@ -287,6 +294,22 @@ grabMzmlMetadata <- function(xml_data){
     polarities <- "None found"
   }
 
+  lambda_high_xpath <- '//d1:spectrum/d1:cvParam[@name="highest observed wavelength"]'
+  lambda_high_nodes <- xml2::xml_find_all(xml_data, xpath = lambda_high_xpath)
+  if(length(lambda_high_nodes)>0){
+    lambda_highest <- max(as.numeric(xml2::xml_attr(lambda_high_nodes, "value")))
+  } else {
+    lambda_highest <- NA_real_
+  }
+
+  lambda_low_xpath <- '//d1:spectrum/d1:cvParam[@name="lowest observed wavelength"]'
+  lambda_low_nodes <- xml2::xml_find_all(xml_data, xpath = lambda_low_xpath)
+  if(length(lambda_low_nodes)>0){
+    lambda_lowest <- max(as.numeric(xml2::xml_attr(lambda_low_nodes, "value")))
+  } else {
+    lambda_lowest <- NA_real_
+  }
+
   n_spectra <- length(rt_nodes)
 
   chrom_xpath <- '//d1:chromatogram'
@@ -307,6 +330,8 @@ grabMzmlMetadata <- function(xml_data){
     ms_levels=ms_levels,
     mz_lowest=mz_lowest,
     mz_highest=mz_highest,
+    lambda_lowest=lambda_lowest,
+    lambda_highest=lambda_highest,
     rt_start=rt_start,
     rt_end=rt_end,
     centroided=centroided,
@@ -471,6 +496,38 @@ grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE){
   return(data.table(rt=rt_vals, int=int_vals))
 }
 
+#' Extract the DAD data from an mzML nodeset
+#'
+#' @param xml_data An `xml2` nodeset, usually created by applying `read_xml` to
+#'   an mzML file.
+#' @param rtrange A vector of length 2 containing an upper and lower bound on
+#'   retention times of interest. Providing a range here can speed up load times
+#'   (although not enormously, as the entire file must still be read) and reduce
+#'   the final object's size.
+#' @param file_metadata Information about the file used to decode the binary
+#'   arrays containing m/z and intensity information.
+#' @return A `data.table` with columns for retention time (rt), wavelength
+#' (lambda), and intensity (int).
+grabMzmlDAD <- function(xml_data, rtrange, file_metadata){
+  dad_xpath <- "//d1:spectrum[contains(@id,'controllerType=4')]"
+  dad_nodes <- xml2::xml_find_all(xml_data, dad_xpath)
+  if(!length(dad_nodes)){
+    return(data.table(rt=numeric(), lambda=numeric(), int=numeric()))
+  }
+
+  rt_vals <- grabSpectraRt(dad_nodes)
+  if(!is.null(rtrange)){
+    dad_nodes <- dad_nodes[rt_vals%between%rtrange]
+    rt_vals <- rt_vals[rt_vals%between%rtrange]
+  }
+
+  uv_vals <- grabSpectraMz(dad_nodes, file_metadata)
+  int_vals <- grabSpectraInt(dad_nodes, file_metadata)
+
+  int <- NULL #To prevent R CMD check "notes"  when using data.table syntax
+  all_data <- data.table(rt=rep(rt_vals, sapply(uv_vals, length)),
+                         lambda=unlist(uv_vals), int=as.numeric(unlist(int_vals)))
+}
 
 
 # Get spectrum things (functions of xml_nodes) ----

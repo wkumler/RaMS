@@ -20,8 +20,8 @@ relative paths are acceptable.}
 
 \item{grab_what}{What data should be read from the file? Options include
 "MS1" for data only from the first spectrometer, "MS2" for fragmentation
-data, "BPC" for rapid access to the base peak chromatogram, and "TIC" for
-rapid access to the total ion chromatogram. These options can be combined
+data, "BPC" for rapid access to the base peak chromatogram, "TIC" for
+rapid access to the total ion chromatogram, and "DAD" for DAD data. These options can be combined
 (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or this argument can be set to
 "everything" to extract all of the above. Option "EIC" is useful when
 working with files whose total size exceeds working memory - it first
@@ -60,9 +60,10 @@ A list of `data.table`s, each named after the arguments requested in
   etc. MS1 data has three columns: retention time (rt), mass-to-charge (mz),
   and intensity (int). MS2 data has five: retention time (rt), precursor m/z
   (premz), fragment m/z (fragmz), fragment intensity (int), and collision
-  energy (voltage). Data requested that does not exist in the provided files
-  (such as MS2 data requested from MS1-only files) will return an empty
-  (length zero) data.table.
+  energy (voltage). DAD data has three: retention time (rt), wavelength
+  (lambda),and intensity (int). Data requested that does not exist in the
+  provided files (such as MS2 data requested from MS1-only files) will return
+   an empty (length zero) data.table.
 }
 \description{
 This function handles the mzML side of things, reading in files that are
