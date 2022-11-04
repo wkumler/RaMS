@@ -20,13 +20,18 @@ relative paths are acceptable.}
 
 \item{grab_what}{What data should be read from the file? Options include
 "MS1" for data only from the first spectrometer, "MS2" for fragmentation
-data, "BPC" for rapid access to the base peak chromatogram, "TIC" for
-rapid access to the total ion chromatogram, and "DAD" for DAD data. These options can be combined
-(i.e. `grab_data=c("MS1", "MS2", "BPC")`) or this argument can be set to
-"everything" to extract all of the above. Option "EIC" is useful when
-working with files whose total size exceeds working memory - it first
-extracts all relevant MS1 and MS2 data, then discards data outside of the
-mass range(s) calculated from the provided mz and ppm.}
+data, "BPC" for rapid access to the base peak chromatogram, "TIC" for rapid
+access to the total ion chromatogram, "DAD" for DAD (UV) data, and "chroms"
+for precompiled chromatogram data (especially useful for MRM but often
+contains BPC/TIC in other files). Metadata can be accessed with "metadata",
+which provides information about the instrument and time the file was run.
+These options can be combined (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or
+this argument can be set to "everything" to extract all of the above.
+Options "EIC" and "EIC_MS2" are useful when working with files whose total
+size exceeds working memory - it first extracts all relevant MS1 and MS2
+data, respectively, then discards data outside of the mass range(s)
+calculated from the provided mz and ppm. The default, "everything",
+includes all MS1, MS2, BPC, TIC, and metadata.}
 
 \item{verbosity}{Three levels of processing output to the R console are
 available, with increasing verbosity corresponding to higher integers. A
@@ -56,14 +61,23 @@ easily to handle more.}
 }
 \value{
 A list of `data.table`s, each named after the arguments requested in
-  grab_what. $MS1 contains MS1 information, $MS2 contains fragmentation info,
-  etc. MS1 data has three columns: retention time (rt), mass-to-charge (mz),
-  and intensity (int). MS2 data has five: retention time (rt), precursor m/z
-  (premz), fragment m/z (fragmz), fragment intensity (int), and collision
-  energy (voltage). DAD data has three: retention time (rt), wavelength
-  (lambda),and intensity (int). Data requested that does not exist in the
-  provided files (such as MS2 data requested from MS1-only files) will return
-   an empty (length zero) data.table.
+  grab_what. E.g. $MS1 contains MS1 information, $MS2 contains fragmentation
+  info, etc. MS1 data has four columns: retention time (rt), mass-to-charge
+  (mz), intensity (int), and filename. MS2 data has six: retention time (rt),
+  precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
+  collision energy (voltage), and filename. Data requested that does not
+  exist in the provided files (such as MS2 data requested from MS1-only
+  files) will return an empty (length zero) data.table. The data.tables
+  extracted from each of the individual files are collected into one large
+  table using data.table's `rbindlist`. $metadata is a little weirder because
+  the metadata doesn't fit neatly into a tidy format but things are hopefully
+  named helpfully. $chroms was added in v1.3 and contains 7 columns:
+  chromatogram type (usually TIC, BPC or SRM info), chromatogram index,
+  target mz, product mz, retention time (rt), and intensity (int). $DAD was
+  also added in v1.3 and contains has three columns: retention time (rt),
+  wavelength (lambda),and intensity (int). Data requested that does not exist
+  in the provided files (such as MS2 data requested from MS1-only files) will
+  return an empty (zero-row) data.table.
 }
 \description{
 This function handles the mzML side of things, reading in files that are
