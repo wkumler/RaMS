@@ -18,7 +18,7 @@ library(RaMS)
 msdata_dir <- system.file("extdata", package = "RaMS")
 
 # Identify the files of interest
-data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
+data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)[1:4]
 
 # Check that the files identified are the ones expected
 basename(data_files)
@@ -141,6 +141,16 @@ msdata$MS2 <- mutate(msdata$MS2, neutral_loss=premz-fragmz) %>%
   select("rt", "premz", "fragmz", "neutral_loss", "int", "voltage", "filename")
 msdata$MS2[neutral_loss%between%pmppm(homarine_neutral_loss, ppm = 5)] %>%
   arrange(desc(int)) %>% head() %>% knitr::kable()
+
+## ---- fig.height=3------------------------------------------------------------
+chrom_file <- system.file("extdata", "wk_chrom.mzML.gz", package = "RaMS")
+msdata_chroms <- grabMSdata(chrom_file, verbosity = 0)
+given_chrom <- msdata_chroms$chroms[chrom_type=="SRM iletter1"]
+ptitle <- with(given_chrom, paste0(
+  unique(chrom_type), ": Target m/z = ", unique(target_mz), "; Product m/z = ", 
+  unique(product_mz)
+))
+plot(given_chrom$rt, given_chrom$int, type="l", main=ptitle)
 
 ## ----EICdemo------------------------------------------------------------------
 all_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"))

@@ -90,10 +90,10 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
   if("everything"%in%grab_what){
     if(length(setdiff(grab_what, "everything"))&&verbosity>0){
       message(paste("Heads-up: grab_what = `everything` includes",
-                    "MS1, MS2, BPC, and TIC data"))
+                    "MS1, MS2, BPC, TIC, and chroms data"))
       message("Ignoring additional grabs")
     }
-    grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
+    grab_what <- c("MS1", "MS2", "BPC", "TIC", "chroms", "metadata")
   }
 
   if(any(c("MS1", "MS2", "DAD", "EIC", "EIC_MS2")%in%grab_what)){
@@ -164,6 +164,13 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
       init_dt[premz%between%pmppm(mass = mass, ppm = ppm)]
     })
     output_data$EIC_MS2 <- rbindlist(EIC_MS2_list)
+  }
+
+  if("chroms"%in%grab_what){
+    if(verbosity>1){
+      last_time <- timeReport(last_time, text = "Reading chromatograms...")
+    }
+    output_data$chroms <- grabMzmlChroms(xml_data = xml_data, file_metadata = file_metadata)
   }
 
   if("metadata"%in%grab_what){
@@ -341,6 +348,10 @@ grabMzmlMetadata <- function(xml_data){
 grabMzmlEncodingData <- function(xml_data){
   init_xpath <- "//*[self::d1:spectrum or self::d1:chromatogram]"
   init_node <- xml2::xml_find_first(xml_data, xpath = init_xpath)
+  if(length(init_node)==0){
+    stop(paste("Unable to find a spectrum or chromatogram node from",
+               "which to extract metadata"))
+  }
   compr_xpath <- paste0('//d1:cvParam[@accession="MS:1000574"]|',
                         '//d1:cvParam[@accession="MS:1000576"]')
   compr_node <- xml2::xml_find_first(init_node, compr_xpath)
@@ -637,6 +648,41 @@ grabSpectraInt <- function(xml_nodes, file_metadata){
 
 
 # Get chromatogram things (functions of xml_nodes) ----
+grabMzmlChroms <- function(xml_data, file_metadata){
+  chrom_xpath <- '//d1:chromatogram'
+  chrom_nodes <- xml2::xml_find_all(xml_data, chrom_xpath)
+
+  chrom_id <- xml_attr(chrom_nodes, "id")
+  chrom_idx <- xml_attr(chrom_nodes, "index")
+  target_mz_xpath <- 'd1:precursor//d1:cvParam[@name="isolation window target m/z"]'
+  target_mzs <- as.numeric(xml_attr(xml_child(chrom_nodes, target_mz_xpath), "value"))
+  product_mz_xpath <- 'd1:product//d1:cvParam[@name="isolation window target m/z"]'
+  product_mzs <- as.numeric(xml_attr(xml_child(chrom_nodes, product_mz_xpath), "value"))
+
+  time_vals <- grabChromRt(chrom_nodes, file_metadata)
+  int_vals <- grabChromInt(chrom_nodes, file_metadata)
+
+  all_data <- data.table(chrom_type=rep(chrom_id, lengths(time_vals)),
+                         chrom_index=rep(chrom_idx, lengths(time_vals)),
+                         target_mz=rep(target_mzs, lengths(time_vals)),
+                         product_mz=rep(product_mzs, lengths(time_vals)),
+                         rt=unlist(time_vals), int=as.numeric(unlist(int_vals)))
+}
+
+grabChromRt <- function(chrom_nodes, file_metadata){
+  # Exactly the same as grabbing the mz values for spectra
+  # In chromatograms, the first vector is time
+  # In spectra, the first vector is mz
+  # We index by the first vector so these are identical
+  grabSpectraMz(chrom_nodes, file_metadata)
+}
+grabChromInt <- function(chrom_nodes, file_metadata){
+  # Exactly the same as for spectra
+  # Second chromatogram is intensity in both cases
+  grabSpectraInt(chrom_nodes, file_metadata)
+}
+
+
 
 # Other helper functions ----
 shrinkRTrangemzML <- function(xml_nodes, rtrange){

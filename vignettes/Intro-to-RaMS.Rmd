@@ -29,6 +29,7 @@ knitr::opts_chunk$set(
   + [TICs, BPCs, and metadata]
   + [Adding a column: MS1 data]
   + [Moving along: MS2 data]
+  + [Continuing: chromatograms!]
 * **[Advanced RaMS usage]**
   + [Saving space: EICs and rtrange]
   + [Speeding things up]
@@ -53,7 +54,7 @@ library(RaMS)
 msdata_dir <- system.file("extdata", package = "RaMS")
 
 # Identify the files of interest
-data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)
+data_files <- list.files(msdata_dir, pattern = "mzML", full.names = TRUE)[1:4]
 
 # Check that the files identified are the ones expected
 basename(data_files)
@@ -284,6 +285,29 @@ msdata$MS2[neutral_loss%between%pmppm(homarine_neutral_loss, ppm = 5)] %>%
 
 We can again confirm our suspicions that there's another signal with
 a similar neutral loss: one with a mass of 104.0710.
+
+### Continuing: chromatograms!
+
+mzMLs can also contain precompiled chromatograms. Version 1.3 of RaMS enabled
+the extraction of these chromatograms just like MS^1^ or MS^2^ data and added
+the new `chroms` slot to hold them. Now, asking for `grab_what = "everything"`
+or `grab_what = "chroms"` will create this new slot in the returned object.
+Chromatograms are returned as a `data.table` with seven columns: chromatogram 
+type (usually TIC, BPC or SRM info), chromatogram index, target mz, product mz, 
+retention time (rt), and intensity (int). This allows simple plotting of
+various chromatograms such as those returned by MRM:
+
+```{r, fig.height=3}
+chrom_file <- system.file("extdata", "wk_chrom.mzML.gz", package = "RaMS")
+msdata_chroms <- grabMSdata(chrom_file, verbosity = 0)
+given_chrom <- msdata_chroms$chroms[chrom_type=="SRM iletter1"]
+ptitle <- with(given_chrom, paste0(
+  unique(chrom_type), ": Target m/z = ", unique(target_mz), "; Product m/z = ", 
+  unique(product_mz)
+))
+plot(given_chrom$rt, given_chrom$int, type="l", main=ptitle)
+```
+
 
 ## Advanced RaMS usage
 

@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 library(RaMS)
 msdata_files <- list.files(
   system.file("extdata", package = "RaMS"), full.names = TRUE, pattern = "mzML"
-)
+)[1:4]
 
 initial_filename <- msdata_files[1]
 output_filename <- gsub(x=paste0("minified_", basename(initial_filename)), "\\.gz", "")

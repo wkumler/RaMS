@@ -17,6 +17,7 @@
 #' @param files A character vector of filenames to read into R's memory. Both
 #'   absolute and relative paths are acceptable.
 #' @param grab_what What data should be read from the file? Options include
+#'   "metadata" for the extraction of instrumental and run metadata,
 #'   "MS1" for data only from the first spectrometer, "MS2" for fragmentation
 #'   data, "DAD" for diode array (uv) data, "BPC" for rapid access to the base
 #'   peak chromatogram, and "TIC" for rapid access to the total ion chromatogram.
@@ -52,7 +53,7 @@
 #'   easily to handle more.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
-#'   grab_what. $MS1 contains MS1 information, MS2 contains fragmentation info,
+#'   grab_what. E.g. $MS1 contains MS1 information, $MS2 contains fragmentation info,
 #'   etc. MS1 data has four columns: retention time (rt), mass-to-charge (mz),
 #'   intensity (int), and filename. MS2 data has six: retention time (rt),
 #'   precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
@@ -60,7 +61,11 @@
 #'   exist in the provided files (such as MS2 data requested from MS1-only
 #'   files) will return an empty (length zero) data.table. The data.tables
 #'   extracted from each of the individual files are collected into one large
-#'   table using data.table's `rbindlist`.
+#'   table using data.table's `rbindlist`. $metadata is a little weirder
+#'   because the metadata doesn't fit neatly into a tidy format but things are
+#'   hopefully named helpfully. $chroms was added in 1.3 and contains 7 columns:
+#'   chromatogram type (usually TIC, BPC or SRM info), chromatogram index,
+#'   target mz, product mz, retention time (rt), and intensity (int).
 #'
 #' @export
 #'
@@ -88,8 +93,8 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   if(!length(files)>0)stop("No files provided")
 
   # Check that grab_what is one of the approved options
-  good_grabs <- c("MS1", "MS2", "DAD", "EIC", "EIC_MS2", "everything", "metadata",
-                  "BPC", "TIC")
+  good_grabs <- c("MS1", "MS2", "EIC", "EIC_MS2", "everything", "metadata",
+                  "BPC", "TIC", "chroms")
   if(any(!grab_what%in%good_grabs)){
     bad_grabs <- paste(grab_what[!grab_what%in%good_grabs], collapse = ", ")
     stop(paste0("`grab_what = ", bad_grabs, "` is not currently supported"))
@@ -240,7 +245,7 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
 
 checkOutputQuality <- function(output_data, grab_what){
   if("everything"%in%grab_what){
-    grab_what <- c("MS1", "MS2", "BPC", "TIC")
+    grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata", "chroms")
   }
   missing_data <- !grab_what%in%names(output_data)
   if(any(missing_data)){
@@ -273,6 +278,9 @@ checkOutputQuality <- function(output_data, grab_what){
       proper_names <- c("rt", "mz", "int", "filename")
     } else if (nms=="EIC_MS2"){
       proper_names <- c("rt", "premz", "fragmz", "int", "voltage", "filename")
+    } else if(nms=="chroms"){
+      proper_names <- c("chrom_type", "chrom_index", "target_mz", "product_mz",
+                        "rt", "int")
     } else if(nms=="metadata"){
       return(FALSE) # Because we don't know what names metadata may have
     } else {
