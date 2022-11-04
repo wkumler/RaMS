@@ -261,7 +261,11 @@ grabMzmlMetadata <- function(xml_data){
 
   rt_xpath <- '//d1:spectrum/d1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
   rt_nodes <- xml2::xml_find_all(xml_data, xpath = rt_xpath)
+  rt_unit <- unique(xml_attr(rt_nodes, "unitName"))
   rt <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
+
+  if (!"minute" %in% rt_unit) rt=rt/60
+
   if(length(rt) > 0){
     rt_start <- min(rt)
     rt_end <- max(rt)
@@ -284,14 +288,20 @@ grabMzmlMetadata <- function(xml_data){
     }
   }
 
-  polarity_xpath <- '//d1:spectrum/d1:cvParam[@accession="MS:1000130"]'
-  polarity_nodes <- xml2::xml_find_all(xml_data, polarity_xpath)
-  if(length(polarity_nodes)>0){
-    polarities <- unique(
-      gsub(" scan", "", xml2::xml_attr(polarity_nodes, "name"))
+  polarity_pos <- '//d1:spectrum/d1:cvParam[@accession="MS:1000130"]'
+  polarity_pos <- xml_find_all(xml_data, polarity_pos)
+
+  polarity_neg <- '//d1:spectrum/d1:cvParam[@accession="MS:1000129"]'
+  polarity_neg <- xml_find_all(xml_data, polarity_neg)
+
+
+  if(length(polarity_pos)>0|length(polarity_neg)>0) {
+    polarities <- c(
+      unique(gsub(" scan", "", xml_attr(polarity_pos, "name"))),
+      unique(gsub(" scan", "", xml_attr(polarity_neg, "name")))
     )
   } else {
-    polarities <- "None found"
+    polarities <- NA_character_
   }
 
   lambda_high_xpath <- '//d1:spectrum/d1:cvParam[@name="highest observed wavelength"]'
@@ -542,12 +552,16 @@ grabMzmlDAD <- function(xml_data, rtrange, file_metadata){
 grabSpectraRt <- function(xml_nodes){
   rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
   rt_nodes <- xml2::xml_find_all(xml_nodes, rt_xpath)
+  rt_unit <- unique(xml_attr(rt_nodes, "unitName"))
   rt_vals <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
-  if(any(rt_vals>150)){
-    # Guess RT is in seconds if the run is more than 150 long
-    # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
-    rt_vals <- rt_vals/60
-  }
+
+  if(!"minute"%in%rt_unit) rt_vals=rt_vals/60
+  # if(any(rt_vals>150)){
+  #   # Guess RT is in seconds if the run is more than 150 long
+  #   # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
+  #   rt_vals <- rt_vals/60
+  # }
+
   rt_vals
 }
 

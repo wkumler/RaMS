@@ -229,8 +229,10 @@ grabMzxmlMetadata <- function(xml_data){
     mz_highest <- max(as.numeric(xml2::xml_attr(scan_nodes, "highMz")))
 
     rt <- xml2::xml_attr(scan_nodes, "retentionTime")
+    unit <- unique(gsub(".*[0-9]", "", rt))
     rt <- gsub("[^0-9.-]", "", rt)
     rt <- as.numeric(rt)
+    if("S"%in%unit) rt <- rt/60
 
     rt_start <- min(rt)
     rt_end <- max(rt)
@@ -415,12 +417,16 @@ grabMzxmlBPC <- function(xml_data, TIC=FALSE, rtrange){
 
 grabMzxmlSpectraRt <- function(xml_nodes){
   rt_attrs <- xml2::xml_attr(xml_nodes, "retentionTime")
+  rt_unit <- unique(gsub(".*[0-9]", "", rt_attrs))
   rt_vals <- as.numeric(gsub("PT|S", "", rt_attrs))
-  if(any(rt_vals>150)){
-    # Guess RT is in seconds if the run is more than 150 long
-    # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
-    rt_vals <- rt_vals/60
-  }
+
+  if ("S" %in% rt_unit) rt_vals <- rt_vals/60
+  # if(any(rt_vals>150)){
+  #   # Guess RT is in seconds if the run is more than 150 long
+  #   # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
+  #   rt_vals <- rt_vals/60
+  # }
+
   rt_vals
 }
 
