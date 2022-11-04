@@ -25,7 +25,7 @@ test_that("error if grab_what is weird", {
 test_that("checkOutputQuality detects things", {
   grab_what <- "everything"
   output_data <- list(MS1=data.table(runif(100)))
-  expect_error(checkOutputQuality(output_data, grab_what))
+  expect_warning(checkOutputQuality(output_data, grab_what))
 
   grab_what <- c("MS1", "MS2")
   output_data <- list(MS1=data.table(runif(100)), MS2=data.table())
