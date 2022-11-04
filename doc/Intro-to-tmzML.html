@@ -230,7 +230,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  $ MS2       : NULL</span></span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  $ connection:List of 3</span></span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   ..$ files    : Named chr [1:3] &quot;tmzMLs/LB12HL_AB.tmzML&quot; &quot;tmzMLs/LB12HL_CD.tmzML&quot; &quot;tmzMLs/LB12HL_EF.tmzML&quot;</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   .. ..- attr(*, &quot;names&quot;)= chr [1:3] &quot;C:/Users/willi/AppData/Local/Temp/Rtmpo7X6cP/temp_libpath324c52126f01/RaMS/extdata/LB12HL_AB.mzML.gz&quot; &quot;C:/Users/willi/AppData/Local/Temp/Rtmpo7X6cP/temp_libpath324c52126f01/RaMS/extdata/LB12HL_CD.mzML.gz&quot; &quot;C:/Users/willi/AppData/Local/Temp/Rtmpo7X6cP/temp_libpath324c52126f01/RaMS/extdata/LB12HL_EF.mzML.gz&quot;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   .. ..- attr(*, &quot;names&quot;)= chr [1:3] &quot;C:/Users/willi/AppData/Local/Temp/RtmpKsAKTx/temp_libpath3538353a500f/RaMS/extdata/LB12HL_AB.mzML.gz&quot; &quot;C:/Users/willi/AppData/Local/Temp/RtmpKsAKTx/temp_libpath3538353a500f/RaMS/extdata/LB12HL_CD.mzML.gz&quot; &quot;C:/Users/willi/AppData/Local/Temp/RtmpKsAKTx/temp_libpath3538353a500f/RaMS/extdata/LB12HL_EF.mzML.gz&quot;</span></span>
 <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   ..$ grab_what: chr [1:2] &quot;MS1&quot; &quot;MS2&quot;</span></span>
 <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   ..$ verbosity: num 0</span></span>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  - attr(*, &quot;class&quot;)= chr &quot;msdata_connection&quot;</span></span></code></pre></div>
@@ -254,7 +254,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>I’m still deciding whether XML documents are the way to go. Having it be XML means that I can expand it effortlessly and essentially future-proofs it for additional functionality that I’d like to add later, but does require that the whole file is read in at a high level. Something simpler like a pure-text document could have a header that’s read in separately from the rest of the document that then contains pointers to the data. Preliminary tests suggest this plain-text method is 5-10 times faster than the XML style but tmzMLs are already plenty fast so we may be approaching diminishing returns.</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unlink</span>(<span class="st">&quot;tmzMLs&quot;</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <hr />
-<p>Vignette last built on 2022-04-08</p>
+<p>Vignette last built on 2022-08-11</p>
 </div>
 
 

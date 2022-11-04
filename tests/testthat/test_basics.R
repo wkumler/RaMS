@@ -3,7 +3,7 @@ test_that("everything grabs everything", {
 })
 
 test_that("everything got grabbed", {
-  expect_setequal(names(mzML_data), c("MS1", "MS2", "metadata", "TIC", "BPC"))
+  expect_setequal(names(mzML_data), c("MS1", "MS2", "metadata", "TIC", "BPC", "chroms"))
 })
 
 test_that("mzML MS1 data looks normal", {

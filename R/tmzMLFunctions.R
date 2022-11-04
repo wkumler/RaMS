@@ -118,6 +118,10 @@ tmzmlMaker <- function(input_filename, output_filename=NULL,
   }
   msdata <- grabMSdata(input_filename, verbosity = 0)
 
+  if(nrow(msdata$MS1)==0){
+    stop(paste("Unable to find MS1 data in", input_filename))
+  }
+
   tmz_doc <- xml2::xml_new_root("tmzML")
   glimpse_node <- xml2::xml_add_child(tmz_doc, "glimpse")
   data_node <- xml2::xml_add_child(tmz_doc, "data")

@@ -88,10 +88,10 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
                     "MS1, MS2, BPC, and TIC data"))
       message("Ignoring additional grabs")
     }
-    grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
+    grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata", "chroms")
   }
 
-  if(any(c("MS1", "MS2", "EIC", "EIC_MS2")%in%grab_what)){
+  if(any(c("MS1", "MS2", "EIC", "EIC_MS2", "chroms")%in%grab_what)){
     file_metadata <- grabMzxmlEncodingData(xml_data)
   }
 
@@ -150,6 +150,18 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
       init_dt[premz%between%pmppm(mass = mass, ppm = ppm)]
     })
     output_data$EIC_MS2 <- rbindlist(EIC_MS2_list)
+  }
+
+  if("chroms" %in% grab_what){
+    warning(paste("grab_what = 'chroms' not available for mzXML documents,",
+                  "returning empty table"))
+    output_data$chroms <- data.table(
+      chrom_type = character(0),
+      chrom_index = character(0),
+      target_mz = numeric(0),
+      product_mz = numeric(0),
+      int = numeric(0),
+      filename = character(0))
   }
 
   if("metadata"%in%grab_what){
