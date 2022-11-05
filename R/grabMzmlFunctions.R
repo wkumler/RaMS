@@ -110,7 +110,7 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
     grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
   }
 
-  if(any(c("MS1", "MS2", "DAD", "EIC", "EIC_MS2")%in%grab_what)){
+  if(any(c("MS1", "MS2", "DAD", "EIC", "EIC_MS2", "chroms")%in%grab_what)){
     file_metadata <- grabMzmlEncodingData(xml_data)
   }
 
