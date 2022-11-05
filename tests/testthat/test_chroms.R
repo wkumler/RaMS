@@ -6,10 +6,6 @@ test_that("chroms are grabbed when using chroms", {
   expect_identical(mzML_everything, mzML_data)
 })
 
-test_that("chroms are grabbed when using 'everything'", {
-  expect_length(msdata_MRM_chroms$chroms, n = 7)
-})
-
 test_that("warning thrown when requesting chroms from mzXML", {
   expect_warning(grabMSdata(mzXML_filenames[1]))
 })

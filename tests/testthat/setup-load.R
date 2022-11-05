@@ -10,7 +10,7 @@ mzXML_filenames <- list.files(system.file("extdata", package = "RaMS"),
 
 mzML_everything <- grabMSdata(mzML_filenames[1:2], grab_what = "everything", verbosity=2)
 
-mzML_data <- grabMSdata(mzML_filenames[1:2], grab_what = c("BPC", "TIC", "MS1", "MS2", "metadata", "chroms"))
+mzML_data <- grabMSdata(mzML_filenames[1:2], grab_what = c("BPC", "TIC", "MS1", "MS2", "metadata"))
 
 mzXML_data <- grabMSdata(mzXML_filenames[1:2], grab_what = c(
   "MS1", "MS2", "BPC", "TIC", "metadata"

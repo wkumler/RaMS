@@ -252,7 +252,7 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
 
 checkOutputQuality <- function(output_data, grab_what){
   if("everything"%in%grab_what){
-    grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata", "chroms")
+    grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
   }
   missing_data <- !grab_what%in%names(output_data)
   if(any(missing_data)){
