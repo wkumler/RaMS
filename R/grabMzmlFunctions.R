@@ -160,7 +160,7 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
     EIC_list <- lapply(unique(mz), function(mass){
       init_dt[mz%between%pmppm(mass = mass, ppm = ppm)]
     })
-    output_data$EIC <- rbindlist(EIC_list)
+    output_data$EIC <- unique(rbindlist(EIC_list))
   }
 
   if("EIC_MS2"%in%grab_what){
@@ -178,7 +178,7 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
     EIC_MS2_list <- lapply(unique(mz), function(mass){
       init_dt[premz%between%pmppm(mass = mass, ppm = ppm)]
     })
-    output_data$EIC_MS2 <- rbindlist(EIC_MS2_list)
+    output_data$EIC_MS2 <- unique(rbindlist(EIC_MS2_list))
   }
 
   if("chroms"%in%grab_what){
