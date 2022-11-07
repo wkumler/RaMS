@@ -7,5 +7,6 @@ test_that("chroms are grabbed when using chroms", {
 })
 
 test_that("warning thrown when requesting chroms from mzXML", {
-  expect_warning(grabMSdata(mzXML_filenames[1]))
+  expect_warning(grabMSdata(mzXML_filenames[2], grab_what = "chroms"),
+                 regexp = "grab_what = 'chroms' not available for mzXML documents")
 })
