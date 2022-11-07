@@ -214,9 +214,10 @@ minifyMzml <- function(filename, output_filename, ppm,
   chromlist_node <- xml_find_all(xml_data, "//d1:chromatogramList")
   if(length(chromlist_node)>0){
     if(warn){
-      warning(paste0("mzML file ", basename(filename), " has a compiled TIC. ",
+      warning(paste0("mzML file ", basename(filename),
+                     " has a compiled chromatogram. ",
                      "This will be outdated after minification so it's ",
-                     "getting dropped"))
+                     "getting dropped."))
     }
     xml2::xml_remove(chromlist_node)
   }
