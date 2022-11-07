@@ -4,7 +4,7 @@ library(data.table)
 
 # Load the defaults ----
 mzML_filenames <- list.files(system.file("extdata", package = "RaMS"),
-                             pattern = "mzML", full.names = TRUE)
+                             pattern = "mzML", full.names = TRUE)[c(2:6, 1)]
 mzXML_filenames <- list.files(system.file("extdata", package = "RaMS"),
                               pattern = "mzXML", full.names = TRUE)
 
