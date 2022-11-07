@@ -101,7 +101,7 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
 
   # Check that grab_what is one of the approved options
   good_grabs <- c("MS1", "MS2", "EIC", "EIC_MS2", "everything", "metadata",
-                  "BPC", "TIC", "chroms")
+                  "BPC", "TIC", "chroms", "DAD")
   if(any(!grab_what%in%good_grabs)){
     bad_grabs <- paste(grab_what[!grab_what%in%good_grabs], collapse = ", ")
     stop(paste0("`grab_what = ", bad_grabs, "` is not currently supported"))
