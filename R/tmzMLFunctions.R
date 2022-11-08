@@ -10,7 +10,7 @@
 addEncNode <- function(parent_node, dubset, name){
   new_node <- xml2::xml_add_child(parent_node, name)
   xml2::xml_text(new_node) <- giveEncoding(
-    dubset[[name]], compression_type = "gzip",
+    as.numeric(dubset[[name]]), compression_type = "gzip",
     bin_precision = 8, endi_enc = "little"
   )
 }
