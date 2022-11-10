@@ -371,7 +371,7 @@ checkProvidedMzPpm <- function(mz, ppm){
   if(is.null(mz)){
     stop("Please provide an m/z value when using grab_what = EIC")
   }
-  if(class(mz)!="numeric"&&class(mz)!="integer"){
+  if(!is(mz, "numeric")&&!is(mz, "integer")){
     stop("Please provide a numeric m/z value")
   }
   if(any(is.na(mz))){
@@ -384,7 +384,7 @@ checkProvidedMzPpm <- function(mz, ppm){
   if(is.null(ppm)){
     stop("Please provide a ppm value when using grab_what = EIC")
   }
-  if(class(ppm)!="numeric"&&class(ppm)!="integer"){
+  if(!is(ppm, "numeric")&&!is(ppm, "integer")){
     stop("Please provide a numeric ppm value")
   }
   if(ppm<0){
@@ -400,7 +400,7 @@ checkRTrange <- function(rtrange){
     if(length(rtrange)!=2){
       stop("Please provide an rtrange of length 2")
     }
-    if(class(rtrange)!="numeric"&&class(rtrange)!="integer"){
+    if(!is(rtrange, "numeric")&&!is(rtrange, "integer")){
       stop("Please provide a numeric rtrange")
     }
   }
