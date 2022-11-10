@@ -1,7 +1,7 @@
 
 ext_filepath <- system.file("extdata", package = "RaMS")
 DAD_filepath <- list.files(ext_filepath, full.names = TRUE,
-                           pattern = "20220404_CirA_D5_30_mini.mzML")
+                           pattern = "uv_test_mini.mzML")
 msdata_DAD <- grabMSdata(files = DAD_filepath, grab_what = c("everything", "DAD"))
 msdata_DAD_only <- grabMSdata(files = DAD_filepath, grab_what = "DAD")
 
