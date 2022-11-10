@@ -103,12 +103,12 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
 
   if("everything"%in%grab_what){
     extra_grabs <- setdiff(grab_what, "everything")
-    if(c("MS1", "MS2", "BPC", "TIC", "metadata")%in%extra_grabs&&verbosity>0){
+    if(any(c("MS1", "MS2", "BPC", "TIC", "metadata")%in%extra_grabs)&&verbosity>0){
       message(paste("Heads-up: grab_what = `everything` includes",
                     "MS1, MS2, BPC, TIC, and meta data"))
       message("Ignoring duplicate specification")
     }
-    grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata", extra_grabs)
+    grab_what <- unique(c("MS1", "MS2", "BPC", "TIC", "metadata", extra_grabs))
   }
 
   if(any(c("MS1", "MS2", "DAD", "EIC", "EIC_MS2", "chroms")%in%grab_what)){
