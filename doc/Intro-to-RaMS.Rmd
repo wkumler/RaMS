@@ -308,6 +308,9 @@ ptitle <- with(given_chrom, paste0(
 plot(given_chrom$rt, given_chrom$int, type="l", main=ptitle)
 ```
 
+Version 1.3 also enabled support for DAD (diode array detection) data. This data
+type can be requested using `grab_what = DAD` and will return an additional
+item in the list with columns for retention time, wavelength, and intensity.
 
 ## Advanced RaMS usage
 

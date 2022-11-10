@@ -144,7 +144,7 @@ msdata$MS2[neutral_loss%between%pmppm(homarine_neutral_loss, ppm = 5)] %>%
 
 ## ---- fig.height=3------------------------------------------------------------
 chrom_file <- system.file("extdata", "wk_chrom.mzML.gz", package = "RaMS")
-msdata_chroms <- grabMSdata(chrom_file, verbosity = 0)
+msdata_chroms <- grabMSdata(chrom_file, verbosity = 0, grab_what = "chroms")
 given_chrom <- msdata_chroms$chroms[chrom_type=="SRM iletter1"]
 ptitle <- with(given_chrom, paste0(
   unique(chrom_type), ": Target m/z = ", unique(target_mz), "; Product m/z = ", 
