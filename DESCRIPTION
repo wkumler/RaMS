@@ -1,11 +1,12 @@
 Package: RaMS
 Type: Package
 Title: R Access to Mass-Spec Data
-Version: 1.2.0
+Version: 1.3.0
 Authors@R: c(
   person(given = "William", family = "Kumler", email = "wkumler@uw.edu",
          role = c("aut", "cre", "cph")),
-  person(given = "Ricardo", family = "Cunha", role = "ctb")
+  person(given = "Ricardo", family = "Cunha", role = "ctb"),
+  person(given = "Ethan", family = "Bass", role = "ctb")
   )
 Maintainer: William Kumler <wkumler@uw.edu>
 Description: R-based access to mass-spectrometry (MS) data. While many packages 
