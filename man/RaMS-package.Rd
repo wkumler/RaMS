@@ -37,6 +37,7 @@ Useful links:
 Other contributors:
 \itemize{
   \item Ricardo Cunha [contributor]
+  \item Ethan Bass [contributor]
 }
 
 }
