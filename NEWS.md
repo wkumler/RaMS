@@ -1,5 +1,12 @@
 # RaMS (development version)
 
+# RaMS 1.3.0
+## DAD and chromatogram handling
+ - Added support for DAD (diode array detection) data with `grab_what = "DAD"`, credit to @ethanbass for the code
+ - Added support for precompiled chromatograms with `grab_what = "chroms"`, credit to @ricardobachertdacunha for the proposal
+   - Also enables MRM data support per Github issue #6
+ - Squashed some bugs
+
 # RaMS 1.2.0
 ## The tmzML release
  - Added `tmzmlMaker`, a function that converts mzML and mzXML files to the new tmzML file type

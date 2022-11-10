@@ -93,7 +93,7 @@ discuss [below](#why-not-tmzml).
 ## Getting started with tmzML documents
 
 First, mzML/mzXML documents must be converted to tmzML. Again, these files
-might feels similar but they're very different internally. We'll use a couple
+might feel similar but they're very different internally. We'll use a couple
 of the files packaged with RaMS and convert them in a temporary directory.
 
 ```{r listfiles}

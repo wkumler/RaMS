@@ -18,13 +18,18 @@
 #'   absolute and relative paths are acceptable.
 #' @param grab_what What data should be read from the file? Options include
 #'   "MS1" for data only from the first spectrometer, "MS2" for fragmentation
-#'   data, "BPC" for rapid access to the base peak chromatogram, and "TIC" for
-#'   rapid access to the total ion chromatogram. These options can be combined
-#'   (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or this argument can be set to
-#'   "everything" to extract all of the above. Options "EIC" and "EIC_MS2" are
-#'   useful when working with files whose total size exceeds working memory -
-#'   they first extracts all relevant MS1 and MS2 data, then discard data
-#'   outside of the mass range(s) calculated from the provided mz and ppm.
+#'   data, "BPC" for rapid access to the base peak chromatogram, "TIC" for rapid
+#'   access to the total ion chromatogram, "DAD" for DAD (UV) data, and "chroms"
+#'   for precompiled chromatogram data (especially useful for MRM but often
+#'   contains BPC/TIC in other files). Metadata can be accessed with "metadata",
+#'   which provides information about the instrument and time the file was run.
+#'   These options can be combined (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or
+#'   this argument can be set to "everything" to extract all of the above.
+#'   Options "EIC" and "EIC_MS2" are useful when working with files whose total
+#'   size exceeds working memory - it first extracts all relevant MS1 and MS2
+#'   data, respectively, then discards data outside of the mass range(s)
+#'   calculated from the provided mz and ppm. The default, "everything",
+#'   includes all MS1, MS2, BPC, TIC, and metadata.
 #' @param verbosity Three levels of processing output to the R console are
 #'   available, with increasing verbosity corresponding to higher integers. A
 #'   verbosity of zero means that no output will be produced, useful when
@@ -51,15 +56,23 @@
 #'   easily to handle more.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
-#'   grab_what. $MS1 contains MS1 information, MS2 contains fragmentation info,
-#'   etc. MS1 data has four columns: retention time (rt), mass-to-charge (mz),
-#'   intensity (int), and filename. MS2 data has six: retention time (rt),
+#'   grab_what. E.g. $MS1 contains MS1 information, $MS2 contains fragmentation
+#'   info, etc. MS1 data has four columns: retention time (rt), mass-to-charge
+#'   (mz), intensity (int), and filename. MS2 data has six: retention time (rt),
 #'   precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
 #'   collision energy (voltage), and filename. Data requested that does not
 #'   exist in the provided files (such as MS2 data requested from MS1-only
 #'   files) will return an empty (length zero) data.table. The data.tables
 #'   extracted from each of the individual files are collected into one large
-#'   table using data.table's `rbindlist`.
+#'   table using data.table's `rbindlist`. $metadata is a little weirder because
+#'   the metadata doesn't fit neatly into a tidy format but things are hopefully
+#'   named helpfully. $chroms was added in v1.3 and contains 7 columns:
+#'   chromatogram type (usually TIC, BPC or SRM info), chromatogram index,
+#'   target mz, product mz, retention time (rt), and intensity (int). $DAD was
+#'   also added in v1.3 and contains has three columns: retention time (rt),
+#'   wavelength (lambda),and intensity (int). Data requested that does not exist
+#'   in the provided files (such as MS2 data requested from MS1-only files) will
+#'   return an empty (zero-row) data.table.
 #'
 #' @export
 #'
@@ -88,7 +101,7 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
 
   # Check that grab_what is one of the approved options
   good_grabs <- c("MS1", "MS2", "EIC", "EIC_MS2", "everything", "metadata",
-                  "BPC", "TIC")
+                  "BPC", "TIC", "chroms", "DAD")
   if(any(!grab_what%in%good_grabs)){
     bad_grabs <- paste(grab_what[!grab_what%in%good_grabs], collapse = ", ")
     stop(paste0("`grab_what = ", bad_grabs, "` is not currently supported"))
@@ -239,11 +252,11 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
 
 checkOutputQuality <- function(output_data, grab_what){
   if("everything"%in%grab_what){
-    grab_what <- c("MS1", "MS2", "BPC", "TIC")
+    grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
   }
   missing_data <- !grab_what%in%names(output_data)
   if(any(missing_data)){
-    stop(paste("Not all data collected; missing",
+    warning(paste("Not all data collected; missing",
                   paste(grab_what[missing_data], collapse = ", ")))
   }
 
@@ -266,10 +279,15 @@ checkOutputQuality <- function(output_data, grab_what){
       proper_names <- c("rt", "mz", "int", "filename")
     } else if(nms=="MS2"){
       proper_names <- c("rt", "premz", "fragmz", "int", "voltage", "filename")
+    } else if (nms=="DAD"){
+      proper_names <- c("rt", "lambda", "int", "filename")
     } else if (nms=="EIC"){
       proper_names <- c("rt", "mz", "int", "filename")
     } else if (nms=="EIC_MS2"){
       proper_names <- c("rt", "premz", "fragmz", "int", "voltage", "filename")
+    } else if(nms=="chroms"){
+      proper_names <- c("chrom_type", "chrom_index", "target_mz", "product_mz",
+                        "rt", "int")
     } else if(nms=="metadata"){
       return(FALSE) # Because we don't know what names metadata may have
     } else {
@@ -353,7 +371,7 @@ checkProvidedMzPpm <- function(mz, ppm){
   if(is.null(mz)){
     stop("Please provide an m/z value when using grab_what = EIC")
   }
-  if(class(mz)!="numeric"&&class(mz)!="integer"){
+  if(!inherits(mz, "numeric")&&!inherits(mz, "integer")){
     stop("Please provide a numeric m/z value")
   }
   if(any(is.na(mz))){
@@ -366,7 +384,7 @@ checkProvidedMzPpm <- function(mz, ppm){
   if(is.null(ppm)){
     stop("Please provide a ppm value when using grab_what = EIC")
   }
-  if(class(ppm)!="numeric"&&class(ppm)!="integer"){
+  if(!inherits(ppm, "numeric")&&!inherits(ppm, "integer")){
     stop("Please provide a numeric ppm value")
   }
   if(ppm<0){
@@ -382,7 +400,7 @@ checkRTrange <- function(rtrange){
     if(length(rtrange)!=2){
       stop("Please provide an rtrange of length 2")
     }
-    if(class(rtrange)!="numeric"&&class(rtrange)!="integer"){
+    if(!inherits(rtrange, "numeric")&&!inherits(rtrange, "integer")){
       stop("Please provide a numeric rtrange")
     }
   }

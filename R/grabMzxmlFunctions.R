@@ -16,12 +16,16 @@
 #' @param grab_what What data should be read from the file? Options include
 #'   "MS1" for data only from the first spectrometer, "MS2" for fragmentation
 #'   data, "BPC" for rapid access to the base peak chromatogram, and "TIC" for
-#'   rapid access to the total ion chromatogram. These options can be combined
-#'   (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or this argument can be set to
-#'   "everything" to extract all of the above. Option "EIC" is useful when
-#'   working with files whose total size exceeds working memory - it first
-#'   extracts all relevant MS1 and MS2 data, then discards data outside of the
-#'   mass range(s) calculated from the provided mz and ppm.
+#'   rapid access to the total ion chromatogram. DAD and chromatogram ("DAD" and
+#'   "chroms") are unavailable for mzXML files. Metadata can be accessed with
+#'   "metadata", which provides information about the instrument and time the
+#'   file was run. These options can be combined (i.e. `grab_data=c("MS1",
+#'   "MS2", "BPC")`) or this argument can be set to "everything" to extract all
+#'   of the above. Options "EIC" and "EIC_MS2" are useful when working with
+#'   files whose total size exceeds working memory - it first extracts all
+#'   relevant MS1 and MS2 data, respectively, then discards data outside of the
+#'   mass range(s) calculated from the provided mz and ppm. The default,
+#'   "everything", includes all MS1, MS2, BPC, TIC, and metadata.
 #' @param verbosity Three levels of processing output to the R console are
 #'   available, with increasing verbosity corresponding to higher integers. A
 #'   verbosity of zero means that no output will be produced, useful when
@@ -43,13 +47,19 @@
 #'   easily to handle more.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
-#'   grab_what. $MS1 contains MS1 information, $MS2 contains fragmentation info,
-#'   etc. MS1 data has three columns: retention time (rt), mass-to-charge (mz),
-#'   and intensity (int). MS2 data has five: retention time (rt), precursor m/z
-#'   (premz), fragment m/z (fragmz), fragment intensity (int), and collision
-#'   energy (voltage). Data requested that does not exist in the provided files
-#'   (such as MS2 data requested from MS1-only files) will return an empty
-#'   (length zero) data.table.
+#'   grab_what. E.g. $MS1 contains MS1 information, $MS2 contains fragmentation
+#'   info, etc. MS1 data has four columns: retention time (rt), mass-to-charge
+#'   (mz), intensity (int), and filename. MS2 data has six: retention time (rt),
+#'   precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
+#'   collision energy (voltage), and filename. Data requested that does not
+#'   exist in the provided files (such as MS2 data requested from MS1-only
+#'   files) will return an empty (length zero) data.table. The data.tables
+#'   extracted from each of the individual files are collected into one large
+#'   table using data.table's `rbindlist`. $metadata is a little weirder because
+#'   the metadata doesn't fit neatly into a tidy format but things are hopefully
+#'   named helpfully. Data requested that does not exist in the provided files
+#'   (such as DAD or chromatogram data) will return an empty (zero-row)
+#'   data.table.
 #'
 #' @export
 #'
@@ -83,12 +93,13 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
   output_data <- list()
 
   if("everything"%in%grab_what){
-    if(length(setdiff(grab_what, "everything"))&&verbosity>0){
+    extra_grabs <- setdiff(grab_what, "everything")
+    if(any(c("MS1", "MS2", "BPC", "TIC", "metadata")%in%extra_grabs)&&verbosity>0){
       message(paste("Heads-up: grab_what = `everything` includes",
-                    "MS1, MS2, BPC, and TIC data"))
-      message("Ignoring additional grabs")
+                    "MS1, MS2, BPC, TIC, and meta data"))
+      message("Ignoring duplicate specification")
     }
-    grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
+    grab_what <- unique(c("MS1", "MS2", "BPC", "TIC", "metadata", extra_grabs))
   }
 
   if(any(c("MS1", "MS2", "EIC", "EIC_MS2")%in%grab_what)){
@@ -150,6 +161,28 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
       init_dt[premz%between%pmppm(mass = mass, ppm = ppm)]
     })
     output_data$EIC_MS2 <- rbindlist(EIC_MS2_list)
+  }
+
+  if("chroms" %in% grab_what){
+    warning(paste("grab_what = 'chroms' not available for mzXML documents,",
+                  "returning empty table"))
+    output_data$chroms <- data.table(
+      chrom_type = character(0),
+      chrom_index = character(0),
+      target_mz = numeric(0),
+      product_mz = numeric(0),
+      int = numeric(0),
+      filename = character(0))
+  }
+
+  if("DAD" %in% grab_what){
+    warning(paste("grab_what = 'DAD' not available for mzXML documents,",
+                  "returning empty table"))
+    output_data$chroms <- data.table(
+      rt = numeric(0),
+      lambda = numeric(0),
+      int = numeric(0),
+      filename = character(0))
   }
 
   if("metadata"%in%grab_what){
@@ -217,8 +250,10 @@ grabMzxmlMetadata <- function(xml_data){
     mz_highest <- max(as.numeric(xml2::xml_attr(scan_nodes, "highMz")))
 
     rt <- xml2::xml_attr(scan_nodes, "retentionTime")
+    unit <- unique(gsub(".*[0-9]", "", rt))
     rt <- gsub("[^0-9.-]", "", rt)
     rt <- as.numeric(rt)
+    if("S"%in%unit) rt <- rt/60
 
     rt_start <- min(rt)
     rt_end <- max(rt)
@@ -403,12 +438,16 @@ grabMzxmlBPC <- function(xml_data, TIC=FALSE, rtrange){
 
 grabMzxmlSpectraRt <- function(xml_nodes){
   rt_attrs <- xml2::xml_attr(xml_nodes, "retentionTime")
+  rt_unit <- unique(gsub(".*[0-9]", "", rt_attrs))
   rt_vals <- as.numeric(gsub("PT|S", "", rt_attrs))
-  if(any(rt_vals>150)){
-    # Guess RT is in seconds if the run is more than 150 long
-    # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
-    rt_vals <- rt_vals/60
-  }
+
+  if ("S" %in% rt_unit) rt_vals <- rt_vals/60
+  # if(any(rt_vals>150)){
+  #   # Guess RT is in seconds if the run is more than 150 long
+  #   # A 2.5 minute run is unheard of, and a 2.5 hour run is unheard of
+  #   rt_vals <- rt_vals/60
+  # }
+
   rt_vals
 }
 

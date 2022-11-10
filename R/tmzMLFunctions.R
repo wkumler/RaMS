@@ -10,7 +10,7 @@
 addEncNode <- function(parent_node, dubset, name){
   new_node <- xml2::xml_add_child(parent_node, name)
   xml2::xml_text(new_node) <- giveEncoding(
-    dubset[[name]], compression_type = "gzip",
+    as.numeric(dubset[[name]]), compression_type = "gzip",
     bin_precision = 8, endi_enc = "little"
   )
 }
@@ -117,6 +117,10 @@ tmzmlMaker <- function(input_filename, output_filename=NULL,
     message("Reading in original file...")
   }
   msdata <- grabMSdata(input_filename, verbosity = 0)
+
+  if(nrow(msdata$MS1)==0){
+    stop(paste("Unable to find MS1 data in", input_filename))
+  }
 
   tmz_doc <- xml2::xml_new_root("tmzML")
   glimpse_node <- xml2::xml_add_child(tmz_doc, "glimpse")
