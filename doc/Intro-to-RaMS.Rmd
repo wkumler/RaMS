@@ -45,7 +45,7 @@ If you have your own data, feel free to load it here. If not, there's a couple
 small example files you're welcome to use in the "extdata" folder. The first of 
 these contains DDA data from a pooled sample, while the others are individual 
 samples. I'll be using these throughout. For more details on the origin of these
-files, see the [minification vignette](doc/Minifying-files-with-RaMS.html).
+files, see the [minification vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Minifying-files-with-RaMS.html).
 
 ```{r findfiles, message=FALSE}
 library(RaMS)
@@ -426,7 +426,7 @@ reduce file size and read times. Sharp-eyed users will have noticed that the
 demo files are already gzipped, which is part of the reason they are so small.
 
 `zlib` compression is slightly trickier, and is most often performed with tools
-such as [Proteowizard](http://proteowizard.sourceforge.net/doc_users.html)'s 
+such as [Proteowizard](https://proteowizard.sourceforge.io/doc_users.html)'s 
 `msconvert` tool with the option "-z". 
 
 Read times may also be slow if files are being accessed via the Internet, either
