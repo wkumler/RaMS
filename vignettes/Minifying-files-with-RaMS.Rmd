@@ -179,7 +179,7 @@ minifyMSdata(files = init_files, output_files = out_files, warn = FALSE,
 
 Now we have four minified mzXML files in our inst/extdata folder. However, we'd
 like to be able to demo the mzML functionality as well as that of mzXMLs, so
-we can use [Proteowizard's](http://proteowizard.sourceforge.net/tools.shtml) 
+we can use [Proteowizard's](https://proteowizard.sourceforge.io/tools/msconvert.html) 
 `msconvert` tool because `RaMS` can't convert between mzML and mzXML or vice 
 versa. You'll need to install `msconvert` and add it to your path for this
 step.

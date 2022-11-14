@@ -7,7 +7,7 @@ R-based access to Mass-Spec data (RaMS)
 [![R build
 status](https://github.com/wkumler/RaMS/workflows/R-CMD-check/badge.svg)](https://github.com/wkumler/RaMS/actions/)
 [![Codecov test
-coverage](https://codecov.io/gh/wkumler/RaMS/branch/master/graph/badge.svg)](https://codecov.io/gh/wkumler/RaMS)
+coverage](https://codecov.io/gh/wkumler/RaMS/branch/master/graph/badge.svg?token=FU9R6TAOOO)](https://codecov.io/gh/wkumler/RaMS)
 <!-- badges: end -->
 
 **Table of contents:** [Overview](.#overview) -
@@ -231,7 +231,7 @@ slightly older **mzXML** format, as well as the custom [**tmzML**
 format](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Intro-to-tmzML.html)
 as of version 1.2.0. Tools to convert data from other formats are
 available through
-[Proteowizard’s](http://proteowizard.sourceforge.net/tools.shtml)
+[Proteowizard’s](https://proteowizard.sourceforge.io/tools/msconvert.html)
 `msconvert` tool. Data can, however, be gzip compressed (file ending
 .gz) and this compression actually speeds up data retrieval
 significantly as well as reducing file sizes.
@@ -265,4 +265,4 @@ Issues page](https://github.com/wkumler/RaMS/issues).
 
 ------------------------------------------------------------------------
 
-README last built on 2022-04-08
+README last built on 2022-11-14
