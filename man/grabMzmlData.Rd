@@ -90,6 +90,7 @@ filtering) is desired before the full data object is returned.
 \examples{
 sample_file <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
 file_data <- grabMzmlData(sample_file, grab_what="MS1")
+\dontrun{
 # Extract MS1 data and a base peak chromatogram
 file_data <- grabMzmlData(sample_file, grab_what=c("MS1", "BPC"))
 # Extract data from a retention time subset
@@ -104,4 +105,5 @@ file_data <- grabMzmlData(sample_file, grab_what="EIC", ppm=5,
 # Extract MS2 data
 sample_file <- system.file("extdata", "DDApos_2.mzML.gz", package = "RaMS")
 MS2_data <- grabMzmlData(sample_file, grab_what="MS2")
+}
 }

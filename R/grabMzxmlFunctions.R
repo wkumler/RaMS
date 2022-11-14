@@ -66,6 +66,7 @@
 #' @examples
 #' sample_file <- system.file("extdata", "LB12HL_AB.mzXML.gz", package = "RaMS")
 #' file_data <- grabMzxmlData(sample_file, grab_what="MS1")
+#' \dontrun{
 #' # Extract MS1 data and a base peak chromatogram
 #' file_data <- grabMzxmlData(sample_file, grab_what=c("MS1", "BPC"))
 #' # Extract EIC for a specific mass
@@ -77,6 +78,7 @@
 #' # Extract MS2 data
 #' sample_file <- system.file("extdata", "DDApos_2.mzXML.gz", package = "RaMS")
 #' MS2_data <- grabMzxmlData(sample_file, grab_what="MS2")
+#' }
 #'
 grabMzxmlData <- function(filename, grab_what, verbosity=0,
                           rtrange=NULL, mz=NULL, ppm=NULL, prefilter=-1){
