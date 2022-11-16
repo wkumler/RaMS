@@ -7,7 +7,7 @@ R-based access to Mass-Spec data (RaMS)
 [![R build
 status](https://github.com/wkumler/RaMS/workflows/R-CMD-check/badge.svg)](https://github.com/wkumler/RaMS/actions/)
 [![Codecov test
-coverage](https://codecov.io/gh/wkumler/RaMS/branch/master/graph/badge.svg?token=FU9R6TAOOO)](https://codecov.io/gh/wkumler/RaMS)
+coverage](https://codecov.io/gh/wkumler/RaMS/branch/master/graph/badge.svg?token=FU9R6TAOOO)](https://app.codecov.io/gh/wkumler/RaMS)
 <!-- badges: end -->
 
 **Table of contents:** [Overview](.#overview) -
@@ -265,4 +265,4 @@ Issues page](https://github.com/wkumler/RaMS/issues).
 
 ------------------------------------------------------------------------
 
-README last built on 2022-11-14
+README last built on 2022-11-16

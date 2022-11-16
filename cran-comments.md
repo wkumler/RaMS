@@ -1,6 +1,11 @@
 ## Resubmission
 This is a resubmission. In this version I have:
 
+* Fixed more invalid URLs! Sorry I didn't catch them all last time
+
+## Resubmission (prior)
+This is a resubmission. In this version I have:
+
 * Fixed invalid URLs
 * Reduced some examples to have CPU time < 2.5 times elapsed time
 
