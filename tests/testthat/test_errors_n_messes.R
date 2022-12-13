@@ -7,12 +7,6 @@ test_that("error if no files", {
   expect_error(grabMSdata(files = character(), verbosity=2))
 })
 
-test_that("error if weird files", {
-  file.create("blah.txt")
-  expect_error(grabMSdata(files = "blah.txt", verbosity=2))
-  file.remove("blah.txt")
-})
-
 test_that("error if grab_what is weird", {
   expect_error(grabMSdata(files = mzML_filenames[2], grab_what = "banana"))
   expect_error(grabMSdata(files = mzML_filenames[2], grab_what = "SM1"))

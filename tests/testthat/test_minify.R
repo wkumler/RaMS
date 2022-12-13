@@ -168,12 +168,15 @@ test_that("Fancy error when many files not found", {
   expect_error(minifyMSdata(files = letters[1:5]))
 })
 
-test_that("Warn on overwrite", {
-  extdata_dir <- unique(dirname(mzML_filenames))
-  init_files <- list.files(extdata_dir, full.names = TRUE)
-  expect_warning(minifyMSdata(files = mzML_filenames[2:4], ppm = 5, mz_include=include_mzs))
-  file.remove(setdiff(list.files(extdata_dir, full.names = TRUE), init_files))
-})
+# test_that("Warn on overwrite", {
+#   # Create initial files
+#   output_files <- paste(output_dir, basename(mzML_filenames[2:4]), sep="/")
+#   minifyMSdata(files = mzML_filenames[2:4], output_files = output_files,
+#                ppm = 5, mz_include=include_mzs)
+#   expect_warning(minifyMSdata(files = mzML_filenames[2:4],
+#                               output_files = output_files,
+#                               ppm = 5, mz_include=include_mzs))
+# })
 
 
 test_that("Stop if lengths not equal", {
