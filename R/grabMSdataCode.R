@@ -460,7 +460,7 @@ timeReport <- function(last_time, text=NULL){
 #' @import xml2
 #' @import data.table
 #' @import utils
-#' @importFrom base64enc base64decode
+#' @importFrom base64enc base64decode base64encode
 #' @export
 data.table::between
 #' @export
