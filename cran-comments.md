@@ -1,4 +1,9 @@
-## Resubmission
+## Resubmission (prior)
+This is a resubmission. In this version I have:
+
+* Removed/rewritten unit tests that wrote to a non-temp directory
+
+## Resubmission (prior)
 This is a resubmission. In this version I have:
 
 * Fixed more invalid URLs! Sorry I didn't catch them all last time
