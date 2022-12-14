@@ -1,5 +1,12 @@
 # RaMS (development version)
 
+# RaMS 1.3.1 (patch)
+ - Squashed a bunch of bugs around CRAN submission
+ - Changed where unit tests write to
+ - Improved unit test coverage
+ - Fixed broken URLs
+ - Added base64encoding to the package officially
+
 # RaMS 1.3.0
 ## DAD and chromatogram handling
  - Added support for DAD (diode array detection) data with `grab_what = "DAD"`, credit to @ethanbass for the code

@@ -1,3 +1,8 @@
+## Resubmission
+This is a resubmission. In this patch version I have:
+
+* Incremented version number to avoid name conflicts with the existing package
+
 ## Resubmission (prior)
 This is a resubmission. In this version I have:
 
