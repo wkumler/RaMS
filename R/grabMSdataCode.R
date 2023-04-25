@@ -348,6 +348,8 @@ checkOutputQuality <- function(output_data, grab_what){
 #' plot(tic$rt, tic$int, type = "l")
 grabAccessionData <- function(filename, accession_number){
   xml_data <- xml2::read_xml(filename)
+
+  checkNamespace(xml_data)
   arb_xpath <- paste0('//d1:cvParam[@accession="', accession_number, '"]')
   arb_nodes <- xml2::xml_find_all(xml_data, arb_xpath)
   out_df <- data.frame(name=xml2::xml_attr(arb_nodes, "name"),
@@ -359,6 +361,13 @@ grabAccessionData <- function(filename, accession_number){
 }
 
 # Other functions ----
+
+checkNamespace <- function(xml_data){
+  if (is.na(xml2::xml_attr(xml_data,"xmlns"))){
+    xml2::xml_attr(xml_data,"xmlns") <- "http://psi.hupo.org/ms/mzml"
+  }
+}
+
 checkFileType <- function(xml_data, node_to_check){
   # Check for mzML node
   # Length works because external pointer has length 2
