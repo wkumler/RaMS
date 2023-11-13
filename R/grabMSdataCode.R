@@ -110,53 +110,10 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   # Handle tmzMLs first
   tmzml_check <- grepl("\\.tmzML", files)
   if(any(tmzml_check)){
-    if(!all(tmzml_check)){
-      stop("At this time, tmzMLs can't be mixed with mzML/mzXMLs")
-    }
-    if(grab_what=="everything"){
-      grab_what <- c("MS1", "MS2")
-    }
-    if(!all(grab_what%in%c("MS1", "MS2"))){
-      stop("At this time, tmzMLs can only be used with MS1 or MS2 data")
-    }
-    if(!is.null(mz)){
-      warning("Argument 'mz' has no function when used with tmzML files, ignoring")
-    }
-    if(!is.null(ppm)){
-      warning("Argument 'ppm' has no function when used with tmzML files, ignoring")
-    }
-    if(!is.null(rtrange)){
-      warning("Argument 'rtrange' has no function when used with tmzML files, ignoring")
-    }
-    if(prefilter>-1){
-      warning("Argument 'prefilter' has no function when used with tmzML files, ignoring")
-    }
-
-    # Handle null verbosity flag with intelligent defaults
-    if(is.null(verbosity)){
-      verbosity <- ifelse(length(files)==1, 0, 1)
-    }
-
-    # Check for missing files before creating object
-    url_files <- grepl(x = files, "^(http|ftp)")
-    file_exists <- file.exists(files[!url_files])
-    if(!all(file_exists)){
-      stop(paste("Unable to find all files, e.g.\n",
-                 paste(head(files[!url_files][!file_exists]), collapse = "\n ")))
-    }
-
-    # Create a list object to hide connection values and allow
-    # RStudio to autocomplete MS1 and MS2
-    msdata_con <- vector("list", length = length(grab_what)+1)
-    msdata_con[[length(msdata_con)]] <- list(
-      files=files,
-      grab_what=grab_what,
-      verbosity=verbosity
+    msdata_con_object <- msdata_connection_constructor(
+      tmzml_check, files, grab_what, mz, ppm, rtrange, prefilter, verbosity
     )
-    names(msdata_con) <- c(grab_what, "connection")
-
-    class(msdata_con) <- "msdata_connection"
-    return(msdata_con)
+    return(msdata_con_object)
   }
 
   # Handle mzMLs and mzXMLs below
@@ -166,7 +123,7 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   # Add sanity check for EIC extraction
   if(!is.null(mz) & !any(c("EIC", "EIC_MS2")%in%grab_what)){
     warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
-            '"EIC_MS2" and will be ignored in the current call'))
+                   '"EIC_MS2" and will be ignored in the current call'))
   }
   if(!is.null(ppm) & !any(c("EIC", "EIC_MS2")%in%grab_what)){
     warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
@@ -260,7 +217,6 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
 #' @return NULL (invisibly). The goal of this function is its side effects, i.e.
 #'   throwing errors and providing info when the files are not found.
 #'
-
 checkOutputQuality <- function(output_data, grab_what){
   if("everything"%in%grab_what){
     grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
@@ -371,6 +327,57 @@ grabAccessionData <- function(filename, accession_number){
   out_df
 }
 
+# msdata_connection_constructor ----
+msdata_connection_constructor <- function(tmzml_check, files, grab_what, mz, ppm,
+                                          rtrange, prefilter, verbosity){
+  if(!all(tmzml_check)){
+    stop("At this time, tmzMLs can't be mixed with mzML/mzXMLs")
+  }
+  if(grab_what=="everything"){
+    grab_what <- c("MS1", "MS2")
+  }
+  if(!all(grab_what%in%c("MS1", "MS2"))){
+    stop("At this time, tmzMLs can only be used with MS1 or MS2 data")
+  }
+  if(!is.null(mz)){
+    warning("Argument 'mz' has no function when used with tmzML files, ignoring")
+  }
+  if(!is.null(ppm)){
+    warning("Argument 'ppm' has no function when used with tmzML files, ignoring")
+  }
+  if(!is.null(rtrange)){
+    warning("Argument 'rtrange' has no function when used with tmzML files, ignoring")
+  }
+  if(prefilter>-1){
+    warning("Argument 'prefilter' has no function when used with tmzML files, ignoring")
+  }
+
+  # Handle null verbosity flag with intelligent defaults
+  if(is.null(verbosity)){
+    verbosity <- ifelse(length(files)==1, 0, 1)
+  }
+
+  # Check for missing files before creating object
+  url_files <- grepl(x = files, "^(http|ftp)")
+  file_exists <- file.exists(files[!url_files])
+  if(!all(file_exists)){
+    stop(paste("Unable to find all files, e.g.\n",
+               paste(head(files[!url_files][!file_exists]), collapse = "\n ")))
+  }
+
+  # Create a list object to hide connection values and allow
+  # RStudio to autocomplete MS1 and MS2
+  msdata_con <- vector("list", length = length(grab_what)+1)
+  msdata_con[[length(msdata_con)]] <- list(
+    files=files,
+    grab_what=grab_what,
+    verbosity=verbosity
+  )
+  names(msdata_con) <- c(grab_what, "connection")
+
+  class(msdata_con) <- "msdata_connection"
+  return(msdata_con)
+}
 # Other functions ----
 
 checkNamespace <- function(xml_data){
