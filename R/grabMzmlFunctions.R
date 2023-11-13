@@ -97,6 +97,7 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
   }
   xml_data <- xml2::read_xml(filename)
 
+  checkNamespace(xml_data)
   checkFileType(xml_data, "mzML")
   rtrange <- checkRTrange(rtrange)
   prefilter <- checkProvidedPrefilter(prefilter)
