@@ -216,10 +216,18 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     if(length(files)>=2){
       close(pb)
     }
+    if(verbosity>1){
+      cat("Binding files together into single data.table\n")
+    }
   }
 
   # Bind all the similar pieces together (e.g. stack MS1 from different files)
-  all_file_data_output <- Reduce(function(x,y) Map(rbind, x, y, fill=TRUE), all_file_data)
+  # all_file_data_output <- Reduce(function(x,y) Map(rbind, x, y, fill=TRUE), all_file_data)
+  all_file_data_output <- lapply(seq_along(all_file_data[[1]]), function(sub_index){
+    rbindlist(lapply(all_file_data, `[[`, sub_index))
+  })
+  names(all_file_data_output) <- names(all_file_data[[1]])
+
   invisible(checkOutputQuality(
     output_data = all_file_data_output, grab_what = grab_what
   ))
