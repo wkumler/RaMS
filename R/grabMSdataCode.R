@@ -160,6 +160,9 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   }
 
   # Handle mzMLs and mzXMLs below
+  # Check for non-mzXML or non-mzML files
+  checkQuickMLs(files)
+
   # Add sanity check for EIC extraction
   if(!is.null(mz) & !any(c("EIC", "EIC_MS2")%in%grab_what)){
     warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
@@ -439,6 +442,26 @@ checkProvidedPrefilter <- function(prefilter){
     prefilter <- prefilter[1]
   }
   prefilter
+}
+
+checkQuickMLs <- function(files){
+  ml_check <- grepl("\\.mzx?ml$ | \\.mzx?ml\\.gz$", files, ignore.case = TRUE)
+  if(!all(ml_check)){
+    nonml_files <- files[!ml_check]
+    if(length(nonml_files)>5){
+      warn_string <- paste0(
+        "Not all files appear to be mzML or mzXML: see\n",
+        paste(head(nonml_files, 5), collapse = "\n"),
+        "\nand ", length(nonml_files)-5, " others"
+      )
+    } else {
+      warn_string <- paste0(
+        "Not all files appear to be mzML or mzXML: see\n",
+        paste(nonml_files, collapse = "\n")
+      )
+    }
+    warning(warn_string)
+  }
 }
 
 
