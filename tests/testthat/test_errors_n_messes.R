@@ -1,6 +1,6 @@
 
 test_that("error if unable to find files", {
-  expect_error(grabMSdata(files = rep(tempfile(), 7), verbosity=2))
+  expect_error(grabMSdata(files = rep(tempfile(fileext = ".mzML"), 7), verbosity=2))
 })
 
 test_that("error if no files", {
@@ -67,3 +67,13 @@ test_that("default verbosity works", {
     regexp = "Reading MS1"
   )
 })
+
+test_that("checkQuickMLs catches weird file types", {
+  expect_warning({
+    expect_error(grabMSdata(files = rep(tempfile(), 7)))
+  })
+  expect_warning({
+    expect_error(grabMSdata("desktop.ini"))
+  })
+})
+
