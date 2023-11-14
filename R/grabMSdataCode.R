@@ -452,6 +452,8 @@ checkProvidedPrefilter <- function(prefilter){
 }
 
 checkQuickMLs <- function(files){
+  init_warn_val <- getOption("warn")
+  options(warn=1)
   ml_check <- grepl("\\.mzx?ml$|\\.mzx?ml\\.gz$", files, ignore.case = TRUE)
   if(!all(ml_check)){
     nonml_files <- files[!ml_check]
@@ -469,6 +471,7 @@ checkQuickMLs <- function(files){
     }
     warning(warn_string)
   }
+  options(warn=init_warn_val)
 }
 
 
