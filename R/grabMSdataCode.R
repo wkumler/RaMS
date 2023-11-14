@@ -452,7 +452,7 @@ checkProvidedPrefilter <- function(prefilter){
 }
 
 checkQuickMLs <- function(files){
-  ml_check <- grepl("\\.mzx?ml$ | \\.mzx?ml\\.gz$", files, ignore.case = TRUE)
+  ml_check <- grepl("\\.mzx?ml$|\\.mzx?ml\\.gz$", files, ignore.case = TRUE)
   if(!all(ml_check)){
     nonml_files <- files[!ml_check]
     if(length(nonml_files)>5){
