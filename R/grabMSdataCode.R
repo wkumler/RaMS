@@ -496,6 +496,73 @@ checkQuickMLs <- function(files){
 #' pmppm(892.535313, 10)
 pmppm <- function(mass, ppm=4)c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
 
+#' Trapezoidal integration of mass-spec retention time / intensity values
+#'
+#' Performs a trapezoidal Riemann sum to calculate the area under the curve
+#' for mass-spectrometry data. Accepts a vector of retention times and the
+#' associated intensities and returns the area.
+#'
+#' @param rts A numeric vector of retention times across an MS peak. Should be
+#' monotonically increasing and without duplicates or will throw a warning.
+#' @param ints A numeric vector of measured intensities across an MS peak
+#' @param baseline A length-1 character vector of either "none" (the default),
+#' "square", or "trapezoid".
+#'
+#' @return A length-1 numeric value representing the area under the curve
+#' @export
+#'
+#' @examples
+#' trapz(1:10, 1:10)
+#' trapz(1:10, 10:1)
+#'
+#' trapz(1:10, 11:20)
+#' trapz(1:10, 11:20, baseline="square")
+#' trapz(1:10, 11:20, baseline="trapezoid")
+#'
+#' x_vals <- seq(-2, 2, length.out=100)
+#' trapz(x_vals, dnorm(x_vals))
+#'
+#' x_vals <- seq(0, pi/2, length.out=100)
+#' trapz(x_vals, cos(x_vals))
+trapz <- function(rts, ints, baseline="none"){
+  # Checks for argument accuracy
+  if(!baseline%in%c("none", "square", "trapezoid")){
+    stop("Argument 'baseline' must be one of 'none', 'square', or 'trapezoid'")
+  }
+  if(length(rts)!=length(ints))stop("rts length must be equal to ints length")
+  if(!is.numeric(rts))stop("rts vector must be numeric")
+  if(!is.numeric(ints))stop("ints vector must be numeric")
+  if(length(rts)<2)return(0)
+
+  # Warn if duplicated RT entries (maybe better as any(duplicated(rts)) ?)
+  if(length(rts)!=length(unique(rts)))warning("RTs appear to be duplicated")
+  # Warn if RTs do not increase monotonically
+  # Test stolen from https://stackoverflow.com/q/13093912
+  if(!all(rts == cummax(rts)))warning("RTs do not appear to be ordered")
+  # Warn with very large peak widths
+  if(length(rts)>1000)warning("Most peak widths are less than 1000 scans wide")
+  # Warn with negative intensity values
+  if(any(ints<0))warning("Detected intensities less than zero")
+
+  # Calculate the area of each trapezoid (area under curve)
+  rt_wedges <- rts[-1]-rts[-length(rts)]
+  int_wedges <- (ints[-1]+ints[-length(ints)])/2
+  auc <- sum(rt_wedges*int_wedges)
+
+  # Calculate area under the baseline (area under baseline)
+  if(baseline=="square"){
+    aub <- min(ints)*(max(rts)-min(rts))
+  } else if(baseline=="trapezoid"){
+    minmax_rts <- c(rts[1], rts[length(rts)])
+    minmax_ints <- c(ints[1], ints[length(ints)])
+    aub <- trapz(minmax_rts, minmax_ints, baseline="none")
+  } else {
+    aub <- 0
+  }
+
+  return(auc-aub)
+}
+
 
 timeReport <- function(last_time, text=NULL){
   time_total <- round(difftime(Sys.time(), last_time), digits = 2)
