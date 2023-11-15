@@ -161,6 +161,9 @@ ggplotMSdata <- function(MS1_df, color_col, facet_col, facet_args){
     arg_list <- c(list(facets=ggplot2::vars(get(facet_col))), facet_args)
     out_plot <- out_plot + do.call(what=ggplot2::facet_wrap, args = arg_list)
   }
+  int <- NULL #To prevent R CMD check "notes"  when using ggplot2 syntax
+  rt <- NULL
+  filename <- NULL
   out_plot
 }
 baseplotMSdata <- function(MS1_df){
