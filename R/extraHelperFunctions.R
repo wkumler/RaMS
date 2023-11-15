@@ -143,10 +143,12 @@ qplotMS1data <- function(MS1_df, color_col=NULL, facet_col=NULL,
                          facet_args=list(ncol=1), force_base=FALSE){
   if(requireNamespace("ggplot2", quietly=TRUE) & !force_base){
     ggplotMSdata(MS1_df, color_col, facet_col, facet_args)
-  } else {
+  } else if(requireNamespace("graphics", quietly=TRUE)) {
     if(!is.null(color_col))warning("Argument 'color_col' is currently only available via ggplot2")
     if(!is.null(facet_col))warning("Argument 'facet_col' is currently only available via ggplot2")
     baseplotMSdata(MS1_df)
+  } else {
+    stop("No graphics package detected. Please install either 'graphics' or 'ggplot2'.")
   }
 }
 ggplotMSdata <- function(MS1_df, color_col, facet_col, facet_args){
@@ -171,7 +173,7 @@ baseplotMSdata <- function(MS1_df){
        xlab = "Retention time (minutes)", ylab="Intensity")
   ordered_df <- MS1_df[order(MS1_df$rt),]
   spldf <- split(ordered_df, ordered_df$filename)
-  sapply(spldf, function(spldf_i)lines(x=spldf_i$rt, y=spldf_i$int))
+  sapply(spldf, function(spldf_i)graphics::lines(x=spldf_i$rt, y=spldf_i$int))
   invisible(NULL)
 }
 
