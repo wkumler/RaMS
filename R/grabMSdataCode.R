@@ -494,7 +494,11 @@ checkQuickMLs <- function(files){
 #' pmppm(1000000, 5)
 #' pmppm(118.0865, 2.5)
 #' pmppm(892.535313, 10)
-pmppm <- function(mass, ppm=4)c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
+pmppm <- function(mass, ppm=4){
+  if(length(mass)>1)warning("Vectorized masses are not supported in pmppm")
+  if(length(ppm)>1)warning("Vectorized ppms are not supported in pmppm")
+  c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
+}
 
 #' Trapezoidal integration of mass-spec retention time / intensity values
 #'

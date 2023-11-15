@@ -9,6 +9,8 @@ test_that("pmppm works as expected", {
   expect_lt(pmppm(100)[1], pmppm(100)[2])
 
   expect_gt(max(pmppm(100, 10)), max(pmppm(100, 5)))
+
+  expect_warning(pmppm(100:110, 10))
 })
 
 test_that("trapz works as expected", {
@@ -17,10 +19,10 @@ test_that("trapz works as expected", {
   expect_equal(trapz(0, 1), 0)
   expect_equal(trapz(1, 1), 0)
   expect_equal(trapz(1:10, 1:10, baseline = "square"), 40.5)
-  expect_equal(trapz(1:10, 1:10, baseline = "linear"), 0)
+  expect_equal(trapz(1:10, 1:10, baseline = "trapezoid"), 0)
   expect_equal(trapz(c(0, 100), c(1, 1)), 100)
   expect_equal(trapz(c(0, 100), c(1, 1), "square"), 0)
-  expect_equal(trapz(c(0, 100), c(1, 1), "linear"), 0)
+  expect_equal(trapz(c(0, 100), c(1, 1), "trapezoid"), 0)
 
   x_vals <- 1:10
   y_vals <- runif(10)
