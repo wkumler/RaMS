@@ -62,3 +62,25 @@ test_that("qplotMS1data works as expected", {
   expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(118.0865)]))
   expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(138.0555, 10)]))
 })
+
+test_that("mz_group works as expected", {
+  example_mz_vals <- c(118.0, 118.1, 138.0, 152.0, 118.2, 138.1, 118.1)
+  expect_equal(mz_group(example_mz_vals, ppm = 1), c(1, 2, 3, 4, 5, 6, 2))
+  expect_equal(mz_group(example_mz_vals, ppm = 1000), c(1, 1, 2, 3, 4, 2, 1))
+  expect_equal(mz_group(example_mz_vals, ppm = 2e5), c(1, 1, 1, 2, 1, 1, 1))
+
+  expect_equal(mz_group(example_mz_vals, ppm = 1000, min_group_size = 2),
+               c(1, 1, NA, NA, NA, NA, 1))
+  expect_equal(mz_group(example_mz_vals, ppm = 1000, max_groups = 2),
+               c(1, 1, 2, NA, NA, 2, 1))
+  expect_equal(max(mz_group(runif(1000), ppm = 1e5, max_groups=2), na.rm = TRUE), 2)
+
+  mz_vals <- mzML_everything$MS1[mz%between%pmppm(119.0865, 100)][order(int, decreasing = TRUE)]$mz
+  expect_equal(max(mz_group(mz_vals, ppm=10)), 5)
+  expect_equal(max(mz_group(mz_vals, ppm=50)), 2)
+  expect_equal(max(mz_group(mz_vals, ppm=5, max_groups = 2), na.rm = TRUE), 2)
+  expect_equal(max(mz_group(mz_vals, ppm=5, max_groups = 3), na.rm = TRUE), 3)
+  expect_equal(max(mz_group(mz_vals, ppm=5, min_group_size = 1), na.rm = TRUE), 4)
+  expect_true(any(is.na(mz_group(mz_vals, ppm=5, max_groups = 2))))
+  expect_true(any(is.na(mz_group(mz_vals, ppm=5, min_group_size = 1))))
+})

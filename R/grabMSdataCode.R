@@ -695,6 +695,12 @@ baseplotMSdata <- function(MS1_df){
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
 #' msdata <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
+#'
+#' grouped_MS1 <- msdata$MS1[mz%between%pmppm(119.0865, 100)][
+#'  order(int, decreasing = TRUE)][
+#'    ,mz_group:=mz_group(mz, ppm = 5)][]
+#' print(grouped_MS1)
+#'
 #' library(ggplot2)
 #' library(dplyr)
 #' msdata$MS1[mz%between%pmppm(119.0865, 100)] %>%
@@ -706,6 +712,10 @@ baseplotMSdata <- function(MS1_df){
 #' msdata$MS1[mz%between%pmppm(119.0865, 100)] %>%
 #'   arrange(desc(int)) %>%
 #'   mutate(mz_group=mz_group(mz, ppm=5)) %>%
+#'   qplotMS1data(facet_col = "mz_group")
+#' msdata$MS1[mz%between%pmppm(119.0865, 100)] %>%
+#'   arrange(desc(int)) %>%
+#'   mutate(mz_group=mz_group(mz, ppm=5, max_groups = 2)) %>%
 #'   qplotMS1data(facet_col = "mz_group")
 mz_group <- function(mz_vals, ppm, min_group_size=0, max_groups=NULL){
   if(!is.numeric(mz_vals))stop("'mz_vals' must be a numeric vector")
