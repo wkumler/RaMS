@@ -10,7 +10,7 @@ test_that("pmppm works as expected", {
 
   expect_gt(max(pmppm(100, 10)), max(pmppm(100, 5)))
 
-  expect_warning(pmppm(100:110, 10))
+  expect_error(pmppm(100:110, 10))
 })
 
 test_that("trapz works as expected", {
