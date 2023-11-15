@@ -502,8 +502,11 @@ timeReport <- function(last_time, text=NULL){
 #' pmppm(118.0865, 2.5)
 #' pmppm(892.535313, 10)
 pmppm <- function(mass, ppm=4){
-  if(length(mass)>1)warning("Vectorized masses are not supported in pmppm")
-  if(length(ppm)>1)warning("Vectorized ppms are not supported in pmppm")
+  if(length(mass)>1)stop("Vectorized masses are not supported in pmppm")
+  if(length(ppm)>1)stop("Vectorized ppms are not supported in pmppm")
+  if(!is.numeric(mass))stop("'mass' must be numeric")
+  if(!is.numeric(ppm))stop("'ppm' must be numeric")
+  if(ppm<0)warning("'ppm' should be positive")
   c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
 }
 
