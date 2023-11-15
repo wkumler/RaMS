@@ -474,6 +474,13 @@ checkQuickMLs <- function(files){
   options(warn=init_warn_val)
 }
 
+timeReport <- function(last_time, text=NULL){
+  time_total <- round(difftime(Sys.time(), last_time), digits = 2)
+  cat(time_total, units(time_total), "\n")
+  cat(text)
+  Sys.time()
+}
+
 
 #' Plus/minus parts per million
 #'
