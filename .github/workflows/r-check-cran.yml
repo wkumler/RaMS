@@ -71,6 +71,7 @@ jobs:
       - name: Install dependencies
         run: |
           install.packages("stringi")
+          BiocManager::install("mzR")
           remotes::install_deps(dependencies = TRUE, repos=BiocManager::repositories())
           remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
