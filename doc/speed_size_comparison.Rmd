@@ -30,7 +30,6 @@ library(xml2)
 BiocParallel::register(BiocParallel::SerialParam(stop.on.error = FALSE, progressbar = TRUE))
 ```
 
-
 ```{r file download}
 set.seed(123)
 
@@ -237,7 +236,7 @@ make_timings %>%
 ggsave("vignettes/figures/ssc_vignette_renders/make_time_gp.png", width = 6.5, height = 4, units = "in", device = "png", dpi = 144)
 ```
 
-![](../vignettes/figures/ssc_vignette_renders/make_time_gp.png)
+![](../vignettes/figures/ssc_vignette_renders/make_time_gp.png){width=100%}
 
 Nothing super surprising here. It should be noted that I ran all of these without using parallel processing to ensure a fair comparison, but RaMS and the tmzMLs are almost perfectly parallelizable and can be read/written in series for a huge time saving. Testing this with 5 cores across the 10 files resulted in a 3-fold speed improvement (from ~250 seconds to ~85, placing it about on par with the SQL database) for tmzMLs but not for default RaMS. This makes sense if I/O is the slow step but reading can be done separately from writing, thus preventing multiple simultaneous reads but allowing one tmzML to be written while another is read. Also worth noting is that because `tmzmlMaker` calls `grabMSdata` internally, the RaMS values are a lower bound on the maximum tmzML speed. The MSnExp, OnDiskMSnExp, and Spectra packages focus instead on parallelizing their query step and I can't seem to run those in parallel. The SQL and Arrow options similarly write to a single file that's presumably going to be "locked" during writing and don't have parallelization options available either. Also worth noting is that performing this test on 10 files (~1GB MS data) doesn't really challenge memory requirements, so this could be very different if a larger number of files was used.
 
@@ -293,7 +292,7 @@ par_timings %>%
 ggsave("vignettes/figures/ssc_vignette_renders/par_time_gp.png", width = 6.5, height = 3, units = "in", device = "png", dpi = 144)
 ```
 
-![](../vignettes/figures/ssc_vignette_renders/par_time_gp.png)
+![](../vignettes/figures/ssc_vignette_renders/par_time_gp.png){width=100%}
 
 ## MS data query timings
 
@@ -404,7 +403,7 @@ query_timings %>%
 ggsave("vignettes/figures/ssc_vignette_renders/query_time_gp.png", width = 6.5, height = 5, units = "in", device = "png", dpi = 144)
 ```
 
-![](../vignettes/figures/ssc_vignette_renders/query_time_gp.png)
+![](../vignettes/figures/ssc_vignette_renders/query_time_gp.png){width=100%}
 
 There's a few surprises in the above plot. Most notably, the incredible speed of the mz-indexed SQL database. It's apparently faster to query the database and read that data into R than it is to index through the big RaMS object entirely within memory. That's a pretty darn compelling reason to switch to SQL databases (although note the importance of indexing them - the non-indexed one took 100x longer!). Side note: I originally expected this to be quite slow because I previously *thought* I was creating an index on the mz data using `dbExecute` instead of `dbSendQuery` but apparently that's not how the function works. This actually disagrees with a [similar comparison](https://bioconductor.org/packages/release/bioc/vignettes/MsBackendSql/inst/doc/MsBackendSql.html#4_Performance_comparison_with_other_backends) done by the Spectra package that found the SQL backend to be consistently slower than the in-memory option. This result was so unexpected that I wrote a quick followup to double-check and can confirm that in real time the SQL query felt just as fast as the RaMS object. Wild.
 
@@ -520,7 +519,7 @@ multichrom_timings %>%
 ggsave("vignettes/figures/ssc_vignette_renders/multichrom_gp.png", width = 6.5, height = 4, units = "in", device = "png", dpi = 144)
 ```
 
-![](../vignettes/figures/ssc_vignette_renders/multichrom_gp.png)
+![](../vignettes/figures/ssc_vignette_renders/multichrom_gp.png){width=100%}
 
 Once again the indexed SQL database blows the others out of the water, with the unified query performing ~10x better in SQL than Arrow and ~100x better than RaMS. Curiously, the unified query actually takes *longer* when processed via RaMS/data.table than looping. Good to know.
 
@@ -603,7 +602,7 @@ size_list %>%
 ggsave("vignettes/figures/ssc_vignette_renders/size_cons.png", width = 6.5, height = 4, units = "in", device = "png", dpi = 144)
 ```
 
-![](../vignettes/figures/ssc_vignette_renders/size_cons.png)
+![](../vignettes/figures/ssc_vignette_renders/size_cons.png){width=100%}
 
 Unsurprisingly, the SQL databases are massive, weighing in at 5-10x the size of the original mzXML files (black horizontal line in above plot). RaMS is similarly enormous (about 2x the mzXML size) with an additional penalty of existing in memory instead of on disk. The original MSnExp object is about the same size (slightly larger than mzXMLs, maybe because the m/z & int data has been decompressed?) and also exists in memory. tmzMLs and Arrow do slightly better, actually reducing the size of the dataset while remaining on disk, and of course the pointer objects in Spectra and the OnDiskMSnExp object are microscopic in comparison.
 
@@ -673,7 +672,7 @@ ggsave("vignettes/figures/ssc_vignette_renders/sum_plot.png", width = 6.5, heigh
 #                   type="scatter3d", mode="markers")
 ```
 
-![](../vignettes/figures/ssc_vignette_renders/sum_plot.png)
+![](../vignettes/figures/ssc_vignette_renders/sum_plot.png){width=100%}
 
 ```{r cleanup}
 unlink("vignettes/figures/ssc_vignette_renders/tmzMLs", recursive = TRUE)
