@@ -64,11 +64,7 @@ jobs:
           done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
           ## Force-install netcdf since it's missed by the system requirements
           ## but required for mzR & MSnbase
-<<<<<<< HEAD
           sudo -s apt-get install -y libnetcdf-dev
-=======
-          apt-get install -y libnetcdf-dev
->>>>>>> 8adbe5adb872818d635f109c0d81046725aaae50
 
       - name: Install BiocManager
         run: |
