@@ -1,5 +1,14 @@
 # RaMS (development version)
 
+# RaMS 1.3.2
+ - Added OpenChrom reading support, credit to @ethanbass for the PR (#18 on Github)
+ - Added several convenience functions and useful documentation for each
+   - `qplotMS1data`, a shortcut for the common `ggplot2` call
+   - `mz_group()`, a way to group raw MS1 data into m/z bins given a ppm error
+   - `trapz()`, for integrating RT/intensity data into peak area
+ - Added new vignette with speed & size comparison to other packages and methods
+ - Updated vignettes
+
 # RaMS 1.3.1 (patch)
  - Squashed a bunch of bugs around CRAN submission
  - Changed where unit tests write to
