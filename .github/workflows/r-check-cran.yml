@@ -62,9 +62,6 @@ jobs:
           do
             eval sudo $cmd
           done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
-          ## Force-install netcdf since it's missed by the system requirements
-          ## but required for mzR & MSnbase
-          sudo -s apt-get install -y libnetcdf-dev
 
       - name: Install BiocManager
         run: |
@@ -74,8 +71,6 @@ jobs:
       - name: Install dependencies
         run: |
           install.packages("stringi")
-          BiocManager::install("ncdf4")
-          BiocManager::install("mzR")
           remotes::install_deps(dependencies = TRUE, repos=BiocManager::repositories())
           remotes::install_cran("rcmdcheck")
         shell: Rscript {0}

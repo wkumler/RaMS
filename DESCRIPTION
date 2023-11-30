@@ -39,7 +39,6 @@ Suggests:
     RSQLite,
     reticulate,
     BiocParallel,
-    MSnbase,
     Spectra,
     arrow,
     microbenchmark,
