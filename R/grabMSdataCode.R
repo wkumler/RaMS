@@ -78,6 +78,7 @@
 #'
 #' @examples
 #' library(RaMS)
+#' \dontshow{data.table::setDTthreads(2)}
 #' # Extract MS1 data from a couple files
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
@@ -304,6 +305,7 @@ checkOutputQuality <- function(output_data, grab_what){
 #'
 #' @examples
 #' library(RaMS)
+#' \dontshow{data.table::setDTthreads(2)}
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_file <- list.files(sample_dir, full.names=TRUE)[3]
 #' # Get ion injection time

@@ -124,6 +124,7 @@ trapz <- function(rts, ints, baseline="none"){
 #' @export
 #'
 #' @examples
+#' \dontshow{data.table::setDTthreads(2)}
 #' test_df <- expand.grid(rt=rep(1:100, length.out=1000))
 #' test_df$int <- rep(dnorm(seq(-10, 10, length.out=100)), 10)*10+runif(1000)
 #' test_df$filename <- rep(LETTERS[1:10], each=100)
@@ -135,10 +136,12 @@ trapz <- function(rts, ints, baseline="none"){
 #'             facet_args=list(ncol=2, scales="free"))
 #'
 #' # Using data from the `grabMSdata` function:
+#' \dontrun{
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
 #' msdata <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
 #' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865)])
+#' }
 qplotMS1data <- function(MS1_df, color_col=NULL, facet_col=NULL,
                          facet_args=list(ncol=1), force_base=FALSE){
   if(requireNamespace("ggplot2", quietly=TRUE) & !force_base){
@@ -206,6 +209,7 @@ baseplotMSdata <- function(MS1_df){
 #' @export
 #'
 #' @examples
+#' \dontshow{data.table::setDTthreads(2)}
 #' example_mz_vals <- c(118.0, 118.1, 138.0, 152.0, 118.2, 138.1, 118.1)
 #' mz_group(example_mz_vals, ppm = 1)
 #' mz_group(example_mz_vals, ppm = 1000)
@@ -214,6 +218,7 @@ baseplotMSdata <- function(MS1_df){
 #' mz_group(example_mz_vals, ppm = 1000, min_group_size = 2)
 #' mz_group(example_mz_vals, ppm = 1000, max_groups = 2)
 #'
+#' \dontrun{
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
 #' msdata <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
@@ -239,6 +244,7 @@ baseplotMSdata <- function(MS1_df){
 #'   arrange(desc(int)) %>%
 #'   mutate(mz_group=mz_group(mz, ppm=5, max_groups = 2)) %>%
 #'   qplotMS1data(facet_col = "mz_group")
+#' }
 mz_group <- function(mz_vals, ppm, min_group_size=0, max_groups=NULL){
   if(!is.numeric(mz_vals))stop("'mz_vals' must be a numeric vector")
   if(!is.numeric(ppm))stop("'ppm' must be a length-1 numeric")

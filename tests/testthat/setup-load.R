@@ -1,6 +1,7 @@
 # devtools::load_all()
 library(tidyverse)
 library(data.table)
+setDTthreads(2)
 
 # Load the defaults ----
 mzML_filenames <- list.files(system.file("extdata", package = "RaMS"),
