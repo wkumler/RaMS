@@ -44,6 +44,7 @@ name of the associated column to the `color_col` and `facet_col` arguments,
 respectively.
 }
 \examples{
+\dontshow{data.table::setDTthreads(2)}
 test_df <- expand.grid(rt=rep(1:100, length.out=1000))
 test_df$int <- rep(dnorm(seq(-10, 10, length.out=100)), 10)*10+runif(1000)
 test_df$filename <- rep(LETTERS[1:10], each=100)
@@ -55,8 +56,10 @@ qplotMS1data(test_df, color_col="startime", facet_col="startime",
             facet_args=list(ncol=2, scales="free"))
 
 # Using data from the `grabMSdata` function:
+\dontrun{
 sample_dir <- system.file("extdata", package = "RaMS")
 sample_files <- list.files(sample_dir, full.names=TRUE)
 msdata <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
 qplotMS1data(msdata$MS1[mz\%between\%pmppm(118.0865)])
+}
 }

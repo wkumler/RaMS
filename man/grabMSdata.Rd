@@ -95,6 +95,7 @@ if they are encoded in seconds.
 }
 \examples{
 library(RaMS)
+\dontshow{data.table::setDTthreads(2)}
 # Extract MS1 data from a couple files
 sample_dir <- system.file("extdata", package = "RaMS")
 sample_files <- list.files(sample_dir, full.names=TRUE)

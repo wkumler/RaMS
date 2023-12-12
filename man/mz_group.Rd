@@ -36,6 +36,7 @@ in the m/z vector as the window center, it's often a good idea to first
 sort the values by decreasing intensity.
 }
 \examples{
+\dontshow{data.table::setDTthreads(2)}
 example_mz_vals <- c(118.0, 118.1, 138.0, 152.0, 118.2, 138.1, 118.1)
 mz_group(example_mz_vals, ppm = 1)
 mz_group(example_mz_vals, ppm = 1000)
@@ -44,6 +45,7 @@ mz_group(example_mz_vals, ppm = 200000)
 mz_group(example_mz_vals, ppm = 1000, min_group_size = 2)
 mz_group(example_mz_vals, ppm = 1000, max_groups = 2)
 
+\dontrun{
 sample_dir <- system.file("extdata", package = "RaMS")
 sample_files <- list.files(sample_dir, full.names=TRUE)
 msdata <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
@@ -69,4 +71,5 @@ msdata$MS1[mz\%between\%pmppm(119.0865, 100)] \%>\%
   arrange(desc(int)) \%>\%
   mutate(mz_group=mz_group(mz, ppm=5, max_groups = 2)) \%>\%
   qplotMS1data(facet_col = "mz_group")
+}
 }

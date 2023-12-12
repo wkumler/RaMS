@@ -25,6 +25,7 @@ Get arbitrary metadata from an mzML file by accession number
 }
 \examples{
 library(RaMS)
+\dontshow{data.table::setDTthreads(2)}
 sample_dir <- system.file("extdata", package = "RaMS")
 sample_file <- list.files(sample_dir, full.names=TRUE)[3]
 # Get ion injection time
