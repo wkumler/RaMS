@@ -64,6 +64,7 @@
 #' @export
 #'
 #' @examples
+#' \dontshow{data.table::setDTthreads(2)}
 #' sample_file <- system.file("extdata", "LB12HL_AB.mzXML.gz", package = "RaMS")
 #' file_data <- grabMzxmlData(sample_file, grab_what="MS1")
 #' \dontrun{

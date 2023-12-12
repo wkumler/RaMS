@@ -318,7 +318,8 @@ The sections below will likely be of interest to users who are already familiar
 with `RaMS` and are looking to optimize speed, reduce memory requirements, or 
 are otherwise interested in the details of what `RaMS` does under the hood. If
 you're just getting started, I strongly recommend applying `RaMS` to your own
-data before you read on.
+data before you read on. For a more detailed analysis of the first two sections
+on saving space and speeding things up, consider also browsing the [speed & size comparison vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/speed_size_comparison.html)
 
 ### Saving space: EICs and rtrange
 

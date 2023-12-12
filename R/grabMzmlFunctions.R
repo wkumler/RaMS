@@ -71,6 +71,7 @@
 #' @export
 #'
 #' @examples
+#' \dontshow{data.table::setDTthreads(2)}
 #' sample_file <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
 #' file_data <- grabMzmlData(sample_file, grab_what="MS1")
 #' \dontrun{
@@ -97,6 +98,7 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
   }
   xml_data <- xml2::read_xml(filename)
 
+  checkNamespace(xml_data)
   checkFileType(xml_data, "mzML")
   rtrange <- checkRTrange(rtrange)
   prefilter <- checkProvidedPrefilter(prefilter)
@@ -480,6 +482,12 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
   voltage <- grabSpectraVoltage(ms2_nodes)
   mz_vals <- grabSpectraMz(ms2_nodes, file_metadata)
   int_vals <- grabSpectraInt(ms2_nodes, file_metadata)
+
+  if(length(premz_vals)==0 & length(voltage)==0 &
+     length(mz_vals)==0 & length(int_vals)==0){
+    return(data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
+                      int=numeric(), voltage=integer()))
+  }
 
   data.table(rt=rep(rt_vals, sapply(mz_vals, length)),
              premz=rep(premz_vals, sapply(mz_vals, length)),

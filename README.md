@@ -30,8 +30,12 @@ data](https://r4ds.had.co.nz/tidy-data.html). Tidy data neatly resolves
 the ragged arrays that mass spectrometers produce and plays nicely with
 other [tidy data packages](https://www.tidyverse.org/).
 
-![RaMS quick-start poster from Metabolomics Society conference
-2021](poster.png)
+<figure>
+<img src="poster.png"
+alt="RaMS quick-start poster from Metabolomics Society conference 2021" />
+<figcaption aria-hidden="true">RaMS quick-start poster from Metabolomics
+Society conference 2021</figcaption>
+</figure>
 
 ## Installation
 
@@ -125,7 +129,9 @@ packages. Here, we use
 [data.table](https://cran.r-project.org/package=data.table) and a few
 other tidyverse packages to compare a molecule’s <sup>13</sup>C and
 <sup>15</sup>N peak areas to that of the base peak, giving us some clue
-as to its molecular formula.
+as to its molecular formula. Note also the use of the `trapz` function
+(available in v1.3.2+) to calculate the area of the peak given the
+retention time and intensity values.
 
 ``` r
 library(data.table)
@@ -142,7 +148,7 @@ iso_data <- imap_dfr(lst(M, M_13C, M_15N), function(mass, isotope){
 
 iso_data %>%
   group_by(filename, isotope) %>%
-  summarise(area=sum(int)) %>%
+  summarise(area=trapz(rt, int)) %>%
   pivot_wider(names_from = isotope, values_from = area) %>%
   mutate(ratio_13C_12C = M_13C/M) %>%
   mutate(ratio_15N_14N = M_15N/M) %>%
@@ -156,8 +162,8 @@ iso_data %>%
 
 | isotope | avg_ratio |  sd_ratio |
 |:--------|----------:|----------:|
-| 13C     | 0.0543929 | 0.0006015 |
-| 15N     | 0.0033375 | 0.0001846 |
+| 13C     | 0.0544072 | 0.0005925 |
+| 15N     | 0.0033611 | 0.0001578 |
 
 With [natural
 abundances](https://en.wikipedia.org/wiki/Natural_abundance) for
@@ -175,6 +181,25 @@ ggplot(iso_data) +
 ```
 
 ![](man/figures/README-isoexampleplot-1.png)<!-- -->
+
+MS<sup>1</sup> data typically consists of many individual chromatograms,
+so RaMS provides a small function that can bin it into chromatograms
+based on *m/z* windows.
+
+``` r
+msdata$MS1 %>%
+  arrange(desc(int)) %>%
+  mutate(mz_group=mz_group(mz, ppm=10, max_groups = 3)) %>%
+  qplotMS1data(facet_col = "mz_group")
+```
+
+![](man/figures/README-mzgroupqplot-1.png)<!-- -->
+
+We also use the `qplotMS1data` function above, which wraps the typical
+`ggplot` call to avoid needing to type out
+`ggplot() + geom_line(aes(x=rt, y=int, group=filename))` every time.
+Both the `mz_group` and `qplotMS1data` functions were added in RaMS
+version 1.3.2.
 
 #### MS2 data:
 
@@ -258,6 +283,11 @@ msdata <- grabMSdata(sample_url, grab_what="everything", verbosity=2)
 msdata$metadata
 ```
 
+For an analysis of how RaMS compares to other methods of MS data access
+and alternative file types, consider browsing the [speed & size
+comparison
+vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/speed_size_comparison.html).
+
 ## Contact
 
 Feel free to submit questions, bugs, or feature requests on the [GitHub
@@ -265,4 +295,4 @@ Issues page](https://github.com/wkumler/RaMS/issues).
 
 ------------------------------------------------------------------------
 
-README last built on 2022-11-16
+README last built on 2023-11-29

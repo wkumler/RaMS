@@ -78,6 +78,7 @@
 #'
 #' @examples
 #' library(RaMS)
+#' \dontshow{data.table::setDTthreads(2)}
 #' # Extract MS1 data from a couple files
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
@@ -110,60 +111,20 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   # Handle tmzMLs first
   tmzml_check <- grepl("\\.tmzML", files)
   if(any(tmzml_check)){
-    if(!all(tmzml_check)){
-      stop("At this time, tmzMLs can't be mixed with mzML/mzXMLs")
-    }
-    if(grab_what=="everything"){
-      grab_what <- c("MS1", "MS2")
-    }
-    if(!all(grab_what%in%c("MS1", "MS2"))){
-      stop("At this time, tmzMLs can only be used with MS1 or MS2 data")
-    }
-    if(!is.null(mz)){
-      warning("Argument 'mz' has no function when used with tmzML files, ignoring")
-    }
-    if(!is.null(ppm)){
-      warning("Argument 'ppm' has no function when used with tmzML files, ignoring")
-    }
-    if(!is.null(rtrange)){
-      warning("Argument 'rtrange' has no function when used with tmzML files, ignoring")
-    }
-    if(prefilter>-1){
-      warning("Argument 'prefilter' has no function when used with tmzML files, ignoring")
-    }
-
-    # Handle null verbosity flag with intelligent defaults
-    if(is.null(verbosity)){
-      verbosity <- ifelse(length(files)==1, 0, 1)
-    }
-
-    # Check for missing files before creating object
-    url_files <- grepl(x = files, "^(http|ftp)")
-    file_exists <- file.exists(files[!url_files])
-    if(!all(file_exists)){
-      stop(paste("Unable to find all files, e.g.\n",
-                 paste(head(files[!url_files][!file_exists]), collapse = "\n ")))
-    }
-
-    # Create a list object to hide connection values and allow
-    # RStudio to autocomplete MS1 and MS2
-    msdata_con <- vector("list", length = length(grab_what)+1)
-    msdata_con[[length(msdata_con)]] <- list(
-      files=files,
-      grab_what=grab_what,
-      verbosity=verbosity
+    msdata_con_object <- msdata_connection_constructor(
+      tmzml_check, files, grab_what, mz, ppm, rtrange, prefilter, verbosity
     )
-    names(msdata_con) <- c(grab_what, "connection")
-
-    class(msdata_con) <- "msdata_connection"
-    return(msdata_con)
+    return(msdata_con_object)
   }
 
   # Handle mzMLs and mzXMLs below
+  # Check for non-mzXML or non-mzML files
+  checkQuickMLs(files)
+
   # Add sanity check for EIC extraction
   if(!is.null(mz) & !any(c("EIC", "EIC_MS2")%in%grab_what)){
     warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
-            '"EIC_MS2" and will be ignored in the current call'))
+                   '"EIC_MS2" and will be ignored in the current call'))
   }
   if(!is.null(ppm) & !any(c("EIC", "EIC_MS2")%in%grab_what)){
     warning(paste0('Argument "mz" should be used with grab_what = "EIC" or',
@@ -216,10 +177,18 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     if(length(files)>=2){
       close(pb)
     }
+    if(verbosity>1){
+      cat("Binding files together into single data.table\n")
+    }
   }
 
   # Bind all the similar pieces together (e.g. stack MS1 from different files)
-  all_file_data_output <- Reduce(function(x,y) Map(rbind, x, y, fill=TRUE), all_file_data)
+  # all_file_data_output <- Reduce(function(x,y) Map(rbind, x, y, fill=TRUE), all_file_data)
+  all_file_data_output <- lapply(seq_along(all_file_data[[1]]), function(sub_index){
+    rbindlist(lapply(all_file_data, `[[`, sub_index))
+  })
+  names(all_file_data_output) <- names(all_file_data[[1]])
+
   invisible(checkOutputQuality(
     output_data = all_file_data_output, grab_what = grab_what
   ))
@@ -249,7 +218,6 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
 #' @return NULL (invisibly). The goal of this function is its side effects, i.e.
 #'   throwing errors and providing info when the files are not found.
 #'
-
 checkOutputQuality <- function(output_data, grab_what){
   if("everything"%in%grab_what){
     grab_what <- c("MS1", "MS2", "BPC", "TIC", "metadata")
@@ -337,6 +305,7 @@ checkOutputQuality <- function(output_data, grab_what){
 #'
 #' @examples
 #' library(RaMS)
+#' \dontshow{data.table::setDTthreads(2)}
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_file <- list.files(sample_dir, full.names=TRUE)[3]
 #' # Get ion injection time
@@ -348,6 +317,8 @@ checkOutputQuality <- function(output_data, grab_what){
 #' plot(tic$rt, tic$int, type = "l")
 grabAccessionData <- function(filename, accession_number){
   xml_data <- xml2::read_xml(filename)
+
+  checkNamespace(xml_data)
   arb_xpath <- paste0('//d1:cvParam[@accession="', accession_number, '"]')
   arb_nodes <- xml2::xml_find_all(xml_data, arb_xpath)
   out_df <- data.frame(name=xml2::xml_attr(arb_nodes, "name"),
@@ -358,7 +329,65 @@ grabAccessionData <- function(filename, accession_number){
   out_df
 }
 
+# msdata_connection_constructor ----
+msdata_connection_constructor <- function(tmzml_check, files, grab_what, mz, ppm,
+                                          rtrange, prefilter, verbosity){
+  if(!all(tmzml_check)){
+    stop("At this time, tmzMLs can't be mixed with mzML/mzXMLs")
+  }
+  if(grab_what=="everything"){
+    grab_what <- c("MS1", "MS2")
+  }
+  if(!all(grab_what%in%c("MS1", "MS2"))){
+    stop("At this time, tmzMLs can only be used with MS1 or MS2 data")
+  }
+  if(!is.null(mz)){
+    warning("Argument 'mz' has no function when used with tmzML files, ignoring")
+  }
+  if(!is.null(ppm)){
+    warning("Argument 'ppm' has no function when used with tmzML files, ignoring")
+  }
+  if(!is.null(rtrange)){
+    warning("Argument 'rtrange' has no function when used with tmzML files, ignoring")
+  }
+  if(prefilter>-1){
+    warning("Argument 'prefilter' has no function when used with tmzML files, ignoring")
+  }
+
+  # Handle null verbosity flag with intelligent defaults
+  if(is.null(verbosity)){
+    verbosity <- ifelse(length(files)==1, 0, 1)
+  }
+
+  # Check for missing files before creating object
+  url_files <- grepl(x = files, "^(http|ftp)")
+  file_exists <- file.exists(files[!url_files])
+  if(!all(file_exists)){
+    stop(paste("Unable to find all files, e.g.\n",
+               paste(head(files[!url_files][!file_exists]), collapse = "\n ")))
+  }
+
+  # Create a list object to hide connection values and allow
+  # RStudio to autocomplete MS1 and MS2
+  msdata_con <- vector("list", length = length(grab_what)+1)
+  msdata_con[[length(msdata_con)]] <- list(
+    files=files,
+    grab_what=grab_what,
+    verbosity=verbosity
+  )
+  names(msdata_con) <- c(grab_what, "connection")
+
+  class(msdata_con) <- "msdata_connection"
+  return(msdata_con)
+}
 # Other functions ----
+
+checkNamespace <- function(xml_data){
+  if (is.na(xml2::xml_attr(xml_data,"xmlns"))){
+    xml2::xml_attr(xml_data,"xmlns") <- "http://psi.hupo.org/ms/mzml"
+  }
+}
+
 checkFileType <- function(xml_data, node_to_check){
   # Check for mzML node
   # Length works because external pointer has length 2
@@ -424,28 +453,28 @@ checkProvidedPrefilter <- function(prefilter){
   prefilter
 }
 
-
-#' Plus/minus parts per million
-#'
-#' It shouldn't be hard to translate a point mass into a mass window bounded by
-#' spectrometer accuracy.
-#'
-#' @param mass A length-1 numeric representing the mass of
-#' interest for which a mass range is desired.
-#' @param ppm The parts-per-million accuracy of the mass spectrometer on which
-#' the data was collected.
-#'
-#' @return A length-2 numeric representing the mass range requested
-#'
-#' @export
-#'
-#' @examples
-#' pmppm(100, 5)
-#' pmppm(1000000, 5)
-#' pmppm(118.0865, 2.5)
-#' pmppm(892.535313, 10)
-pmppm <- function(mass, ppm=4)c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
-
+checkQuickMLs <- function(files){
+  init_warn_val <- getOption("warn")
+  options(warn=1)
+  ml_check <- grepl("\\.mzx?ml$|\\.mzx?ml\\.gz$", files, ignore.case = TRUE)
+  if(!all(ml_check)){
+    nonml_files <- files[!ml_check]
+    if(length(nonml_files)>5){
+      warn_string <- paste0(
+        "Not all files appear to be mzML or mzXML: see\n",
+        paste(head(nonml_files, 5), collapse = "\n"),
+        "\nand ", length(nonml_files)-5, " others"
+      )
+    } else {
+      warn_string <- paste0(
+        "Not all files appear to be mzML or mzXML: see\n",
+        paste(nonml_files, collapse = "\n")
+      )
+    }
+    warning(warn_string)
+  }
+  options(warn=init_warn_val)
+}
 
 timeReport <- function(last_time, text=NULL){
   time_total <- round(difftime(Sys.time(), last_time), digits = 2)
@@ -453,7 +482,6 @@ timeReport <- function(last_time, text=NULL){
   cat(text)
   Sys.time()
 }
-
 
 # Import area ----
 
