@@ -1,4 +1,10 @@
 
+## Resubmission
+
+This is a resubmission. In this version I have reduced the example runtimes to
+below 5s (I hope) for tests and examples and set data.table to use only two
+threads to avoid CPU time > 2.5 times elapsed time
+
 ## Test environments
 * local R installation, R 4.3.2
 * windows-latest (release) (via GitHub Actions)
