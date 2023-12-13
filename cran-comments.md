@@ -1,6 +1,12 @@
 
 ## Resubmission
 
+This is a resubmission. In this version I have set data.table to use only two
+threads to avoid CPU time > 2.5 times elapsed time in the vignettes
+
+
+## Resubmission (prior)
+
 This is a resubmission. In this version I have reduced the example runtimes to
 below 5s (I hope) for tests and examples and set data.table to use only two
 threads to avoid CPU time > 2.5 times elapsed time
