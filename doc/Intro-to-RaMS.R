@@ -1,6 +1,7 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 options(rmarkdown.html_vignette.check_title = FALSE)
 options(tidyverse.quiet = TRUE)
+data.table::setDTthreads(2)
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -142,7 +143,7 @@ msdata$MS2 <- mutate(msdata$MS2, neutral_loss=premz-fragmz) %>%
 msdata$MS2[neutral_loss%between%pmppm(homarine_neutral_loss, ppm = 5)] %>%
   arrange(desc(int)) %>% head() %>% knitr::kable()
 
-## ---- fig.height=3------------------------------------------------------------
+## ----fig.height=3-------------------------------------------------------------
 chrom_file <- system.file("extdata", "wk_chrom.mzML.gz", package = "RaMS")
 msdata_chroms <- grabMSdata(chrom_file, verbosity = 0, grab_what = "chroms")
 given_chrom <- msdata_chroms$chroms[chrom_type=="SRM iletter1"]
@@ -192,7 +193,7 @@ as.numeric(object.size(all_data)/object.size(small_data))
 ## ----verbosedemo--------------------------------------------------------------
 all_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), verbosity = 2)
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  ## Not run:
 #  library(parallel)
 #  cl <- makeCluster(getOption("cl.cores", detectCores()-1))
@@ -206,12 +207,12 @@ all_data <- grabMSdata(data_files, grab_what = c("MS1", "MS2"), verbosity = 2)
 #  }
 #  stopImplicitCluster()
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  ## Not run:
 #  data_nodes <- xml2::xml_find_all(mzML_nodes, xpath="//d1:precursorMz")
 #  raw_data <- xml2::xml_attr(data_nodes, "value")
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  ## Not run:
 #  decoded_binary <- base64enc::base64decode(binary)
 #  raw_binary <- as.raw(decoded_binary)

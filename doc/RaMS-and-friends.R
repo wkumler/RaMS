@@ -1,5 +1,6 @@
 ## ----setup, include = FALSE---------------------------------------------------
 options(rmarkdown.html_vignette.check_title = FALSE)
+data.table::setDTthreads(2)
 
 ## -----------------------------------------------------------------------------
 library(RaMS)

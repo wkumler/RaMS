@@ -1,6 +1,7 @@
 ## ----setup, include = FALSE---------------------------------------------------
 options(rmarkdown.html_vignette.check_title = FALSE)
 options(tidyverse.quiet = TRUE)
+data.table::setDTthreads(2)
 
 knitr::opts_chunk$set(
   collapse = TRUE,

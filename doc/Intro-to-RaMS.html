@@ -404,10 +404,10 @@ plot:</p>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(single_file, <span class="at">grab_what =</span> <span class="st">&quot;TIC&quot;</span>)</span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_AB.mzML.gz... 0.04 secs </span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; Reading TIC...0.09 secs </span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_AB.mzML.gz... 0.05 secs </span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; Reading TIC...0.11 secs </span></span>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt; Binding files together into single data.table</span></span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt; Total time: 0.14 secs</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt; Total time: 0.16 secs</span></span>
 <span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a></span>
 <span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(msdata<span class="sc">$</span>TIC, <span class="dv">3</span>))</span></code></pre></div>
 <table>
@@ -448,10 +448,10 @@ also collected by the mass analyzer and doesn’t need to be
 calculated.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(single_file, <span class="at">grab_what =</span> <span class="st">&quot;BPC&quot;</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_AB.mzML.gz... 0.04 secs </span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; Reading BPC...0.06 secs </span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_AB.mzML.gz... 0.05 secs </span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; Reading BPC...0.07 secs </span></span>
 <span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; Binding files together into single data.table</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; Total time: 0.1 secs</span></span></code></pre></div>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; Total time: 0.12 secs</span></span></code></pre></div>
 <p>Since the data is parsed in a <a href="https://r4ds.had.co.nz/tidy-data.html">“tidy” format</a>, it plays
 nicely with popular packages such as <code>ggplot2</code>. Let’s use
 that to plot our BPC instead of the base R plotting system:</p>
@@ -501,8 +501,8 @@ the mzML filetype, so <code>RaMS</code> can’t extract it.</p>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co"># less-minified DDA file here</span></span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">grabMSdata</span>(<span class="at">files =</span> data_files[<span class="dv">1</span>], <span class="at">grab_what =</span> <span class="st">&quot;metadata&quot;</span>)</span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; Reading file DDApos_2.mzML.gz... 0.13 secs </span></span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; Reading file metadata...0.37 secs </span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; Reading file DDApos_2.mzML.gz... 0.12 secs </span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; Reading file metadata...0.38 secs </span></span>
 <span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; Binding files together into single data.table</span></span>
 <span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; Total time: 0.51 secs</span></span>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; $metadata</span></span>
@@ -529,7 +529,7 @@ the mzML filetype, so <code>RaMS</code> can’t extract it.</p>
 <span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="er">|===============================================</span>                       <span class="er">|</span>  <span class="dv">67</span>%</span>
 <span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; Total time: 0.72 secs</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; Total time: 0.8 secs</span></span>
 <span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a></span>
 <span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(msdata<span class="sc">$</span>MS1, <span class="dv">3</span>))</span></code></pre></div>
 <table>
@@ -606,14 +606,14 @@ it with the “MS2” option for <code>grab_what</code>, although it’s often
 a good idea to grab the MS1 data alongside.</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(data_files[<span class="dv">1</span>], <span class="at">grab_what =</span> <span class="st">&quot;everything&quot;</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt; Reading file DDApos_2.mzML.gz... 0.46 secs </span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt; Reading file DDApos_2.mzML.gz... 0.41 secs </span></span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.29 secs </span></span>
 <span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; Reading MS2 data...0.11 secs </span></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; Reading BPC...0.16 secs </span></span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; Reading TIC...0.16 secs </span></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; Reading file metadata...0.47 secs </span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; Reading BPC...0.17 secs </span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; Reading TIC...0.17 secs </span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; Reading file metadata...0.37 secs </span></span>
 <span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; Binding files together into single data.table</span></span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; Total time: 1.65 secs</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; Total time: 1.52 secs</span></span>
 <span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(msdata<span class="sc">$</span>MS2, <span class="dv">3</span>))</span></code></pre></div>
 <table>
 <thead>
@@ -926,7 +926,7 @@ discarded.</p>
 <span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>  <span class="er">|====================================================</span>                  <span class="er">|</span>  <span class="dv">75</span>%</span>
 <span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
-<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a><span class="co">#&gt; Total time: 1.57 secs</span></span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a><span class="co">#&gt; Total time: 1.72 secs</span></span>
 <span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a></span>
 <span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a>mzs_of_interest <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">adenine=</span><span class="fl">136.06232</span>, <span class="at">valine=</span><span class="fl">118.0865</span>)</span>
 <span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a>small_data <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(data_files, <span class="at">grab_what =</span> <span class="fu">c</span>(<span class="st">&quot;EIC&quot;</span>, <span class="st">&quot;EIC_MS2&quot;</span>),</span>
@@ -942,7 +942,7 @@ discarded.</p>
 <span id="cb18-26"><a href="#cb18-26" tabindex="-1"></a>  <span class="er">|====================================================</span>                  <span class="er">|</span>  <span class="dv">75</span>%</span>
 <span id="cb18-27"><a href="#cb18-27" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb18-28"><a href="#cb18-28" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
-<span id="cb18-29"><a href="#cb18-29" tabindex="-1"></a><span class="co">#&gt; Total time: 1.52 secs</span></span>
+<span id="cb18-29"><a href="#cb18-29" tabindex="-1"></a><span class="co">#&gt; Total time: 1.63 secs</span></span>
 <span id="cb18-30"><a href="#cb18-30" tabindex="-1"></a></span>
 <span id="cb18-31"><a href="#cb18-31" tabindex="-1"></a>all_data<span class="sc">$</span>MS1 <span class="sc">%&gt;%</span></span>
 <span id="cb18-32"><a href="#cb18-32" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">type=</span><span class="st">&quot;All data&quot;</span>) <span class="sc">%&gt;%</span></span>
@@ -986,7 +986,7 @@ mass.</p>
 <span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a>  <span class="er">|====================================================</span>                  <span class="er">|</span>  <span class="dv">75</span>%</span>
 <span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
-<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a><span class="co">#&gt; Total time: 1.49 secs</span></span>
+<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a><span class="co">#&gt; Total time: 1.28 secs</span></span>
 <span id="cb20-14"><a href="#cb20-14" tabindex="-1"></a></span>
 <span id="cb20-15"><a href="#cb20-15" tabindex="-1"></a>all_data<span class="sc">$</span>MS1 <span class="sc">%&gt;%</span></span>
 <span id="cb20-16"><a href="#cb20-16" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">type=</span><span class="st">&quot;All data&quot;</span>) <span class="sc">%&gt;%</span></span>
@@ -1030,26 +1030,26 @@ but this is not always the case. To examine bottlenecks,
 <span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a>  <span class="er">|==================</span>                                                    <span class="er">|</span>  <span class="dv">25</span>%</span>
-<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_AB.mzML.gz... 0.12 secs </span></span>
-<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.1 secs </span></span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_AB.mzML.gz... 0.15 secs </span></span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.12 secs </span></span>
 <span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a><span class="co">#&gt; Reading MS2 data...0.01 secs </span></span>
 <span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a>  <span class="er">|===================================</span>                                   <span class="er">|</span>  <span class="dv">50</span>%</span>
-<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_CD.mzML.gz... 0.12 secs </span></span>
-<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.1 secs </span></span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_CD.mzML.gz... 0.15 secs </span></span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.12 secs </span></span>
 <span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a><span class="co">#&gt; Reading MS2 data...0.01 secs </span></span>
 <span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb22-21"><a href="#cb22-21" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb22-22"><a href="#cb22-22" tabindex="-1"></a>  <span class="er">|====================================================</span>                  <span class="er">|</span>  <span class="dv">75</span>%</span>
-<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_EF.mzML.gz... 0.12 secs </span></span>
-<span id="cb22-24"><a href="#cb22-24" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.1 secs </span></span>
+<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a><span class="co">#&gt; Reading file LB12HL_EF.mzML.gz... 0.13 secs </span></span>
+<span id="cb22-24"><a href="#cb22-24" tabindex="-1"></a><span class="co">#&gt; Reading MS1 data...0.11 secs </span></span>
 <span id="cb22-25"><a href="#cb22-25" tabindex="-1"></a><span class="co">#&gt; Reading MS2 data...0.01 secs </span></span>
 <span id="cb22-26"><a href="#cb22-26" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb22-27"><a href="#cb22-27" tabindex="-1"></a>  <span class="sc">|</span>                                                                            </span>
 <span id="cb22-28"><a href="#cb22-28" tabindex="-1"></a>  <span class="er">|======================================================================|</span> <span class="dv">100</span>%</span>
 <span id="cb22-29"><a href="#cb22-29" tabindex="-1"></a><span class="co">#&gt; Binding files together into single data.table</span></span>
-<span id="cb22-30"><a href="#cb22-30" tabindex="-1"></a><span class="co">#&gt; Total time: 1.55 secs</span></span></code></pre></div>
+<span id="cb22-30"><a href="#cb22-30" tabindex="-1"></a><span class="co">#&gt; Total time: 1.65 secs</span></span></code></pre></div>
 <p>In general, slow file read times can be improved by compressing the
 data. mzML files are highly compressible, with options to compress both
 the data itself using the <code>zlib</code> method and the files as a
@@ -1160,7 +1160,7 @@ thing.</p>
 <p>For more information about the mzML data format and its history,
 check out the specification at <a href="https://www.psidev.info/mzML" class="uri">https://www.psidev.info/mzML</a>.</p>
 <hr />
-<p>Vignette last built on 2023-11-29</p>
+<p>Vignette last built on 2023-12-13</p>
 </div>
 </div>
 
