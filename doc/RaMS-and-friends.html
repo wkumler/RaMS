@@ -360,26 +360,27 @@ data to several formats that can be used outside of R.</p>
 exported to CSV files with base R functions. This works best with a few
 chromatograms at a time, as the millions of data points found in most MS
 files can overwhelm common file readers.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RaMS)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Locate an MS file</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>single_file <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;LB12HL_AB.mzML.gz&quot;</span>, <span class="at">package =</span> <span class="st">&quot;RaMS&quot;</span>)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Grab the MS data</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(single_file, <span class="at">grab_what =</span> <span class="st">&quot;everything&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(RaMS)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co"># Locate an MS file</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>single_file <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;LB12HL_AB.mzML.gz&quot;</span>, <span class="at">package =</span> <span class="st">&quot;RaMS&quot;</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co"># Grab the MS data</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(single_file, <span class="at">grab_what =</span> <span class="st">&quot;everything&quot;</span>)</span></code></pre></div>
 <pre><code>## 
-## Reading file LB12HL_AB.mzML.gz... 0.23 secs 
-## Reading MS1 data...0.14 secs 
-## Reading MS2 data...0.02 secs 
+## Reading file LB12HL_AB.mzML.gz... 0.15 secs 
+## Reading MS1 data...0.11 secs 
+## Reading MS2 data...0.01 secs 
 ## Reading BPC...0.08 secs 
-## Reading TIC...0.07 secs 
-## Reading file metadata...0.14 secs 
-## Total time: 0.7 secs</code></pre>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write out MS1 data to .csv file</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(<span class="at">x =</span> msdata<span class="sc">$</span>MS1, <span class="at">file =</span> <span class="st">&quot;MS1_data.csv&quot;</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Clean up afterward</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">file.remove</span>(<span class="st">&quot;MS1_data.csv&quot;</span>)</span></code></pre></div>
+## Reading TIC...0.06 secs 
+## Reading file metadata...0.1 secs 
+## Binding files together into single data.table
+## Total time: 0.51 secs</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Write out MS1 data to .csv file</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">write.csv</span>(<span class="at">x =</span> msdata<span class="sc">$</span>MS1, <span class="at">file =</span> <span class="st">&quot;MS1_data.csv&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co"># Clean up afterward</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">file.remove</span>(<span class="st">&quot;MS1_data.csv&quot;</span>)</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
 </div>
 <div id="fancier-export-to-excel" class="section level2">
@@ -391,25 +392,26 @@ for encoding both MS1 and MS2 information in one place. This vignette
 uses the <a href="https://cran.r-project.org/package=openxlsx"><code>openxlsx</code></a>
 package, although there are several alternatives with identical
 functionality.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(openxlsx)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Locate an MS2 file</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>MS2_file <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;DDApos_2.mzML.gz&quot;</span>, <span class="at">package =</span> <span class="st">&quot;RaMS&quot;</span>)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Grab the MS1 and MS2 data</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(MS2_file, <span class="at">grab_what=</span><span class="fu">c</span>(<span class="st">&quot;MS1&quot;</span>, <span class="st">&quot;MS2&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(openxlsx)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co"># Locate an MS2 file</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>MS2_file <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;DDApos_2.mzML.gz&quot;</span>, <span class="at">package =</span> <span class="st">&quot;RaMS&quot;</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co"># Grab the MS1 and MS2 data</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(MS2_file, <span class="at">grab_what=</span><span class="fu">c</span>(<span class="st">&quot;MS1&quot;</span>, <span class="st">&quot;MS2&quot;</span>))</span></code></pre></div>
 <pre><code>## 
-## Reading file DDApos_2.mzML.gz... 0.54 secs 
-## Reading MS1 data...0.34 secs 
-## Reading MS2 data...0.12 secs 
-## Total time: 1 secs</code></pre>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write out MS data to Excel file</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># openxlsx writes each object in a list to a unique sheet</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Produces one sheet for MS1 and one for MS2</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">write.xlsx</span>(msdata, <span class="at">file =</span> <span class="st">&quot;MS2_data.xlsx&quot;</span>)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Clean up afterward</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="fu">file.remove</span>(<span class="st">&quot;MS2_data.xlsx&quot;</span>)</span></code></pre></div>
+## Reading file DDApos_2.mzML.gz... 0.41 secs 
+## Reading MS1 data...0.55 secs 
+## Reading MS2 data...0.11 secs 
+## Binding files together into single data.table
+## Total time: 1.07 secs</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Write out MS data to Excel file</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co"># openxlsx writes each object in a list to a unique sheet</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co"># Produces one sheet for MS1 and one for MS2</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="fu">write.xlsx</span>(msdata, <span class="at">file =</span> <span class="st">&quot;MS2_data.xlsx&quot;</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co"># Clean up afterward</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="fu">file.remove</span>(<span class="st">&quot;MS2_data.xlsx&quot;</span>)</span></code></pre></div>
 <pre><code>## [1] TRUE</code></pre>
 </div>
 <div id="exporting-to-sql-database" class="section level2">
@@ -419,12 +421,12 @@ larger-than-memory data sets, SQL databases are an excellent choice.
 This vignette will demo the <a href="https://cran.r-project.org/package=RSQLite"><code>RSQLite</code></a>
 package’s engine, although several other database engines have similar
 functionality.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Get data from multiple files to show off</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>mzml_files <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="fu">c</span>(<span class="st">&quot;extdata/LB12HL_AB.mzML.gz&quot;</span>, </span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                            <span class="st">&quot;extdata/LB12HL_CD.mzML.gz&quot;</span>), </span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>                          <span class="at">package =</span> <span class="st">&quot;RaMS&quot;</span>)</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(mzml_files)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co"># Get data from multiple files to show off</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>mzml_files <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="fu">c</span>(<span class="st">&quot;extdata/LB12HL_AB.mzML.gz&quot;</span>, </span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>                            <span class="st">&quot;extdata/LB12HL_CD.mzML.gz&quot;</span>), </span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>                          <span class="at">package =</span> <span class="st">&quot;RaMS&quot;</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(mzml_files)</span></code></pre></div>
 <pre><code>## 
   |                                                                            
   |                                                                      |   0%
@@ -432,57 +434,58 @@ functionality.</p>
   |===================================                                   |  50%
   |                                                                            
   |======================================================================| 100%
-## Total time: 1.12 secs</code></pre>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the sqlite database and connect to it</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>MSdb <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">&quot;MSdata.sqlite&quot;</span>)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Export MS1 and MS2 data to sqlite tables</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dbWriteTable</span>(MSdb, <span class="st">&quot;MS1&quot;</span>, msdata<span class="sc">$</span>MS1)</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="fu">dbWriteTable</span>(MSdb, <span class="st">&quot;MS2&quot;</span>, msdata<span class="sc">$</span>MS2)</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="fu">dbListTables</span>(MSdb)</span></code></pre></div>
+## Total time: 0.98 secs</code></pre>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Create the sqlite database and connect to it</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>MSdb <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(RSQLite<span class="sc">::</span><span class="fu">SQLite</span>(), <span class="st">&quot;MSdata.sqlite&quot;</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co"># Export MS1 and MS2 data to sqlite tables</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="fu">dbWriteTable</span>(MSdb, <span class="st">&quot;MS1&quot;</span>, msdata<span class="sc">$</span>MS1)</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="fu">dbWriteTable</span>(MSdb, <span class="st">&quot;MS2&quot;</span>, msdata<span class="sc">$</span>MS2)</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="fu">dbListTables</span>(MSdb)</span></code></pre></div>
 <pre><code>## [1] &quot;MS1&quot; &quot;MS2&quot;</code></pre>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Perform a simple query to ensure data was exported correctly</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(MSdb, <span class="st">&#39;SELECT * FROM MS1 LIMIT 3&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Perform a simple query to ensure data was exported correctly</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">dbGetQuery</span>(MSdb, <span class="st">&#39;SELECT * FROM MS1 LIMIT 3&#39;</span>)</span></code></pre></div>
 <pre><code>##      rt       mz        int          filename
 ## 1 4.009 139.0503 1800550.12 LB12HL_AB.mzML.gz
 ## 2 4.009 148.0967  206310.81 LB12HL_AB.mzML.gz
 ## 3 4.009 136.0618   71907.15 LB12HL_AB.mzML.gz</code></pre>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Perform EIC extraction in SQL rather than in R</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>EIC_query <span class="ot">&lt;-</span> <span class="st">&#39;SELECT * FROM MS1 WHERE mz BETWEEN :lower_bound AND :upper_bound&#39;</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>query_params <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">lower_bound=</span><span class="fl">118.086</span>, <span class="at">upper_bound=</span><span class="fl">118.087</span>)</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>EIC <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(MSdb, EIC_query, <span class="at">params =</span> query_params)</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Append with additional files</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>extra_file <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;LB12HL_EF.mzML.gz&quot;</span>, <span class="at">package =</span> <span class="st">&quot;RaMS&quot;</span>)</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>extra_msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(extra_file, <span class="at">grab_what =</span> <span class="st">&quot;everything&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># Perform EIC extraction in SQL rather than in R</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>EIC_query <span class="ot">&lt;-</span> <span class="st">&#39;SELECT * FROM MS1 WHERE mz BETWEEN :lower_bound AND :upper_bound&#39;</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>query_params <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">lower_bound=</span><span class="fl">118.086</span>, <span class="at">upper_bound=</span><span class="fl">118.087</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>EIC <span class="ot">&lt;-</span> <span class="fu">dbGetQuery</span>(MSdb, EIC_query, <span class="at">params =</span> query_params)</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co"># Append with additional files</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>extra_file <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;LB12HL_EF.mzML.gz&quot;</span>, <span class="at">package =</span> <span class="st">&quot;RaMS&quot;</span>)</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>extra_msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(extra_file, <span class="at">grab_what =</span> <span class="st">&quot;everything&quot;</span>)</span></code></pre></div>
 <pre><code>## 
-## Reading file LB12HL_EF.mzML.gz... 0.16 secs 
-## Reading MS1 data...0.15 secs 
+## Reading file LB12HL_EF.mzML.gz... 0.15 secs 
+## Reading MS1 data...0.3 secs 
 ## Reading MS2 data...0.01 secs 
-## Reading BPC...0.07 secs 
-## Reading TIC...0.07 secs 
-## Reading file metadata...0.14 secs 
-## Total time: 0.62 secs</code></pre>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(MSdb, <span class="st">&#39;SELECT COUNT(*) FROM MS1&#39;</span>) <span class="co"># Initial number of rows</span></span></code></pre></div>
+## Reading BPC...0.06 secs 
+## Reading TIC...0.06 secs 
+## Reading file metadata...0.1 secs 
+## Binding files together into single data.table
+## Total time: 0.69 secs</code></pre>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">dbGetQuery</span>(MSdb, <span class="st">&#39;SELECT COUNT(*) FROM MS1&#39;</span>) <span class="co"># Initial number of rows</span></span></code></pre></div>
 <pre><code>##   COUNT(*)
 ## 1    42313</code></pre>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dbAppendTable</span>(MSdb, <span class="st">&quot;MS1&quot;</span>, extra_msdata<span class="sc">$</span>MS1)</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">dbAppendTable</span>(MSdb, <span class="st">&quot;MS1&quot;</span>, extra_msdata<span class="sc">$</span>MS1)</span></code></pre></div>
 <pre><code>## [1] 22124</code></pre>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Confirm three different files exist in DB</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(MSdb, <span class="st">&#39;SELECT DISTINCT filename FROM MS1&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="co"># Confirm three different files exist in DB</span></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="fu">dbGetQuery</span>(MSdb, <span class="st">&#39;SELECT DISTINCT filename FROM MS1&#39;</span>)</span></code></pre></div>
 <pre><code>##            filename
 ## 1 LB12HL_AB.mzML.gz
 ## 2 LB12HL_CD.mzML.gz
 ## 3 LB12HL_EF.mzML.gz</code></pre>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Confirm new rows have been added</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dbGetQuery</span>(MSdb, <span class="st">&#39;SELECT COUNT(*) FROM MS1&#39;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="co"># Confirm new rows have been added</span></span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="fu">dbGetQuery</span>(MSdb, <span class="st">&#39;SELECT COUNT(*) FROM MS1&#39;</span>)</span></code></pre></div>
 <pre><code>##   COUNT(*)
 ## 1    64437</code></pre>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Disconnect after export</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dbDisconnect</span>(MSdb)</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Clean up afterward</span></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">unlink</span>(<span class="st">&quot;MSdata.sqlite&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="co"># Disconnect after export</span></span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="fu">dbDisconnect</span>(MSdb)</span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a><span class="co"># Clean up afterward</span></span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a><span class="fu">unlink</span>(<span class="st">&quot;MSdata.sqlite&quot;</span>)</span></code></pre></div>
 </div>
 <div id="interfacing-with-python-via-reticulate" class="section level2">
 <h2>Interfacing with Python via <code>reticulate</code></h2>
@@ -492,11 +495,11 @@ R. RStudio, in which this vignette was written, supports both R and
 Python code chunks as shown below.</p>
 <div id="r-code-chunk-r" class="section level3">
 <h3>R code chunk: {r}</h3>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Locate a couple MS files</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>data_dir <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="at">package =</span> <span class="st">&quot;RaMS&quot;</span>)</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>file_paths <span class="ot">&lt;-</span> <span class="fu">list.files</span>(data_dir, <span class="at">pattern =</span> <span class="st">&quot;HL.*mzML&quot;</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(<span class="at">files =</span> file_paths, <span class="at">grab_what =</span> <span class="st">&quot;BPC&quot;</span>)<span class="sc">$</span>BPC</span></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="co"># Locate a couple MS files</span></span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>data_dir <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="at">package =</span> <span class="st">&quot;RaMS&quot;</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a>file_paths <span class="ot">&lt;-</span> <span class="fu">list.files</span>(data_dir, <span class="at">pattern =</span> <span class="st">&quot;HL.*mzML&quot;</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a></span>
+<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a>msdata <span class="ot">&lt;-</span> <span class="fu">grabMSdata</span>(<span class="at">files =</span> file_paths, <span class="at">grab_what =</span> <span class="st">&quot;BPC&quot;</span>)<span class="sc">$</span>BPC</span></code></pre></div>
 <pre><code>## 
   |                                                                            
   |                                                                      |   0%
@@ -506,18 +509,18 @@ Python code chunks as shown below.</p>
   |===============================================                       |  67%
   |                                                                            
   |======================================================================| 100%
-## Total time: 0.42 secs</code></pre>
+## Total time: 0.34 secs</code></pre>
 </div>
 <div id="python-code-chunk-python" class="section level3">
 <h3>Python code chunk: {python}</h3>
-<div class="sourceCode" id="cb28"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Not run to pass R CMD check on GitHub</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Make sure python, matplotlib, and seaborn are installed</span></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>sns.relplot(data<span class="op">=</span>r.msdata, kind<span class="op">=</span><span class="st">&quot;line&quot;</span>, x<span class="op">=</span><span class="st">&quot;rt&quot;</span>, y<span class="op">=</span><span class="st">&quot;int&quot;</span>, hue<span class="op">=</span><span class="st">&quot;filename&quot;</span>)</span>
-<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="co"># Not run to pass R CMD check on GitHub</span></span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a><span class="co"># Make sure python, matplotlib, and seaborn are installed</span></span>
+<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb28-5"><a href="#cb28-5" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb28-6"><a href="#cb28-6" tabindex="-1"></a></span>
+<span id="cb28-7"><a href="#cb28-7" tabindex="-1"></a>sns.relplot(data<span class="op">=</span>r.msdata, kind<span class="op">=</span><span class="st">&quot;line&quot;</span>, x<span class="op">=</span><span class="st">&quot;rt&quot;</span>, y<span class="op">=</span><span class="st">&quot;int&quot;</span>, hue<span class="op">=</span><span class="st">&quot;filename&quot;</span>)</span>
+<span id="cb28-8"><a href="#cb28-8" tabindex="-1"></a>plt.show()</span></code></pre></div>
 </div>
 </div>
 
