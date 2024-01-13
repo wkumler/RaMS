@@ -96,7 +96,8 @@
 #' file_data <- grabMSdata(sample_url, grab_what="everything", verbosity=2)
 #' }
 grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
-                       mz=NULL, ppm=NULL, rtrange=NULL, prefilter=-1){
+                       incl_polarity=FALSE, mz=NULL, ppm=NULL,
+                       rtrange=NULL, prefilter=-1){
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
@@ -106,6 +107,11 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   if(any(!grab_what%in%good_grabs)){
     bad_grabs <- paste(grab_what[!grab_what%in%good_grabs], collapse = ", ")
     stop(paste0("`grab_what = ", bad_grabs, "` is not currently supported"))
+  }
+
+  # Check incl_polarity makes sense
+  if(!is.logical(incl_polarity)){
+    warning("Argument incl_polarity not TRUE or FALSE - defaulting to FALSE")
   }
 
   # Handle tmzMLs first
@@ -151,11 +157,13 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     if(grepl("\\.mzML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzmlData(filename = filename, grab_what = grab_what,
                                verbosity = verbosity, mz = mz, ppm = ppm,
-                               rtrange = rtrange, prefilter = prefilter)
+                               rtrange = rtrange, prefilter = prefilter,
+                               incl_polarity=incl_polarity)
     } else if(grepl("\\.mzXML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzxmlData(filename = filename, grab_what = grab_what,
                                 verbosity = verbosity, mz = mz, ppm = ppm,
-                                rtrange = rtrange, prefilter = prefilter)
+                                rtrange = rtrange, prefilter = prefilter,
+                                incl_polarity=incl_polarity)
     } else {
       stop(paste("Unable to determine file type for", filename))
     }
