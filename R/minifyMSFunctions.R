@@ -584,6 +584,26 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_exclude=NULL,
   }
   xml2::xml_remove(ms2_nodes[to_remove])
 
+  # MS3 things
+  ms3_xpath <- '//d1:scan[@msLevel="3"]'
+  ms3_nodes <- xml2::xml_find_all(xml_data, ms3_xpath)
+  ms3_pre_nodes <- xml2::xml_find_all(ms3_nodes, "d1:precursorMz")
+  ms3_pre_vals <- as.numeric(xml2::xml_text(ms3_pre_nodes))
+  if(!is.null(mz_include)){
+    ms3_subset <- unlist(lapply(mz_include, function(premz_i){
+      mzrange <- pmppm(premz_i, ppm)
+      which(between(ms3_pre_mat[,1], mzrange[1], mzrange[2]) |
+              between(ms3_pre_mat[,2], mzrange[1], mzrange[2]))
+    }))
+    to_remove <- setdiff(seq_along(ms3_pre_vals), ms3_subset)
+  } else {
+    to_remove <- unlist(lapply(mz_exclude, function(premz_i){
+      mzrange <- pmppm(premz_i, ppm)
+      which(between(ms3_pre_mat[,1], mzrange[1], mzrange[2]) |
+              between(ms3_pre_mat[,2], mzrange[1], mzrange[2]))
+    }))
+  }
+  xml2::xml_remove(ms3_nodes[to_remove])
 
 
 
