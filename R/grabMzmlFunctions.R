@@ -567,9 +567,9 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata, incl_polarity){
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information.
 #'
-#' @return A `data.table` with columns for retention time (rt), precursor premz
-#'   (prepremz), precursor m/z (premz), fragment m/z (fragmz), collision energy
-#'   (voltage), and intensity (int).
+#' @return A `data.table` with columns for retention time (rt),
+#' MS1 precursor m/z (prepremz), MS2 precursor m/z (premz),
+#' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
 grabMzmlMS3 <- function(xml_data, rtrange, file_metadata, incl_polarity){
   ms3_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level" and @value="3"]]'
 
