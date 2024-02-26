@@ -102,8 +102,8 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   if(!length(files)>0)stop("No files provided")
 
   # Check that grab_what is one of the approved options
-  good_grabs <- c("MS1", "MS2", "EIC", "EIC_MS2", "everything", "metadata",
-                  "BPC", "TIC", "chroms", "DAD")
+  good_grabs <- c("MS1", "MS2", "MS3", "EIC", "EIC_MS2", "EIC_MS3",
+                  "everything", "metadata", "BPC", "TIC", "chroms", "DAD")
   if(any(!grab_what%in%good_grabs)){
     bad_grabs <- paste(grab_what[!grab_what%in%good_grabs], collapse = ", ")
     stop(paste0("`grab_what = ", bad_grabs, "` is not currently supported"))
@@ -255,12 +255,16 @@ checkOutputQuality <- function(output_data, grab_what){
       proper_names <- c("rt", "mz", "int", "filename")
     } else if(nms=="MS2"){
       proper_names <- c("rt", "premz", "fragmz", "int", "voltage", "filename")
+    } else if(nms=="MS3"){
+      proper_names <- c("rt", "prepremz", "premz", "fragmz", "int", "voltage", "filename")
     } else if (nms=="DAD"){
       proper_names <- c("rt", "lambda", "int", "filename")
     } else if (nms=="EIC"){
       proper_names <- c("rt", "mz", "int", "filename")
     } else if (nms=="EIC_MS2"){
       proper_names <- c("rt", "premz", "fragmz", "int", "voltage", "filename")
+    } else if (nms=="EIC_MS3"){
+      proper_names <- c("rt", "prepremz", "premz", "fragmz", "int", "voltage", "filename")
     } else if(nms=="chroms"){
       proper_names <- c("chrom_type", "chrom_index", "target_mz", "product_mz",
                         "rt", "int")

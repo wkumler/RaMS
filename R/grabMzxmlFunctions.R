@@ -105,7 +105,7 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0, incl_polarity=FALSE,
     grab_what <- unique(c("MS1", "MS2", "BPC", "TIC", "metadata", extra_grabs))
   }
 
-  if(any(c("MS1", "MS2", "EIC", "EIC_MS2")%in%grab_what)){
+  if(any(c("MS1", "MS2", "MS3", "EIC", "EIC_MS2", "EIC_MS3")%in%grab_what)){
     file_metadata <- grabMzxmlEncodingData(xml_data)
   }
 
@@ -120,6 +120,13 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0, incl_polarity=FALSE,
   if("MS2"%in%grab_what){
     if(verbosity>1)last_time <- timeReport(last_time, text = "Reading MS2 data...")
     output_data$MS2 <- grabMzxmlMS2(xml_data = xml_data, rtrange=rtrange,
+                                    file_metadata = file_metadata,
+                                    incl_polarity=incl_polarity)
+  }
+
+  if("MS3"%in%grab_what){
+    if(verbosity>1)last_time <- timeReport(last_time, text = "Reading MS3 data...")
+    output_data$MS3 <- grabMzxmlMS3(xml_data = xml_data, rtrange=rtrange,
                                     file_metadata = file_metadata,
                                     incl_polarity=incl_polarity)
   }
@@ -170,6 +177,24 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0, incl_polarity=FALSE,
       init_dt[premz%between%pmppm(mass = mass, ppm = ppm)]
     })
     output_data$EIC_MS2 <- rbindlist(EIC_MS2_list)
+  }
+
+  if("EIC_MS3"%in%grab_what){
+    checkProvidedMzPpm(mz, ppm)
+    if(verbosity>1){
+      last_time <- timeReport(last_time, text = "Extracting EIC MS3...")
+    }
+    if(!"MS3"%in%grab_what){
+      init_dt <- grabMzxmlMS3(xml_data=xml_data, file_metadata = file_metadata,
+                              rtrange=rtrange, incl_polarity=incl_polarity)
+    } else {
+      init_dt <- output_data$MS3
+    }
+    prepremz <- NULL #To prevent R CMD check "notes"
+    EIC_MS3_list <- lapply(unique(mz), function(mass){
+      init_dt[prepremz%between%pmppm(mass = mass, ppm = ppm)]
+    })
+    output_data$EIC_MS3 <- rbindlist(EIC_MS3_list)
   }
 
   if("chroms" %in% grab_what){
@@ -376,7 +401,7 @@ grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange, prefilter, incl_polar
 #'   (although not enormously, as the entire file must still be read) and reduce
 #'   the final object's size.
 #'
-#' @return A `data.table` with columns for retention time (rt),  precursor m/z (mz),
+#' @return A `data.table` with columns for retention time (rt),  precursor m/z (premz),
 #' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
 grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange, incl_polarity){
   ms2_xpath <- '//d1:scan[@msLevel="2" and @peaksCount>0]'
@@ -385,7 +410,7 @@ grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange, incl_polarity){
     empty_dt <- data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
                            int=numeric(), voltage=integer())
     if(incl_polarity){
-      empty_dt$polarity <- character()
+      empty_dt$polarity <- numeric()
     }
     return(empty_dt)
   }
@@ -413,6 +438,61 @@ grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange, incl_polarity){
                       voltage_vals, SIMPLIFY = FALSE)
     dt <- as.data.table(do.call(what=rbind, dt_data))
     names(dt) <- c("rt", "premz", "fragmz", "int", "voltage")
+  }
+  dt$voltage <- as.integer(dt$voltage)
+  dt
+}
+
+
+#' Extract the MS3 data from an mzXML nodeset
+#'
+#' @param xml_data An `xml2` nodeset, usually created by applying `read_xml` to
+#'   an mzXML file.
+#' @param file_metadata Information about the file used to decode the binary
+#'   arrays containing m/z and intensity information.
+#' @param rtrange A vector of length 2 containing an upper and lower bound on
+#'   retention times of interest. Providing a range here can speed up load times
+#'   (although not enormously, as the entire file must still be read) and reduce
+#'   the final object's size.
+#'
+#' @return A `data.table` with columns for retention time (rt),
+#' MS1 precursor m/z (prepremz), MS2 precursor m/z (premz),
+#' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
+grabMzxmlMS3 <- function(xml_data, file_metadata, rtrange, incl_polarity){
+  ms3_xpath <- '//d1:scan[@msLevel="3" and @peaksCount>0]'
+  ms3_nodes <- xml2::xml_find_all(xml_data, ms3_xpath)
+  if(!length(ms3_nodes)){
+    empty_dt <- data.table(rt=numeric(), prepremz=numeric(), premz=numeric(),
+                           fragmz=numeric(), int=numeric(), voltage=integer())
+    if(incl_polarity){
+      empty_dt$polarity <- numeric()
+    }
+    return(empty_dt)
+  }
+  # Remove all nodes with zero peaks
+  ms3_nodes <- ms3_nodes[as.numeric(xml2::xml_attr(ms3_nodes, "peaksCount"))>0]
+
+  rt_vals <- grabMzxmlSpectraRt(ms3_nodes)
+  if(!is.null(rtrange)){
+    ms3_nodes <- ms3_nodes[rt_vals%between%rtrange]
+    rt_vals <- rt_vals[rt_vals%between%rtrange]
+  }
+
+  premz_vals <- matrix(grabMzxmlSpectraPremz(ms3_nodes), ncol=2, byrow=TRUE)
+  voltage_vals <- grabMzxmlSpectraVoltage(ms3_nodes)
+  mz_int_vals <- grabMzxmlSpectraMzInt(ms3_nodes, file_metadata)
+
+  if(incl_polarity){
+    polarity_vals <- grabMzxmlSpectraPolarity(ms3_nodes)
+    dt_data <- mapply(cbind, rt_vals, premz_vals[,2], premz_vals[,1], mz_int_vals,
+                      voltage_vals, polarity_vals, SIMPLIFY = FALSE)
+    dt <- as.data.table(do.call(what=rbind, dt_data))
+    names(dt) <- c("rt", "prepremz", "premz", "fragmz", "int", "voltage", "polarity")
+  } else {
+    dt_data <- mapply(cbind, rt_vals, premz_vals[,2], premz_vals[,1], mz_int_vals,
+                      voltage_vals, SIMPLIFY = FALSE)
+    dt <- as.data.table(do.call(what=rbind, dt_data))
+    names(dt) <- c("rt", "prepremz", "premz", "fragmz", "int", "voltage")
   }
   dt$voltage <- as.integer(dt$voltage)
   dt
