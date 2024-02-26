@@ -14,19 +14,19 @@
 #' @param filename A single filename to read into R's memory. Both absolute and
 #'   relative paths are acceptable.
 #' @param grab_what What data should be read from the file? Options include
-#'   "MS1" for data only from the first spectrometer, "MS2" for fragmentation
-#'   data, "BPC" for rapid access to the base peak chromatogram, "TIC" for rapid
-#'   access to the total ion chromatogram, "DAD" for DAD (UV) data, and "chroms"
-#'   for precompiled chromatogram data (especially useful for MRM but often
-#'   contains BPC/TIC in other files). Metadata can be accessed with "metadata",
-#'   which provides information about the instrument and time the file was run.
-#'   These options can be combined (i.e. `grab_data=c("MS1", "MS2", "BPC")`) or
-#'   this argument can be set to "everything" to extract all of the above.
-#'   Options "EIC" and "EIC_MS2" are useful when working with files whose total
-#'   size exceeds working memory - it first extracts all relevant MS1 and MS2
-#'   data, respectively, then discards data outside of the mass range(s)
-#'   calculated from the provided mz and ppm. The default, "everything",
-#'   includes all MS1, MS2, BPC, TIC, and metadata.
+#'   "MS1" for data only from the first spectrometer, "MS2" and "MS3" for
+#'   fragmentation data, "BPC" for rapid access to the base peak chromatogram,
+#'   "TIC" for rapid access to the total ion chromatogram, "DAD" for DAD (UV)
+#'   data, and "chroms" for precompiled chromatogram data (especially useful for
+#'   MRM but often contains BPC/TIC in other files). Metadata can be accessed
+#'   with "metadata", which provides information about the instrument and time
+#'   the file was run. These options can be combined (i.e. `grab_data=c("MS1",
+#'   "MS2", "BPC")`) or this argument can be set to "everything" to extract all
+#'   of the above. Options "EIC", "EIC_MS2", and "EIC_MS3" are useful when
+#'   working with files whose total size exceeds working memory - it first
+#'   extracts all relevant MS1/2/3 data, respectively, then discards data
+#'   outside of the mass range(s) calculated from the provided mz and ppm. The
+#'   default, "everything", includes all MS1, MS2, BPC, TIC, and metadata.
 #' @param verbosity Three levels of processing output to the R console are
 #'   available, with increasing verbosity corresponding to higher integers. A
 #'   verbosity of zero means that no output will be produced, useful when
@@ -54,19 +54,20 @@
 #'   info, etc. MS1 data has four columns: retention time (rt), mass-to-charge
 #'   (mz), intensity (int), and filename. MS2 data has six: retention time (rt),
 #'   precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
-#'   collision energy (voltage), and filename. Data requested that does not
-#'   exist in the provided files (such as MS2 data requested from MS1-only
-#'   files) will return an empty (length zero) data.table. The data.tables
-#'   extracted from each of the individual files are collected into one large
-#'   table using data.table's `rbindlist`. $metadata is a little weirder because
-#'   the metadata doesn't fit neatly into a tidy format but things are hopefully
-#'   named helpfully. $chroms was added in v1.3 and contains 7 columns:
-#'   chromatogram type (usually TIC, BPC or SRM info), chromatogram index,
-#'   target mz, product mz, retention time (rt), and intensity (int). $DAD was
-#'   also added in v1.3 and contains has three columns: retention time (rt),
-#'   wavelength (lambda),and intensity (int). Data requested that does not exist
-#'   in the provided files (such as MS2 data requested from MS1-only files) will
-#'   return an empty (zero-row) data.table.
+#'   collision energy (voltage), and filename. MS3 has an additional column to
+#'   MS2, prepremz, which has the original MS1 scan's m/z ratio. Data requested
+#'   that does not exist in the provided files (such as MS2 data requested from
+#'   MS1-only files) will return an empty (length zero) data.table. The
+#'   data.tables extracted from each of the individual files are collected into
+#'   one large table using data.table's `rbindlist`. $metadata is a little
+#'   weirder because the metadata doesn't fit neatly into a tidy format but
+#'   things are hopefully named helpfully. $chroms was added in v1.3 and
+#'   contains 7 columns: chromatogram type (usually TIC, BPC or SRM info),
+#'   chromatogram index, target mz, product mz, retention time (rt), and
+#'   intensity (int). $DAD was also added in v1.3 and contains has three
+#'   columns: retention time (rt), wavelength (lambda),and intensity (int). Data
+#'   requested that does not exist in the provided files (such as MS2 data
+#'   requested from MS1-only files) will return an empty (zero-row) data.table.
 #'
 #' @export
 #'
@@ -115,7 +116,7 @@ grabMzmlData <- function(filename, grab_what, verbosity=0, incl_polarity=FALSE,
     grab_what <- unique(c("MS1", "MS2", "BPC", "TIC", "metadata", extra_grabs))
   }
 
-  if(any(c("MS1", "MS2", "DAD", "EIC", "EIC_MS2", "chroms")%in%grab_what)){
+  if(any(c("MS1", "MS2", "MS3", "DAD", "EIC", "EIC_MS2", "EIC_MS3", "chroms")%in%grab_what)){
     file_metadata <- grabMzmlEncodingData(xml_data)
   }
 
@@ -130,6 +131,13 @@ grabMzmlData <- function(filename, grab_what, verbosity=0, incl_polarity=FALSE,
   if("MS2"%in%grab_what){
     if(verbosity>1)last_time <- timeReport(last_time, text = "Reading MS2 data...")
     output_data$MS2 <- grabMzmlMS2(xml_data = xml_data, rtrange = rtrange,
+                                   incl_polarity = incl_polarity,
+                                   file_metadata = file_metadata)
+  }
+
+  if("MS3"%in%grab_what){
+    if(verbosity>1)last_time <- timeReport(last_time, text = "Reading MS3 data...")
+    output_data$MS3 <- grabMzmlMS3(xml_data = xml_data, rtrange = rtrange,
                                    incl_polarity = incl_polarity,
                                    file_metadata = file_metadata)
   }
@@ -189,6 +197,25 @@ grabMzmlData <- function(filename, grab_what, verbosity=0, incl_polarity=FALSE,
       init_dt[premz%between%pmppm(mass = mass, ppm = ppm)]
     })
     output_data$EIC_MS2 <- unique(rbindlist(EIC_MS2_list))
+  }
+
+  if("EIC_MS3"%in%grab_what){
+    checkProvidedMzPpm(mz, ppm)
+    if(verbosity>1){
+      last_time <- timeReport(last_time, text = "Extracting EIC MS3...")
+    }
+    if(!"MS3"%in%grab_what){
+      init_dt <- grabMzmlMS3(xml_data = xml_data, rtrange = rtrange,
+                             file_metadata = file_metadata,
+                             incl_polarity = incl_polarity)
+    } else {
+      init_dt <- output_data$MS3
+    }
+    prepremz <- NULL #To prevent R CMD check "notes"
+    EIC_MS3_list <- lapply(unique(mz), function(mass){
+      init_dt[prepremz%between%pmppm(mass = mass, ppm = ppm)]
+    })
+    output_data$EIC_MS3 <- unique(rbindlist(EIC_MS3_list))
   }
 
   if("chroms"%in%grab_what){
@@ -479,7 +506,7 @@ grabMzmlMS1 <- function(xml_data, rtrange, file_metadata, prefilter, incl_polari
 #'   arrays containing m/z and intensity information.
 #'
 #' @return A `data.table` with columns for retention time (rt),  precursor m/z
-#'   (mz), fragment m/z (fragmz), collision energy (voltage), and intensity
+#'   (premz), fragment m/z (fragmz), collision energy (voltage), and intensity
 #'   (int).
 grabMzmlMS2 <- function(xml_data, rtrange, file_metadata, incl_polarity){
   ms2_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level" and @value="2"]]'
@@ -526,6 +553,71 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata, incl_polarity){
              premz=rep(premz_vals, sapply(mz_vals, length)),
              fragmz=unlist(mz_vals), int=as.numeric(unlist(int_vals)),
              voltage=rep(voltage, sapply(mz_vals, length)))
+}
+
+
+#' Extract the MS3 data from an mzML nodeset
+#'
+#' @param xml_data An `xml2` nodeset, usually created by applying `read_xml` to
+#'   an mzML file.
+#' @param rtrange A vector of length 2 containing an upper and lower bound on
+#'   retention times of interest. Providing a range here can speed up load times
+#'   (although not enormously, as the entire file must still be read) and reduce
+#'   the final object's size.
+#' @param file_metadata Information about the file used to decode the binary
+#'   arrays containing m/z and intensity information.
+#'
+#' @return A `data.table` with columns for retention time (rt), precursor premz
+#'   (prepremz), precursor m/z (premz), fragment m/z (fragmz), collision energy
+#'   (voltage), and intensity (int).
+grabMzmlMS3 <- function(xml_data, rtrange, file_metadata, incl_polarity){
+  ms3_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level" and @value="3"]]'
+
+  ms3_nodes <- xml2::xml_find_all(xml_data, ms3_xpath)
+  if(!length(ms3_nodes)){
+    return(data.table(rt=numeric(), prepremz=numeric(), premz=numeric(),
+                      fragmz=numeric(), int=numeric(), voltage=integer()))
+  }
+
+  rt_vals <- grabSpectraRt(ms3_nodes)
+  if(!is.null(rtrange)){
+    ms3_nodes <- ms3_nodes[rt_vals%between%rtrange]
+    rt_vals <- rt_vals[rt_vals%between%rtrange]
+  }
+
+  premz_vals <- matrix(grabSpectraPremz(ms3_nodes), ncol=2, byrow=TRUE)
+  voltage <- matrix(grabSpectraVoltage(ms3_nodes), ncol=2, byrow = TRUE)
+  if(incl_polarity){pol_vals <- grabSpectraPolarity(ms3_nodes)}
+  mz_vals <- grabSpectraMz(ms3_nodes, file_metadata)
+  int_vals <- grabSpectraInt(ms3_nodes, file_metadata)
+
+  if(length(premz_vals)==0 & length(voltage)==0 &
+     length(mz_vals)==0 & length(int_vals)==0){
+    if(incl_polarity){
+      return(data.table(rt=numeric(), prepremz=numeric(), premz=numeric(),
+                        fragmz=numeric(), int=numeric(), voltage=integer(),
+                        polarity=numeric()))
+    } else {
+      return(data.table(rt=numeric(), prepremz=numeric(), premz=numeric(),
+                        fragmz=numeric(), int=numeric(), voltage=integer()))
+    }
+  }
+
+  if(incl_polarity){
+    return(
+      data.table(rt=rep(rt_vals, lengths(mz_vals)),
+                 prepremz=rep(premz_vals[,2], lengths(mz_vals)),
+                 premz=rep(premz_vals[,1], lengths(mz_vals)),
+                 fragmz=unlist(mz_vals), int=as.numeric(unlist(int_vals)),
+                 voltage=rep(voltage, lengths(mz_vals)),
+                 polarity=rep(pol_vals[,2], lengths(mz_vals)))
+    )
+  }
+  data.table(rt=rep(rt_vals, lengths(mz_vals)),
+             prepremz=rep(premz_vals[,2], lengths(mz_vals)),
+             premz=rep(premz_vals[,1], lengths(mz_vals)),
+             fragmz=unlist(mz_vals), int=as.numeric(unlist(int_vals)),
+             voltage=rep(voltage[,2], lengths(mz_vals)))
 }
 
 
