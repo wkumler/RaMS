@@ -359,6 +359,38 @@ minifyMzml <- function(filename, output_filename, ppm,
   xml2::xml_attr(spectrum_nodes, "index") <- seq_along(spectrum_nodes)-1
 
 
+  # MS3 things (same as above but with every other precursor)
+  ### Drop all nodes with a precursor m/z outside of bounds
+  ms3_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
+                      '@value="3"]][d1:cvParam[@name="base peak intensity"]]')
+  ms3_nodes <- xml2::xml_find_all(xml_data, ms3_xpath)
+  pre_xpath <- paste0('d1:precursorList/d1:precursor/d1:selectedIonList/',
+                      'd1:selectedIon/d1:cvParam[@name="selected ion m/z"]')
+  ms3_pre_nodes <- xml2::xml_find_all(ms3_nodes, pre_xpath)
+  ms3_pre_vals <- as.numeric(xml2::xml_attr(ms3_pre_nodes, "value"))
+  ms3_pre_mat <- matrix(ms3_pre_vals, ncol = 2, byrow = TRUE)
+  if(!is.null(mz_include)){
+    ms3_subset <- unlist(lapply(mz_include, function(premz_i){
+      mzrange <- pmppm(premz_i, ppm)
+      which(between(ms3_pre_mat[,1], mzrange[1], mzrange[2]) |
+              between(ms3_pre_mat[,2], mzrange[1], mzrange[2]))
+    }))
+    to_remove <- setdiff(seq_len(nrow(ms3_pre_mat)), ms3_subset)
+  } else {
+    to_remove <- unlist(lapply(mz_exclude, function(premz_i){
+      mzrange <- pmppm(premz_i, ppm)
+      which(between(ms3_pre_mat[,1], mzrange[1], mzrange[2]) |
+              between(ms3_pre_mat[,2], mzrange[1], mzrange[2]))
+    }))
+  }
+  xml2::xml_remove(ms3_nodes[to_remove])
+  ### Re-renumber spectra
+  spectrum_nodes <- xml2::xml_find_all(xml_data, "//d1:spectrum")
+  speclist_node <- xml2::xml_find_first(xml_data, "//d1:spectrumList")
+  xml2::xml_attr(speclist_node, "count") <- length(spectrum_nodes)
+  xml2::xml_attr(spectrum_nodes, "index") <- seq_along(spectrum_nodes)-1
+
+
 
   # Add note that RaMS was used to shrink the file
   proclist_node <- xml2::xml_find_all(xml_data, "//d1:dataProcessingList")
