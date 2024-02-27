@@ -28,8 +28,8 @@ library(RaMS)
 \dontshow{data.table::setDTthreads(2)}
 sample_dir <- system.file("extdata", package = "RaMS")
 sample_file <- list.files(sample_dir, full.names=TRUE)[3]
-# Get ion injection time
-iit_df <- grabAccessionData(sample_file, "MS:1000927")
+# Get highest observed m/z detected
+topmass_df <- grabAccessionData(sample_file, "MS:1000527")
 # Manually create TIC
 int_df <- grabAccessionData(sample_file, "MS:1000285")
 rt_df <- grabAccessionData(sample_file, "MS:1000016")
