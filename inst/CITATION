@@ -1,0 +1,11 @@
+bibentry(
+  bibtype  = "Article",
+  title    = "Tidy Data Neatly Resolves Mass-Spectrometry’s Ragged Arrays",
+  author   = "William Kumler and Anitra E. Ingalls",
+  journal  = "R Journal",
+  year     = 2022,
+  volume   = 14,
+  number   = 3,
+  pages    = "193-202",
+  doi      = "10.32614/RJ-2022-050"
+)
