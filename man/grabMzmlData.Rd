@@ -41,6 +41,11 @@ wrapping within larger functions. A verbosity of 1 will produce a progress
 bar using base R's txtProgressBar function. A verbosity of 2 or higher will
 produce timing output for each individual file read in.}
 
+\item{incl_polarity}{Toggle this option to TRUE for mixed-polarity files. An
+additional column will be added corresponding to the polarity of the scan,
+with either a 1 or a -1 corresponding to positive and negative mode,
+respectively.}
+
 \item{mz}{A vector of the mass-to-charge ratio for compounds of interest.
 Only used when combined with `grab_what = "EIC"` (see above). Multiple
 masses can be provided.}
@@ -67,7 +72,7 @@ A list of `data.table`s, each named after the arguments requested in
   (mz), intensity (int), and filename. MS2 data has six: retention time (rt),
   precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
   collision energy (voltage), and filename. MS3 has an additional column to
-  MS2, prepremz, which has the original MS1 scan's m/z ratio. Data requested
+  MS2 (prepremz) which has the original MS1 scan's m/z ratio. Data requested
   that does not exist in the provided files (such as MS2 data requested from
   MS1-only files) will return an empty (length zero) data.table. The
   data.tables extracted from each of the individual files are collected into
@@ -77,9 +82,7 @@ A list of `data.table`s, each named after the arguments requested in
   contains 7 columns: chromatogram type (usually TIC, BPC or SRM info),
   chromatogram index, target mz, product mz, retention time (rt), and
   intensity (int). $DAD was also added in v1.3 and contains has three
-  columns: retention time (rt), wavelength (lambda),and intensity (int). Data
-  requested that does not exist in the provided files (such as MS2 data
-  requested from MS1-only files) will return an empty (zero-row) data.table.
+  columns: retention time (rt), wavelength (lambda),and intensity (int).
 }
 \description{
 This function handles the mzML side of things, reading in files that are
@@ -106,7 +109,7 @@ file_data <- grabMzmlData(sample_file, grab_what="EIC", ppm=5,
                           mz=c(118.0865, 146.118104, 189.123918))
 
 # Extract MS2 data
-sample_file <- system.file("extdata", "DDApos_2.mzML.gz", package = "RaMS")
+sample_file <- system.file("extdata", "S30657.mzML.gz", package = "RaMS")
 MS2_data <- grabMzmlData(sample_file, grab_what="MS2")
 }
 }

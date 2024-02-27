@@ -40,6 +40,11 @@ wrapping within larger functions. A verbosity of 1 will produce a progress
 bar using base R's txtProgressBar function. A verbosity of 2 or higher will
 produce timing output for each individual file read in.}
 
+\item{incl_polarity}{Toggle this option to TRUE for mixed-polarity files. An
+additional column will be added corresponding to the polarity of the scan,
+with either a 1 or a -1 corresponding to positive and negative mode,
+respectively.}
+
 \item{rtrange}{Not supported for mzXML data. Only provided here so as to
 throw a friendly warning rather than an unexpected error.}
 
@@ -63,15 +68,14 @@ A list of `data.table`s, each named after the arguments requested in
   info, etc. MS1 data has four columns: retention time (rt), mass-to-charge
   (mz), intensity (int), and filename. MS2 data has six: retention time (rt),
   precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
-  collision energy (voltage), and filename. Data requested that does not
-  exist in the provided files (such as MS2 data requested from MS1-only
-  files) will return an empty (length zero) data.table. The data.tables
-  extracted from each of the individual files are collected into one large
-  table using data.table's `rbindlist`. $metadata is a little weirder because
-  the metadata doesn't fit neatly into a tidy format but things are hopefully
-  named helpfully. Data requested that does not exist in the provided files
-  (such as DAD or chromatogram data) will return an empty (zero-row)
-  data.table.
+  collision energy (voltage), and filename. MS3 has an additional column to
+  MS2 (prepremz) which has the original MS1 scan's m/z ratio. Data requested
+  that does not exist in the provided files (such as MS2 data requested from
+  MS1-only files) will return an empty (length zero) data.table. The
+  data.tables extracted from each of the individual files are collected into
+  one large table using data.table's `rbindlist`. $metadata is a little
+  weirder because the metadata doesn't fit neatly into a tidy format but
+  things are hopefully named helpfully.
 }
 \description{
 This function handles the mzXML side of things, reading in files that are
@@ -95,7 +99,7 @@ file_data <- grabMzxmlData(sample_file, grab_what="EIC", ppm=5,
                            mz=c(118.0865, 146.118104, 189.123918))
 
 # Extract MS2 data
-sample_file <- system.file("extdata", "DDApos_2.mzXML.gz", package = "RaMS")
+sample_file <- system.file("extdata", "S30657.mzXML.gz", package = "RaMS")
 MS2_data <- grabMzxmlData(sample_file, grab_what="MS2")
 }
 

@@ -44,6 +44,11 @@ will select between 1 and 2 depending on the number of files being read: if
 a single file, verbosity is set to 2; if multiple files, verbosity is set
 to 1.}
 
+\item{incl_polarity}{Toggle this option to TRUE for mixed-polarity files. An
+additional column will be added corresponding to the polarity of the scan,
+with either a 1 or a -1 corresponding to positive and negative mode,
+respectively.}
+
 \item{mz}{A vector of the mass-to-charge ratio for compounds of interest.
 Only used when combined with `grab_what = "EIC"` (see above). Multiple
 masses can be provided.}
@@ -69,19 +74,20 @@ A list of `data.table`s, each named after the arguments requested in
   info, etc. MS1 data has four columns: retention time (rt), mass-to-charge
   (mz), intensity (int), and filename. MS2 data has six: retention time (rt),
   precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
-  collision energy (voltage), and filename. Data requested that does not
-  exist in the provided files (such as MS2 data requested from MS1-only
-  files) will return an empty (length zero) data.table. The data.tables
-  extracted from each of the individual files are collected into one large
-  table using data.table's `rbindlist`. $metadata is a little weirder because
-  the metadata doesn't fit neatly into a tidy format but things are hopefully
-  named helpfully. $chroms was added in v1.3 and contains 7 columns:
-  chromatogram type (usually TIC, BPC or SRM info), chromatogram index,
-  target mz, product mz, retention time (rt), and intensity (int). $DAD was
-  also added in v1.3 and contains has three columns: retention time (rt),
-  wavelength (lambda),and intensity (int). Data requested that does not exist
-  in the provided files (such as MS2 data requested from MS1-only files) will
-  return an empty (zero-row) data.table.
+  collision energy (voltage), and filename. MS3 adds an additional column to
+  this (prepremz) corresponding to the initial MS1 m/z targeted. Data
+  requested that does not exist in the provided files (such as MS2 data
+  requested from MS1-only files) will return an empty (length zero)
+  data.table. The data.tables extracted from each of the individual files are
+  collected into one large table using data.table's `rbindlist`. $metadata is
+  a little weirder because the metadata doesn't fit neatly into a tidy format
+  but things are hopefully named helpfully. $chroms was added in v1.3 and
+  contains 7 columns: chromatogram type (usually TIC, BPC or SRM info),
+  chromatogram index, target mz, product mz, retention time (rt), and
+  intensity (int). $DAD was also added in v1.3 and contains has three
+  columns: retention time (rt), wavelength (lambda),and intensity (int). Data
+  requested that does not exist in the provided files (such as MS2 data
+  requested from MS1-only files) will return an empty (zero-row) data.table.
 }
 \description{
 The main `RaMS` function. This function accepts a list of the files that will
@@ -100,6 +106,6 @@ library(RaMS)
 # Extract MS1 data from a couple files
 sample_dir <- system.file("extdata", package = "RaMS")
 sample_files <- list.files(sample_dir, full.names=TRUE)
-multifile_data <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
+multifile_data <- grabMSdata(sample_files[1:5], grab_what="MS1")
 
 }
