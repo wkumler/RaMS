@@ -45,21 +45,24 @@
 #'   will be silently dropped, which can dramatically reduce the size of the
 #'   final object. Currently only works with MS1 data, but could be expanded
 #'   easily to handle more.
+#' @param incl_polarity Toggle this option to TRUE for mixed-polarity files. An
+#'   additional column will be added corresponding to the polarity of the scan,
+#'   with either a 1 or a -1 corresponding to positive and negative mode,
+#'   respectively.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. E.g. $MS1 contains MS1 information, $MS2 contains fragmentation
 #'   info, etc. MS1 data has four columns: retention time (rt), mass-to-charge
 #'   (mz), intensity (int), and filename. MS2 data has six: retention time (rt),
 #'   precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
-#'   collision energy (voltage), and filename. Data requested that does not
-#'   exist in the provided files (such as MS2 data requested from MS1-only
-#'   files) will return an empty (length zero) data.table. The data.tables
-#'   extracted from each of the individual files are collected into one large
-#'   table using data.table's `rbindlist`. $metadata is a little weirder because
-#'   the metadata doesn't fit neatly into a tidy format but things are hopefully
-#'   named helpfully. Data requested that does not exist in the provided files
-#'   (such as DAD or chromatogram data) will return an empty (zero-row)
-#'   data.table.
+#'   collision energy (voltage), and filename. MS3 has an additional column to
+#'   MS2 (prepremz) which has the original MS1 scan's m/z ratio. Data requested
+#'   that does not exist in the provided files (such as MS2 data requested from
+#'   MS1-only files) will return an empty (length zero) data.table. The
+#'   data.tables extracted from each of the individual files are collected into
+#'   one large table using data.table's `rbindlist`. $metadata is a little
+#'   weirder because the metadata doesn't fit neatly into a tidy format but
+#'   things are hopefully named helpfully.
 #'
 #' @export
 #'
