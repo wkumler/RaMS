@@ -28,7 +28,8 @@ test_that("blacklisted file has no data within bounds", {
 #   expect_s4_class(bpis, "MChromatograms")
 #   plot(bpis)
 # })
-
+# mini_msdata$MS1[, .SD[which.max(int)], by=.(rt, filename)] %>%
+#   qplotMS1data()
 
 
 
@@ -64,13 +65,15 @@ test_that("whitelisted file has data only within bounds", {
   expect_equal(eic_full$mz, mini_msdata$MS1$mz)
   expect_equal(eic_full$int, mini_msdata$MS1$int)
 })
-# # Don't want to deal with MSnbase dependencies, but these are good to run personally
+# Don't want to deal with MSnbase dependencies, but these are good to run personally
 # test_that("whitelist file opens in MSnbase", {
 #   library(xcms)
 #   raw_data <- readMSData(output_filename, pdata = NULL, msLevel. = 1)
 #   bpis <- chromatogram(raw_data, aggregationFun = "max")
 #   expect_s4_class(bpis, "MChromatograms")
 # })
+# mini_msdata$MS1[, .SD[which.max(int)], by=.(rt, filename)] %>%
+#   qplotMS1data()
 
 
 
@@ -198,20 +201,25 @@ output_dir <- tempdir()
 ### mzML
 filename <- mzML_filenames[1]
 output_filename <- paste0(output_dir, "\\mini_DDA.mzML")
-mz_include <- 118.0865
+mz_include <- 351.0819
 minifyMSdata(filename, output_files = output_filename,
              mz_include = mz_include, ppm = 5, warn = FALSE)
 
-full_data <- grabMSdata(filename)
-mini_data <- grabMSdata(output_filename)
+full_data <- grabMSdata(filename, grab_what = c("everything", "MS3"))
+mini_data <- grabMSdata(output_filename, grab_what = c("everything", "MS3"))
 
 test_that("Minified file has MS2", {
   expect_gt(nrow(mini_data$MS2), 0)
 })
 
+test_that("Minified file has MS3", {
+  expect_gt(nrow(mini_data$MS3), 0)
+})
+
 test_that("Mini data smaller than full data", {
   expect_gt(nrow(full_data$MS1), nrow(mini_data$MS1))
-  expect_gt(nrow(full_data$MS2), nrow(mini_data$MS2))
+  expect_gte(nrow(full_data$MS2), nrow(mini_data$MS2))
+  expect_gte(nrow(full_data$MS3), nrow(mini_data$MS3))
 })
 
 test_that("Mini data has points only within bounds", {

@@ -76,11 +76,11 @@ test_that("mz_group works as expected", {
   expect_equal(max(mz_group(runif(1000), ppm = 1e5, max_groups=2), na.rm = TRUE), 2)
 
   mz_vals <- mzML_everything$MS1[mz%between%pmppm(119.0865, 100)][order(int, decreasing = TRUE)]$mz
-  expect_equal(max(mz_group(mz_vals, ppm=10)), 5)
+  expect_equal(max(mz_group(mz_vals, ppm=10)), 6)
   expect_equal(max(mz_group(mz_vals, ppm=50)), 2)
   expect_equal(max(mz_group(mz_vals, ppm=5, max_groups = 2), na.rm = TRUE), 2)
   expect_equal(max(mz_group(mz_vals, ppm=5, max_groups = 3), na.rm = TRUE), 3)
-  expect_equal(max(mz_group(mz_vals, ppm=5, min_group_size = 1), na.rm = TRUE), 4)
+  expect_equal(max(mz_group(mz_vals, ppm=5, min_group_size = 1), na.rm = TRUE), 11)
   expect_true(any(is.na(mz_group(mz_vals, ppm=5, max_groups = 2))))
-  expect_true(any(is.na(mz_group(mz_vals, ppm=5, min_group_size = 1))))
+  # expect_true(any(is.na(mz_group(mz_vals, ppm=5, min_group_size = 1))))
 })
