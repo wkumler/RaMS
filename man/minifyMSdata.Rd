@@ -61,6 +61,9 @@ filename <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
 output_filename <- "mini_LB12HL_AB.mzML"
 include_mzs <- c(118.0865, 138.0555)
 minifyMSdata(filename, output_filename, mz_include=include_mzs, ppm=5)
+init_data <- grabMSdata(filename)
+mini_data <- grabMSdata(output_filename)
+qplotMS1data(rbind(init_data$BPC, mini_data$BPC), color_col = "filename")
 unlink(output_filename)
 
 # Exclude data corresponding to valine and homarine
@@ -68,6 +71,9 @@ filename <- system.file("extdata", "LB12HL_AB.mzML.gz", package = "RaMS")
 output_filename <- "mini_LB12HL_AB.mzML"
 exclude_mzs <- c(118.0865, 138.0555)
 minifyMSdata(filename, output_filename, mz_exclude=exclude_mzs, ppm=5)
+init_data <- grabMSdata(filename)
+mini_data <- grabMSdata(output_filename)
+qplotMS1data(rbind(init_data$BPC, mini_data$BPC), color_col = "filename")
 unlink(output_filename)
 }
 }

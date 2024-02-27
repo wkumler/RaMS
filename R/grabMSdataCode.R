@@ -87,7 +87,7 @@
 #' # Extract MS1 data from a couple files
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
-#' multifile_data <- grabMSdata(sample_files[1:5], grab_what="MS1")
+#' multifile_data <- grabMSdata(sample_files[c(3,5,6)], grab_what="MS1")
 #'
 grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
                        incl_polarity=FALSE, mz=NULL, ppm=NULL,
