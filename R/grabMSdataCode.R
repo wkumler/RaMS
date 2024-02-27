@@ -84,17 +84,6 @@
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
 #' multifile_data <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
 #'
-#' # "Stream" data from the internet (i.e. Metabolights)
-#' \dontrun{
-#' access_url <- "https://www.ebi.ac.uk/metabolights/MTBLS703/files"
-#'
-#' # URL below obtained by right-clicking site download button and copying
-#' # link address
-#' sample_url <- paste0("https://www.ebi.ac.uk/metabolights/ws/studies/",
-#'                      "MTBLS703/download/acefcd61-a634-4f35-9c3c-c572",
-#'                      "ade5acf3?file=161024_Smp_LB12HL_AB_pos.mzXML")
-#' file_data <- grabMSdata(sample_url, grab_what="everything", verbosity=2)
-#' }
 grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
                        incl_polarity=FALSE, mz=NULL, ppm=NULL,
                        rtrange=NULL, prefilter=-1){
