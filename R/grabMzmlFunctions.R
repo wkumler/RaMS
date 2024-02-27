@@ -90,7 +90,7 @@
 #'                           mz=c(118.0865, 146.118104, 189.123918))
 #'
 #' # Extract MS2 data
-#' sample_file <- system.file("extdata", "DDApos_2.mzML.gz", package = "RaMS")
+#' sample_file <- system.file("extdata", "S30657.mzML.gz", package = "RaMS")
 #' MS2_data <- grabMzmlData(sample_file, grab_what="MS2")
 #' }
 grabMzmlData <- function(filename, grab_what, verbosity=0, incl_polarity=FALSE,
