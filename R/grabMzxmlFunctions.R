@@ -276,7 +276,7 @@ grabMzxmlMetadata <- function(xml_data){
       centroided <- FALSE
     }
 
-    ms_levels <- paste0("MS", unique(xml2::xml_attr(scan_nodes, "msLevel")),
+    ms_levels <- paste0("MS", sort(unique(xml2::xml_attr(scan_nodes, "msLevel"))),
                         collapse = ", ")
 
     mz_lowest <- min(as.numeric(xml2::xml_attr(scan_nodes, "lowMz")))
@@ -518,9 +518,11 @@ grabMzxmlBPC <- function(xml_data, TIC=FALSE, rtrange, incl_polarity){
   scan_nodes <- xml2::xml_find_all(
     xml_data, '//d1:scan[@msLevel="1"]'
   )
-  rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
-  rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
-  if(any(rt_vals>150)){rt_vals <- rt_vals/60}
+  rt_vals <- grabMzxmlSpectraRt(scan_nodes)
+  # rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
+  # rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
+  # rt_unit <- unique(gsub(".*[0-9]", "", rt_chrs))
+  # if ("S" %in% rt_unit) rt_vals <- rt_vals/60
 
   int_attr <- ifelse(TIC, "totIonCurrent", "basePeakIntensity")
   int_vals <- as.numeric(xml2::xml_attr(scan_nodes, int_attr))
