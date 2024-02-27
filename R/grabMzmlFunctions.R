@@ -525,6 +525,7 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata, incl_polarity){
 
   premz_vals <- grabSpectraPremz(ms2_nodes)
   voltage <- grabSpectraVoltage(ms2_nodes)
+  if(all(is.na(voltage))){voltage <- rep(NA_integer_, length(premz_vals))}
   if(incl_polarity){pol_vals <- grabSpectraPolarity(ms2_nodes)}
   mz_vals <- grabSpectraMz(ms2_nodes, file_metadata)
   int_vals <- grabSpectraInt(ms2_nodes, file_metadata)
@@ -587,6 +588,9 @@ grabMzmlMS3 <- function(xml_data, rtrange, file_metadata, incl_polarity){
 
   premz_vals <- matrix(grabSpectraPremz(ms3_nodes), ncol=2, byrow=TRUE)
   voltage <- matrix(grabSpectraVoltage(ms3_nodes), ncol=2, byrow = TRUE)
+  if(all(is.na(voltage))){
+    voltage <- matrix(rep(NA_integer_, nrow(premz_vals)*2), ncol=2, byrow=TRUE)
+  }
   if(incl_polarity){pol_vals <- grabSpectraPolarity(ms3_nodes)}
   mz_vals <- grabSpectraMz(ms3_nodes, file_metadata)
   int_vals <- grabSpectraInt(ms3_nodes, file_metadata)
@@ -609,8 +613,8 @@ grabMzmlMS3 <- function(xml_data, rtrange, file_metadata, incl_polarity){
                  prepremz=rep(premz_vals[,2], lengths(mz_vals)),
                  premz=rep(premz_vals[,1], lengths(mz_vals)),
                  fragmz=unlist(mz_vals), int=as.numeric(unlist(int_vals)),
-                 voltage=rep(voltage, lengths(mz_vals)),
-                 polarity=rep(pol_vals[,2], lengths(mz_vals)))
+                 voltage=rep(voltage[,2], lengths(mz_vals)),
+                 polarity=rep(pol_vals, lengths(mz_vals)))
     )
   }
   data.table(rt=rep(rt_vals, lengths(mz_vals)),
@@ -753,6 +757,7 @@ grabSpectraVoltage <- function(xml_nodes){
   volt_xpath <- paste0('d1:precursorList/d1:precursor/d1:activation',
                        '/d1:cvParam[@name="collision energy"]')
   volt_nodes <- xml2::xml_find_all(xml_nodes, volt_xpath)
+  if(length(volt_nodes)==0)return(NA_integer_)
   as.integer(xml2::xml_attr(volt_nodes, "value"))
 }
 

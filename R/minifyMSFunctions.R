@@ -589,6 +589,7 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_exclude=NULL,
   ms3_nodes <- xml2::xml_find_all(xml_data, ms3_xpath)
   ms3_pre_nodes <- xml2::xml_find_all(ms3_nodes, "d1:precursorMz")
   ms3_pre_vals <- as.numeric(xml2::xml_text(ms3_pre_nodes))
+  ms3_pre_mat <- matrix(ms3_pre_vals, ncol = 2, byrow = TRUE)
   if(!is.null(mz_include)){
     ms3_subset <- unlist(lapply(mz_include, function(premz_i){
       mzrange <- pmppm(premz_i, ppm)
