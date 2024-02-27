@@ -4,7 +4,7 @@
 \alias{grabMzmlBPC}
 \title{Grab the BPC or TIC from a file}
 \usage{
-grabMzmlBPC(xml_data, rtrange, TIC = FALSE)
+grabMzmlBPC(xml_data, rtrange, TIC = FALSE, incl_polarity)
 }
 \arguments{
 \item{xml_data}{An `xml2` nodeset, usually created by applying `read_xml` to

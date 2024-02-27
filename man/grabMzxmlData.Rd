@@ -8,6 +8,7 @@ grabMzxmlData(
   filename,
   grab_what,
   verbosity = 0,
+  incl_polarity = FALSE,
   rtrange = NULL,
   mz = NULL,
   ppm = NULL,

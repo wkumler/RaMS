@@ -4,7 +4,7 @@
 \alias{grabMzmlMS2}
 \title{Extract the MS2 data from an mzML nodeset}
 \usage{
-grabMzmlMS2(xml_data, rtrange, file_metadata)
+grabMzmlMS2(xml_data, rtrange, file_metadata, incl_polarity)
 }
 \arguments{
 \item{xml_data}{An `xml2` nodeset, usually created by applying `read_xml` to
@@ -20,7 +20,7 @@ arrays containing m/z and intensity information.}
 }
 \value{
 A `data.table` with columns for retention time (rt),  precursor m/z
-  (mz), fragment m/z (fragmz), collision energy (voltage), and intensity
+  (premz), fragment m/z (fragmz), collision energy (voltage), and intensity
   (int).
 }
 \description{
