@@ -1,6 +1,17 @@
 # RaMS (development version)
 
-# RaMS 1.3.2
+# RaMS 1.4
+ - Added MS3 support to file reading and minification
+   - MS3 data is not automatically requested with "everything" (the default) and must instead be added (e.g. `grab_what=c("everything", "MS3")`)
+   - msdata$MS3 has an additional column (prepremz) corresponding to the MS1 trigger while the premz now corresponds to the immediately preceding MS2 *m/z* trigger.
+ - Added option to include polarity as a column per request from MetabolomicsWorkbench
+   - Enable by setting `incl_polarity = TRUE` in `grabMSdata()`
+   - Not enabled by default to preserve back-compatibility
+   - Polarity is encoded as 1 for positive mode and -1 for negative mode
+ - Swapped out demo files to test incl_polarity and MS3 data
+ - Updated tests and minification vignette to reflect new demo files
+
+# RaMS 1.3.4
  - Added OpenChrom reading support, credit to @ethanbass for the PR (#18 on Github)
  - Added several convenience functions and useful documentation for each
    - `qplotMS1data`, a shortcut for the common `ggplot2` call
