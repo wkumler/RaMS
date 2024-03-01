@@ -8,6 +8,8 @@
    - Enable by setting `incl_polarity = TRUE` in `grabMSdata()`
    - Not enabled by default to preserve back-compatibility
    - Polarity is encoded as 1 for positive mode and -1 for negative mode
+ - Added function to edit the retention times of existing mzML/mzXML files (editMSfileRTs)
+   - Still feels like it's in development, would love feedback on Github
  - Swapped out demo files to test incl_polarity and MS3 data
  - Updated tests and minification vignette to reflect new demo files
 
