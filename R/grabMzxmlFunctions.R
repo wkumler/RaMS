@@ -362,6 +362,9 @@ grabMzxmlEncodingData <- function(xml_data){
 #'   the final object's size.
 #' @param prefilter The lowest intensity value of interest, used to reduce file
 #'   size (and especially useful for profile mode data with many 0 values)
+#' @param incl_polarity Boolean determining whether the polarity of the scan
+#'   should be returned as a column in the table (positive mode = 1, negative
+#'   mode = -1)
 #'
 #' @return A `data.table` with columns for retention time (rt), m/z (mz),
 #' and intensity (int).
@@ -403,6 +406,9 @@ grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange, prefilter, incl_polar
 #'   retention times of interest. Providing a range here can speed up load times
 #'   (although not enormously, as the entire file must still be read) and reduce
 #'   the final object's size.
+#' @param incl_polarity Boolean determining whether the polarity of the scan
+#'   should be returned as a column in the table (positive mode = 1, negative
+#'   mode = -1)
 #'
 #' @return A `data.table` with columns for retention time (rt),  precursor m/z (premz),
 #' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
@@ -457,6 +463,9 @@ grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange, incl_polarity){
 #'   retention times of interest. Providing a range here can speed up load times
 #'   (although not enormously, as the entire file must still be read) and reduce
 #'   the final object's size.
+#' @param incl_polarity Boolean determining whether the polarity of the scan
+#'   should be returned as a column in the table (positive mode = 1, negative
+#'   mode = -1)
 #'
 #' @return A `data.table` with columns for retention time (rt),
 #' MS1 precursor m/z (prepremz), MS2 precursor m/z (premz),
@@ -515,6 +524,9 @@ grabMzxmlMS3 <- function(xml_data, file_metadata, rtrange, incl_polarity){
 #'   retention times of interest. Providing a range here can speed up load times
 #'   (although not enormously, as the entire file must still be read) and reduce
 #'   the final object's size.
+#' @param incl_polarity Boolean determining whether the polarity of the scan
+#'   should be returned as a column in the table (positive mode = 1, negative
+#'   mode = -1)
 #'
 #' @return A `data.table` with columns for retention time (rt), and intensity (int).
 grabMzxmlBPC <- function(xml_data, TIC=FALSE, rtrange, incl_polarity){

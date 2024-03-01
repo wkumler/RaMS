@@ -458,6 +458,9 @@ grabMzmlEncodingData <- function(xml_data){
 #'   arrays containing m/z and intensity information.
 #' @param prefilter The lowest intensity value of interest, used to reduce file
 #'   size (and especially useful for profile mode data with many 0 values)
+#' @param incl_polarity Boolean determining whether the polarity of the scan
+#'   should be returned as a column in the table (positive mode = 1, negative
+#'   mode = -1)
 #'
 #' @return A `data.table` with columns for retention time (rt), m/z (mz), and
 #'   intensity (int).
@@ -506,6 +509,9 @@ grabMzmlMS1 <- function(xml_data, rtrange, file_metadata, prefilter, incl_polari
 #'   the final object's size.
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information.
+#' @param incl_polarity Boolean determining whether the polarity of the scan
+#'   should be returned as a column in the table (positive mode = 1, negative
+#'   mode = -1)
 #'
 #' @return A `data.table` with columns for retention time (rt),  precursor m/z
 #'   (premz), fragment m/z (fragmz), collision energy (voltage), and intensity
@@ -569,6 +575,9 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata, incl_polarity){
 #'   the final object's size.
 #' @param file_metadata Information about the file used to decode the binary
 #'   arrays containing m/z and intensity information.
+#' @param incl_polarity Boolean determining whether the polarity of the scan
+#'   should be returned as a column in the table (positive mode = 1, negative
+#'   mode = -1)
 #'
 #' @return A `data.table` with columns for retention time (rt),
 #' MS1 precursor m/z (prepremz), MS2 precursor m/z (premz),
@@ -640,6 +649,9 @@ grabMzmlMS3 <- function(xml_data, rtrange, file_metadata, incl_polarity){
 #'   (although not enormously, as the entire file must still be read) and reduce
 #'   the final object's size.
 #' @param TIC Boolean. If TRUE, the TIC is extracted rather than the BPC.
+#' @param incl_polarity Boolean determining whether the polarity of the scan
+#'   should be returned as a column in the table (positive mode = 1, negative
+#'   mode = -1)
 #'
 #' @return A `data.table` with columns for retention time (rt), and intensity
 #'   (int).

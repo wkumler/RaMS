@@ -17,6 +17,10 @@ the final object's size.}
 
 \item{file_metadata}{Information about the file used to decode the binary
 arrays containing m/z and intensity information.}
+
+\item{incl_polarity}{Boolean determining whether the polarity of the scan
+should be returned as a column in the table (positive mode = 1, negative
+mode = -1)}
 }
 \value{
 A `data.table` with columns for retention time (rt),  precursor m/z

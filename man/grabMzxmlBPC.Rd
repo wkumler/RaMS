@@ -16,6 +16,10 @@ an mzML file.}
 retention times of interest. Providing a range here can speed up load times
 (although not enormously, as the entire file must still be read) and reduce
 the final object's size.}
+
+\item{incl_polarity}{Boolean determining whether the polarity of the scan
+should be returned as a column in the table (positive mode = 1, negative
+mode = -1)}
 }
 \value{
 A `data.table` with columns for retention time (rt), and intensity (int).
