@@ -4,7 +4,7 @@
 \alias{grabMzmlBPC}
 \title{Grab the BPC or TIC from a file}
 \usage{
-grabMzmlBPC(xml_data, rtrange, TIC = FALSE)
+grabMzmlBPC(xml_data, rtrange, TIC = FALSE, incl_polarity)
 }
 \arguments{
 \item{xml_data}{An `xml2` nodeset, usually created by applying `read_xml` to
@@ -16,6 +16,10 @@ retention times of interest. Providing a range here can speed up load times
 the final object's size.}
 
 \item{TIC}{Boolean. If TRUE, the TIC is extracted rather than the BPC.}
+
+\item{incl_polarity}{Boolean determining whether the polarity of the scan
+should be returned as a column in the table (positive mode = 1, negative
+mode = -1)}
 }
 \value{
 A `data.table` with columns for retention time (rt), and intensity

@@ -11,7 +11,7 @@ test_that("error if grab_what is weird", {
   expect_error(grabMSdata(files = mzML_filenames[2], grab_what = "banana"))
   expect_error(grabMSdata(files = mzML_filenames[2], grab_what = "SM1"))
   expect_error(grabMSdata(files = mzML_filenames[1], grab_what = c(
-    "MS1", "MS2", "MS3"
+    "MS1", "MS2", "MS3", "MS4"
   )))
   expect_error(grabMSdata(files = mzML_filenames[2], grab_what = ""))
 })

@@ -45,21 +45,24 @@
 #'   will be silently dropped, which can dramatically reduce the size of the
 #'   final object. Currently only works with MS1 data, but could be expanded
 #'   easily to handle more.
+#' @param incl_polarity Toggle this option to TRUE for mixed-polarity files. An
+#'   additional column will be added corresponding to the polarity of the scan,
+#'   with either a 1 or a -1 corresponding to positive and negative mode,
+#'   respectively.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. E.g. $MS1 contains MS1 information, $MS2 contains fragmentation
 #'   info, etc. MS1 data has four columns: retention time (rt), mass-to-charge
 #'   (mz), intensity (int), and filename. MS2 data has six: retention time (rt),
 #'   precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
-#'   collision energy (voltage), and filename. Data requested that does not
-#'   exist in the provided files (such as MS2 data requested from MS1-only
-#'   files) will return an empty (length zero) data.table. The data.tables
-#'   extracted from each of the individual files are collected into one large
-#'   table using data.table's `rbindlist`. $metadata is a little weirder because
-#'   the metadata doesn't fit neatly into a tidy format but things are hopefully
-#'   named helpfully. Data requested that does not exist in the provided files
-#'   (such as DAD or chromatogram data) will return an empty (zero-row)
-#'   data.table.
+#'   collision energy (voltage), and filename. MS3 has an additional column to
+#'   MS2 (prepremz) which has the original MS1 scan's m/z ratio. Data requested
+#'   that does not exist in the provided files (such as MS2 data requested from
+#'   MS1-only files) will return an empty (length zero) data.table. The
+#'   data.tables extracted from each of the individual files are collected into
+#'   one large table using data.table's `rbindlist`. $metadata is a little
+#'   weirder because the metadata doesn't fit neatly into a tidy format but
+#'   things are hopefully named helpfully.
 #'
 #' @export
 #'
@@ -77,11 +80,11 @@
 #'                            mz=c(118.0865, 146.118104, 189.123918))
 #'
 #' # Extract MS2 data
-#' sample_file <- system.file("extdata", "DDApos_2.mzXML.gz", package = "RaMS")
+#' sample_file <- system.file("extdata", "S30657.mzXML.gz", package = "RaMS")
 #' MS2_data <- grabMzxmlData(sample_file, grab_what="MS2")
 #' }
 #'
-grabMzxmlData <- function(filename, grab_what, verbosity=0,
+grabMzxmlData <- function(filename, grab_what, verbosity=0, incl_polarity=FALSE,
                           rtrange=NULL, mz=NULL, ppm=NULL, prefilter=-1){
   if(verbosity>1){
     cat(paste0("\nReading file ", basename(filename), "... "))
@@ -105,30 +108,42 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
     grab_what <- unique(c("MS1", "MS2", "BPC", "TIC", "metadata", extra_grabs))
   }
 
-  if(any(c("MS1", "MS2", "EIC", "EIC_MS2")%in%grab_what)){
+  if(any(c("MS1", "MS2", "MS3", "EIC", "EIC_MS2", "EIC_MS3")%in%grab_what)){
     file_metadata <- grabMzxmlEncodingData(xml_data)
   }
 
   if("MS1"%in%grab_what){
     if(verbosity>1)last_time <- timeReport(last_time, text = "Reading MS1 data...")
     output_data$MS1 <- grabMzxmlMS1(xml_data = xml_data, rtrange=rtrange,
-                                    file_metadata = file_metadata, prefilter = prefilter)
+                                    file_metadata = file_metadata,
+                                    prefilter = prefilter,
+                                    incl_polarity=incl_polarity)
   }
 
   if("MS2"%in%grab_what){
     if(verbosity>1)last_time <- timeReport(last_time, text = "Reading MS2 data...")
     output_data$MS2 <- grabMzxmlMS2(xml_data = xml_data, rtrange=rtrange,
-                                    file_metadata = file_metadata)
+                                    file_metadata = file_metadata,
+                                    incl_polarity=incl_polarity)
+  }
+
+  if("MS3"%in%grab_what){
+    if(verbosity>1)last_time <- timeReport(last_time, text = "Reading MS3 data...")
+    output_data$MS3 <- grabMzxmlMS3(xml_data = xml_data, rtrange=rtrange,
+                                    file_metadata = file_metadata,
+                                    incl_polarity=incl_polarity)
   }
 
   if("BPC"%in%grab_what){
     if(verbosity>1)last_time <- timeReport(last_time, text = "Reading BPC...")
-    output_data$BPC <- grabMzxmlBPC(xml_data = xml_data, rtrange=rtrange)
+    output_data$BPC <- grabMzxmlBPC(xml_data = xml_data, rtrange=rtrange,
+                                    incl_polarity=incl_polarity)
   }
 
   if("TIC"%in%grab_what){
     if(verbosity>1)last_time <- timeReport(last_time, text = "Reading TIC...")
     output_data$TIC <- grabMzxmlBPC(xml_data = xml_data, rtrange=rtrange,
+                                    incl_polarity=incl_polarity,
                                     TIC = TRUE)
   }
 
@@ -137,7 +152,8 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
     if(verbosity>1)last_time <- timeReport(last_time, text = "Extracting EIC...")
     if(!"MS1"%in%grab_what){
       init_dt <- grabMzxmlMS1(xml_data = xml_data, file_metadata = file_metadata,
-                              rtrange = rtrange, prefilter = prefilter)
+                              rtrange = rtrange, prefilter = prefilter,
+                              incl_polarity=incl_polarity)
     } else {
       init_dt <- output_data$MS1
       if(!nrow(init_dt))stop("Something weird - can't find MS1 data to subset")
@@ -155,7 +171,7 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
       }
     if(!"MS2"%in%grab_what){
       init_dt <- grabMzxmlMS2(xml_data=xml_data, file_metadata = file_metadata,
-                              rtrange=rtrange)
+                              rtrange=rtrange, incl_polarity=incl_polarity)
     } else {
       init_dt <- output_data$MS2
     }
@@ -164,6 +180,24 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
       init_dt[premz%between%pmppm(mass = mass, ppm = ppm)]
     })
     output_data$EIC_MS2 <- rbindlist(EIC_MS2_list)
+  }
+
+  if("EIC_MS3"%in%grab_what){
+    checkProvidedMzPpm(mz, ppm)
+    if(verbosity>1){
+      last_time <- timeReport(last_time, text = "Extracting EIC MS3...")
+    }
+    if(!"MS3"%in%grab_what){
+      init_dt <- grabMzxmlMS3(xml_data=xml_data, file_metadata = file_metadata,
+                              rtrange=rtrange, incl_polarity=incl_polarity)
+    } else {
+      init_dt <- output_data$MS3
+    }
+    prepremz <- NULL #To prevent R CMD check "notes"
+    EIC_MS3_list <- lapply(unique(mz), function(mass){
+      init_dt[prepremz%between%pmppm(mass = mass, ppm = ppm)]
+    })
+    output_data$EIC_MS3 <- rbindlist(EIC_MS3_list)
   }
 
   if("chroms" %in% grab_what){
@@ -245,7 +279,7 @@ grabMzxmlMetadata <- function(xml_data){
       centroided <- FALSE
     }
 
-    ms_levels <- paste0("MS", unique(xml2::xml_attr(scan_nodes, "msLevel")),
+    ms_levels <- paste0("MS", sort(unique(xml2::xml_attr(scan_nodes, "msLevel"))),
                         collapse = ", ")
 
     mz_lowest <- min(as.numeric(xml2::xml_attr(scan_nodes, "lowMz")))
@@ -328,10 +362,13 @@ grabMzxmlEncodingData <- function(xml_data){
 #'   the final object's size.
 #' @param prefilter The lowest intensity value of interest, used to reduce file
 #'   size (and especially useful for profile mode data with many 0 values)
+#' @param incl_polarity Boolean determining whether the polarity of the scan
+#'   should be returned as a column in the table (positive mode = 1, negative
+#'   mode = -1)
 #'
 #' @return A `data.table` with columns for retention time (rt), m/z (mz),
 #' and intensity (int).
-grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange, prefilter){
+grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange, prefilter, incl_polarity){
   ms1_xpath <- '//d1:scan[@msLevel="1" and @peaksCount>0]'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
 
@@ -343,9 +380,17 @@ grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange, prefilter){
 
   mz_int_vals <- grabMzxmlSpectraMzInt(ms1_nodes, file_metadata)
 
-  dt_data <- mapply(cbind, rt_vals, mz_int_vals, SIMPLIFY = FALSE)
-  dt <- as.data.table(do.call(what=rbind, dt_data))
-  names(dt) <- c("rt", "mz", "int")
+  if(incl_polarity){
+    polarity_vals <- grabMzxmlSpectraPolarity(ms1_nodes)
+    dt_data <- mapply(cbind, rt_vals, mz_int_vals, polarity_vals, SIMPLIFY = FALSE)
+    dt <- as.data.table(do.call(what=rbind, dt_data))
+    names(dt) <- c("rt", "mz", "int", "polarity")
+  } else {
+    dt_data <- mapply(cbind, rt_vals, mz_int_vals, SIMPLIFY = FALSE)
+    dt <- as.data.table(do.call(what=rbind, dt_data))
+    names(dt) <- c("rt", "mz", "int")
+  }
+
   int <- NULL #To prevent R CMD check "notes" when using data.table syntax
   dt[int>prefilter]
 }
@@ -361,15 +406,22 @@ grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange, prefilter){
 #'   retention times of interest. Providing a range here can speed up load times
 #'   (although not enormously, as the entire file must still be read) and reduce
 #'   the final object's size.
+#' @param incl_polarity Boolean determining whether the polarity of the scan
+#'   should be returned as a column in the table (positive mode = 1, negative
+#'   mode = -1)
 #'
-#' @return A `data.table` with columns for retention time (rt),  precursor m/z (mz),
+#' @return A `data.table` with columns for retention time (rt),  precursor m/z (premz),
 #' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
-grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange){
+grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange, incl_polarity){
   ms2_xpath <- '//d1:scan[@msLevel="2" and @peaksCount>0]'
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   if(!length(ms2_nodes)){
-    return(data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
-                      int=numeric(), voltage=integer()))
+    empty_dt <- data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
+                           int=numeric(), voltage=integer())
+    if(incl_polarity){
+      empty_dt$polarity <- numeric()
+    }
+    return(empty_dt)
   }
   # Remove all nodes with zero peaks
   ms2_nodes <- ms2_nodes[as.numeric(xml2::xml_attr(ms2_nodes, "peaksCount"))>0]
@@ -384,10 +436,76 @@ grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange){
   voltage_vals <- grabMzxmlSpectraVoltage(ms2_nodes)
   mz_int_vals <- grabMzxmlSpectraMzInt(ms2_nodes, file_metadata)
 
-  dt_data <- mapply(cbind, rt_vals, premz_vals, mz_int_vals,
-                    voltage_vals, SIMPLIFY = FALSE)
-  dt <- as.data.table(do.call(what=rbind, dt_data))
-  names(dt) <- c("rt", "premz", "fragmz", "int", "voltage")
+  if(incl_polarity){
+    polarity_vals <- grabMzxmlSpectraPolarity(ms2_nodes)
+    dt_data <- mapply(cbind, rt_vals, premz_vals, mz_int_vals,
+                      voltage_vals, polarity_vals, SIMPLIFY = FALSE)
+    dt <- as.data.table(do.call(what=rbind, dt_data))
+    names(dt) <- c("rt", "premz", "fragmz", "int", "voltage", "polarity")
+  } else {
+    dt_data <- mapply(cbind, rt_vals, premz_vals, mz_int_vals,
+                      voltage_vals, SIMPLIFY = FALSE)
+    dt <- as.data.table(do.call(what=rbind, dt_data))
+    names(dt) <- c("rt", "premz", "fragmz", "int", "voltage")
+  }
+  dt$voltage <- as.integer(dt$voltage)
+  dt
+}
+
+
+#' Extract the MS3 data from an mzXML nodeset
+#'
+#' @param xml_data An `xml2` nodeset, usually created by applying `read_xml` to
+#'   an mzXML file.
+#' @param file_metadata Information about the file used to decode the binary
+#'   arrays containing m/z and intensity information.
+#' @param rtrange A vector of length 2 containing an upper and lower bound on
+#'   retention times of interest. Providing a range here can speed up load times
+#'   (although not enormously, as the entire file must still be read) and reduce
+#'   the final object's size.
+#' @param incl_polarity Boolean determining whether the polarity of the scan
+#'   should be returned as a column in the table (positive mode = 1, negative
+#'   mode = -1)
+#'
+#' @return A `data.table` with columns for retention time (rt),
+#' MS1 precursor m/z (prepremz), MS2 precursor m/z (premz),
+#' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
+grabMzxmlMS3 <- function(xml_data, file_metadata, rtrange, incl_polarity){
+  ms3_xpath <- '//d1:scan[@msLevel="3" and @peaksCount>0]'
+  ms3_nodes <- xml2::xml_find_all(xml_data, ms3_xpath)
+  if(!length(ms3_nodes)){
+    empty_dt <- data.table(rt=numeric(), prepremz=numeric(), premz=numeric(),
+                           fragmz=numeric(), int=numeric(), voltage=integer())
+    if(incl_polarity){
+      empty_dt$polarity <- numeric()
+    }
+    return(empty_dt)
+  }
+  # Remove all nodes with zero peaks
+  ms3_nodes <- ms3_nodes[as.numeric(xml2::xml_attr(ms3_nodes, "peaksCount"))>0]
+
+  rt_vals <- grabMzxmlSpectraRt(ms3_nodes)
+  if(!is.null(rtrange)){
+    ms3_nodes <- ms3_nodes[rt_vals%between%rtrange]
+    rt_vals <- rt_vals[rt_vals%between%rtrange]
+  }
+
+  premz_vals <- matrix(grabMzxmlSpectraPremz(ms3_nodes), ncol=2, byrow=TRUE)
+  voltage_vals <- grabMzxmlSpectraVoltage(ms3_nodes)
+  mz_int_vals <- grabMzxmlSpectraMzInt(ms3_nodes, file_metadata)
+
+  if(incl_polarity){
+    polarity_vals <- grabMzxmlSpectraPolarity(ms3_nodes)
+    dt_data <- mapply(cbind, rt_vals, premz_vals[,2], premz_vals[,1], mz_int_vals,
+                      voltage_vals, polarity_vals, SIMPLIFY = FALSE)
+    dt <- as.data.table(do.call(what=rbind, dt_data))
+    names(dt) <- c("rt", "prepremz", "premz", "fragmz", "int", "voltage", "polarity")
+  } else {
+    dt_data <- mapply(cbind, rt_vals, premz_vals[,2], premz_vals[,1], mz_int_vals,
+                      voltage_vals, SIMPLIFY = FALSE)
+    dt <- as.data.table(do.call(what=rbind, dt_data))
+    names(dt) <- c("rt", "prepremz", "premz", "fragmz", "int", "voltage")
+  }
   dt$voltage <- as.integer(dt$voltage)
   dt
 }
@@ -406,24 +524,36 @@ grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange){
 #'   retention times of interest. Providing a range here can speed up load times
 #'   (although not enormously, as the entire file must still be read) and reduce
 #'   the final object's size.
+#' @param incl_polarity Boolean determining whether the polarity of the scan
+#'   should be returned as a column in the table (positive mode = 1, negative
+#'   mode = -1)
 #'
 #' @return A `data.table` with columns for retention time (rt), and intensity (int).
-grabMzxmlBPC <- function(xml_data, TIC=FALSE, rtrange){
+grabMzxmlBPC <- function(xml_data, TIC=FALSE, rtrange, incl_polarity){
   scan_nodes <- xml2::xml_find_all(
     xml_data, '//d1:scan[@msLevel="1"]'
   )
-  rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
-  rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
-  if(any(rt_vals>150)){rt_vals <- rt_vals/60}
+  rt_vals <- grabMzxmlSpectraRt(scan_nodes)
+  # rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
+  # rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
+  # rt_unit <- unique(gsub(".*[0-9]", "", rt_chrs))
+  # if ("S" %in% rt_unit) rt_vals <- rt_vals/60
 
   int_attr <- ifelse(TIC, "totIonCurrent", "basePeakIntensity")
   int_vals <- as.numeric(xml2::xml_attr(scan_nodes, int_attr))
+
+  pol_vals <- grabMzxmlSpectraPolarity(scan_nodes)
+
   if(!is.null(rtrange)){
     int_vals <- int_vals[rt_vals%between%rtrange]
     rt_vals <- rt_vals[rt_vals%between%rtrange]
+    if(incl_polarity){
+      pol_vals <- pol_vals[rt_vals%between%rtrange]
+    }
   }
-
-
+  if(incl_polarity){
+    return(data.table(rt=rt_vals, int=int_vals, polarity=pol_vals))
+  }
   return(data.table(rt=rt_vals, int=int_vals))
 }
 
@@ -520,6 +650,16 @@ grabMzxmlSpectraMzInt <- function(xml_nodes, file_metadata){
     matrix(final_binary, ncol = 2, byrow = TRUE)
   })
 }
+
+
+grabMzxmlSpectraPolarity <- function(xml_nodes){
+  pol_attrs <- xml2::xml_attr(xml_nodes, "polarity")
+  num_pol <- numeric(length(pol_attrs))
+  num_pol[pol_attrs=="+"] <- 1
+  num_pol[pol_attrs=="-"] <- -1
+  num_pol
+}
+
 
 
 # Other helper functions ----

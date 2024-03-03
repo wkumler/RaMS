@@ -109,7 +109,7 @@ ggplot(mini_msdata$BPC) + geom_line(aes(x=rt, y=int, color=filename)) + theme_bw
 These new files are valid according to the validator provided in MSnbase, which
 means that most programs should be able to open them, but this feature is still
 experimental and may break on quirky data. If that happens, please feel free to
-submit a bug report at 
+submit a bug report at https://github.com/wkumler/RaMS/issues.
 
 ```{r cleanminimulti, include=FALSE}
 unlink("mini_mzMLs", recursive = TRUE)
@@ -144,7 +144,7 @@ mzs_to_include <- c(mzs_to_include, 119.0899, 119.0835)
 Then, we download the raw MS data from the online repository into which it's
 been deposited.
 
-```{r download the mzXMLs, eval=FALSE}
+```{r download from MBLs, eval=FALSE}
 if(!dir.exists("vignettes/data"))dir.create("vignettes/data")
 base_url <- "ftp://ftp.ebi.ac.uk/pub/databases/metabolights/studies/public/MTBLS703/"
 chosen_files <- paste0(base_url, "170223_Smp_LB12HL_", c("AB", "CD", "EF"), "_pos.mzXML")
@@ -154,16 +154,14 @@ mapply(download.file, chosen_files, paste0("vignettes/data/", new_names),
        mode = "wb", method = "libcurl")
 ```
 
-The MSMS data wasn't uploaded, so we handle that separately by pulling it off
-the lab computer manually and copying it over to our temporary directory. If
-you're following along, you can skip this chunk or use your own DDA data.
+For MSMS data, we can also demo pulling data from MetabolomicsWorkbench:
 
-```{r get DDA, eval=FALSE}
-file.copy(from = paste0("Z:/1_QEdata/2016/2016_Katherine_1335_LightB12_",
-                        "Experiment/170223_KRH_Rerun_1335_LightB12_Exp_HILIC/",
-                        "positive/",
-                        "170223_Poo_AllCyanoAqExtracts_DDApos_2.mzXML"),
-          to = "vignettes/data/DDApos_2.mzXML", overwrite = TRUE)
+```{r download from MW, eval=FALSE}
+MW_url <- paste0(
+  "https://www.metabolomicsworkbench.org/data/file_extract_7z.php?",
+  "A=ST002830_rawdata.zip&F=TCR_081023_Fu_WorkBench%252FS30657.mzXML"
+)
+download.file(MW_url, destfile = "vignettes/data/S30657.mzXML")
 ```
 
 Then we can actually perform the minification:

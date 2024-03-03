@@ -54,25 +54,30 @@
 #'   will be silently dropped, which can dramatically reduce the size of the
 #'   final object. Currently only works with MS1 data, but could be expanded
 #'   easily to handle more.
+#' @param incl_polarity Toggle this option to TRUE for mixed-polarity files. An
+#'   additional column will be added corresponding to the polarity of the scan,
+#'   with either a 1 or a -1 corresponding to positive and negative mode,
+#'   respectively.
 #'
 #' @return A list of `data.table`s, each named after the arguments requested in
 #'   grab_what. E.g. $MS1 contains MS1 information, $MS2 contains fragmentation
 #'   info, etc. MS1 data has four columns: retention time (rt), mass-to-charge
 #'   (mz), intensity (int), and filename. MS2 data has six: retention time (rt),
 #'   precursor m/z (premz), fragment m/z (fragmz), fragment intensity (int),
-#'   collision energy (voltage), and filename. Data requested that does not
-#'   exist in the provided files (such as MS2 data requested from MS1-only
-#'   files) will return an empty (length zero) data.table. The data.tables
-#'   extracted from each of the individual files are collected into one large
-#'   table using data.table's `rbindlist`. $metadata is a little weirder because
-#'   the metadata doesn't fit neatly into a tidy format but things are hopefully
-#'   named helpfully. $chroms was added in v1.3 and contains 7 columns:
-#'   chromatogram type (usually TIC, BPC or SRM info), chromatogram index,
-#'   target mz, product mz, retention time (rt), and intensity (int). $DAD was
-#'   also added in v1.3 and contains has three columns: retention time (rt),
-#'   wavelength (lambda),and intensity (int). Data requested that does not exist
-#'   in the provided files (such as MS2 data requested from MS1-only files) will
-#'   return an empty (zero-row) data.table.
+#'   collision energy (voltage), and filename. MS3 adds an additional column to
+#'   this (prepremz) corresponding to the initial MS1 m/z targeted. Data
+#'   requested that does not exist in the provided files (such as MS2 data
+#'   requested from MS1-only files) will return an empty (length zero)
+#'   data.table. The data.tables extracted from each of the individual files are
+#'   collected into one large table using data.table's `rbindlist`. $metadata is
+#'   a little weirder because the metadata doesn't fit neatly into a tidy format
+#'   but things are hopefully named helpfully. $chroms was added in v1.3 and
+#'   contains 7 columns: chromatogram type (usually TIC, BPC or SRM info),
+#'   chromatogram index, target mz, product mz, retention time (rt), and
+#'   intensity (int). $DAD was also added in v1.3 and contains has three
+#'   columns: retention time (rt), wavelength (lambda),and intensity (int). Data
+#'   requested that does not exist in the provided files (such as MS2 data
+#'   requested from MS1-only files) will return an empty (zero-row) data.table.
 #'
 #' @export
 #'
@@ -82,30 +87,25 @@
 #' # Extract MS1 data from a couple files
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
-#' multifile_data <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
+#' multifile_data <- grabMSdata(sample_files[c(3,5,6)], grab_what="MS1")
 #'
-#' # "Stream" data from the internet (i.e. Metabolights)
-#' \dontrun{
-#' access_url <- "https://www.ebi.ac.uk/metabolights/MTBLS703/files"
-#'
-#' # URL below obtained by right-clicking site download button and copying
-#' # link address
-#' sample_url <- paste0("https://www.ebi.ac.uk/metabolights/ws/studies/",
-#'                      "MTBLS703/download/acefcd61-a634-4f35-9c3c-c572",
-#'                      "ade5acf3?file=161024_Smp_LB12HL_AB_pos.mzXML")
-#' file_data <- grabMSdata(sample_url, grab_what="everything", verbosity=2)
-#' }
 grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
-                       mz=NULL, ppm=NULL, rtrange=NULL, prefilter=-1){
+                       incl_polarity=FALSE, mz=NULL, ppm=NULL,
+                       rtrange=NULL, prefilter=-1){
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
   # Check that grab_what is one of the approved options
-  good_grabs <- c("MS1", "MS2", "EIC", "EIC_MS2", "everything", "metadata",
-                  "BPC", "TIC", "chroms", "DAD")
+  good_grabs <- c("MS1", "MS2", "MS3", "EIC", "EIC_MS2", "EIC_MS3",
+                  "everything", "metadata", "BPC", "TIC", "chroms", "DAD")
   if(any(!grab_what%in%good_grabs)){
     bad_grabs <- paste(grab_what[!grab_what%in%good_grabs], collapse = ", ")
     stop(paste0("`grab_what = ", bad_grabs, "` is not currently supported"))
+  }
+
+  # Check incl_polarity makes sense
+  if(!is.logical(incl_polarity)){
+    warning("Argument incl_polarity not TRUE or FALSE - defaulting to FALSE")
   }
 
   # Handle tmzMLs first
@@ -151,11 +151,13 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     if(grepl("\\.mzML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzmlData(filename = filename, grab_what = grab_what,
                                verbosity = verbosity, mz = mz, ppm = ppm,
-                               rtrange = rtrange, prefilter = prefilter)
+                               rtrange = rtrange, prefilter = prefilter,
+                               incl_polarity=incl_polarity)
     } else if(grepl("\\.mzXML", basename(filename), ignore.case = TRUE)){
       out_data <- grabMzxmlData(filename = filename, grab_what = grab_what,
                                 verbosity = verbosity, mz = mz, ppm = ppm,
-                                rtrange = rtrange, prefilter = prefilter)
+                                rtrange = rtrange, prefilter = prefilter,
+                                incl_polarity=incl_polarity)
     } else {
       stop(paste("Unable to determine file type for", filename))
     }
@@ -185,7 +187,7 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
   # Bind all the similar pieces together (e.g. stack MS1 from different files)
   # all_file_data_output <- Reduce(function(x,y) Map(rbind, x, y, fill=TRUE), all_file_data)
   all_file_data_output <- lapply(seq_along(all_file_data[[1]]), function(sub_index){
-    rbindlist(lapply(all_file_data, `[[`, sub_index))
+    rbindlist(lapply(all_file_data, `[[`, sub_index), fill = TRUE)
   })
   names(all_file_data_output) <- names(all_file_data[[1]])
 
@@ -247,12 +249,16 @@ checkOutputQuality <- function(output_data, grab_what){
       proper_names <- c("rt", "mz", "int", "filename")
     } else if(nms=="MS2"){
       proper_names <- c("rt", "premz", "fragmz", "int", "voltage", "filename")
+    } else if(nms=="MS3"){
+      proper_names <- c("rt", "prepremz", "premz", "fragmz", "int", "voltage", "filename")
     } else if (nms=="DAD"){
       proper_names <- c("rt", "lambda", "int", "filename")
     } else if (nms=="EIC"){
       proper_names <- c("rt", "mz", "int", "filename")
     } else if (nms=="EIC_MS2"){
       proper_names <- c("rt", "premz", "fragmz", "int", "voltage", "filename")
+    } else if (nms=="EIC_MS3"){
+      proper_names <- c("rt", "prepremz", "premz", "fragmz", "int", "voltage", "filename")
     } else if(nms=="chroms"){
       proper_names <- c("chrom_type", "chrom_index", "target_mz", "product_mz",
                         "rt", "int")
@@ -308,8 +314,8 @@ checkOutputQuality <- function(output_data, grab_what){
 #' \dontshow{data.table::setDTthreads(2)}
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_file <- list.files(sample_dir, full.names=TRUE)[3]
-#' # Get ion injection time
-#' iit_df <- grabAccessionData(sample_file, "MS:1000927")
+#' # Get highest observed m/z detected
+#' topmass_df <- grabAccessionData(sample_file, "MS:1000527")
 #' # Manually create TIC
 #' int_df <- grabAccessionData(sample_file, "MS:1000285")
 #' rt_df <- grabAccessionData(sample_file, "MS:1000016")
@@ -489,6 +495,7 @@ timeReport <- function(last_time, text=NULL){
 #' @import data.table
 #' @import utils
 #' @importFrom base64enc base64decode base64encode
+#' @importFrom stats approx
 #' @export
 data.table::between
 #' @export

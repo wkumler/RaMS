@@ -261,27 +261,10 @@ available through
 .gz) and this compression actually speeds up data retrieval
 significantly as well as reducing file sizes.
 
-Currently, `RaMS` also handles only MS<sup>1</sup> and MS<sup>2</sup>
+Currently, `RaMS` handles MS<sup>1</sup> MS<sup>2</sup>, and MS<sup>3</sup>
 data. This should be easy enough to expand in the future, but right now
 I haven’t observed a demonstrated need for higher fragmentation level
 data collection.
-
-Additionally, note that files can be streamed from the internet directly
-if a URL is provided to `grabMSdata`, although this will usually take
-longer than reading a file from disk:
-
-``` r
-## Not run:
-# Find a file with a web browser:
-browseURL("https://www.ebi.ac.uk/metabolights/MTBLS703/files")
-
-# Copy link address by right-clicking "download" button:
-sample_url <- paste0("https://www.ebi.ac.uk/metabolights/ws/studies/MTBLS703/",
-                     "download/acefcd61-a634-4f35-9c3c-c572ade5acf3?file=",
-                     "161024_Smp_LB12HL_AB_pos.mzXML")
-msdata <- grabMSdata(sample_url, grab_what="everything", verbosity=2)
-msdata$metadata
-```
 
 For an analysis of how RaMS compares to other methods of MS data access
 and alternative file types, consider browsing the [speed & size

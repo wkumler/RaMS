@@ -11,7 +11,7 @@ tmzml_filenames <- gsub(x = output_filenames, "\\.mzML.*", ".tmzML")
 mapply(tmzmlMaker, mzML_filenames[1:4], tmzml_filenames[1:4], verbosity=0)
 
 test_that("tmzML conversion warns if no spectra found", {
-  expect_warning(expect_error(tmzmlMaker(mzML_filenames[6])))
+  expect_warning(expect_error(tmzmlMaker(mzML_filenames[7])))
 })
 
 # test_that("tmzML conversion works for mzMLs", {

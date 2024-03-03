@@ -28,3 +28,13 @@ test_that("EIC mzXML extracted expected bounds", {
   expect_true(all(mzXML_EIC_data$EIC$mz < max(mz_bounds)))
 })
 
+# For the MS3 file
+test_that("EIC smaller than all_data", {
+  mzml3_EIC_data <- grabMSdata(mzML_filenames[1], grab_what = c("EIC", "EIC_MS2", "EIC_MS3"),
+                               mz = 351.0819, ppm = 10, verbosity = 2)
+  mzxml3_EIC_data <- grabMSdata(mzXML_filenames[1], grab_what = c("EIC", "EIC_MS2", "EIC_MS3"),
+                                mz = 351.0819, ppm = 10, verbosity = 2)
+
+  expect_contains(names(mzml3_EIC_data), "EIC_MS3")
+  expect_contains(names(mzml3_EIC_data$EIC_MS3), c("prepremz"))
+})

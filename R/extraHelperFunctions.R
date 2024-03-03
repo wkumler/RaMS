@@ -278,3 +278,209 @@ mz_group <- function(mz_vals, ppm, min_group_size=0, max_groups=NULL){
   mz_groups[mz_groups==0] <- NA
   mz_groups
 }
+
+
+
+
+#' Edit mzML/mzXML file retention times
+#'
+#' This function uses the basic XML parsing of RaMS to modify the retention
+#' times of MS scans within the mzML/mzXML files. This method can be useful for
+#' performing RT correction using one platform and then peakpicking and
+#' correspondence on another. The basic method is simply replacing the scan's
+#' recorded retention time value with an arbitrary one of your choosing. This
+#' function is vectorized to handle multiple files, while the internal
+#' `editMzmlRTs()` and `editMzxmlRTs()` do most of the heavy lifting. Note that
+#' the seconds vs minutes must be closely monitored here - the unit should be
+#' the same as the one in the file originally.
+#'
+#' @param files Vector of filenames (including the relative/absolute path)
+#' @param new_rt_list Nested of new retention times. One entry in the list for
+#' each file (in the same order as the files), each containing a vector of new
+#' retention times. RT vectors can be equal to either every scan or just every
+#' MS1 scan. If only the MS1 scans are provided in a file with additional MS
+#' levels, MSn scan RTs will be interpolated according to interp_method (below)
+#' @param new_filenames Vector of filenames (including relative/absolute paths)
+#' describing where the edited files should be written out. Can be the same
+#' as files but will throw a warning and append _rtcor to each file unless
+#' `overwrite = TRUE` (below)
+#' @param interp_method Either "linear" or "constant". Describes the way that
+#' MSn retention times should be handled when only the MS1 values are provided.
+#' "linear" (the default) means that the spacing will be preserved, while
+#' "constant" will use the associated MS1 scan RT for all MSn scans, allowing
+#' an easy method of linking the MSn to the MS1.
+#' @param overwrite Boolean. Controls whether files are overwritten in place
+#' if `new_filenames` is not provided.
+#'
+#' @return Invisibly, the names of the edited files.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Setup (allows running on CRAN computers)
+#' example_dir <- tempdir()
+#' rams_dir <- system.file("extdata", package = "RaMS")
+#' file.copy(list.files(rams_dir, pattern = "LB.*mzML", full.names = TRUE), example_dir)
+#' mzMLs <- list.files(example_dir, pattern = "LB.*mzML", full.names = TRUE)
+#'
+#' library(xcms)
+#' library(RaMS)
+#'
+#' register(SerialParam())
+#' xcms_obj <- readMSData(mzMLs, msLevel. = 1, mode = "onDisk")
+#' cwp <- CentWaveParam(ppm = 5, peakwidth = c(20, 80))
+#' xcms_peakpicked <- findChromPeaks(xcms_obj, param = cwp)
+#' xcms_rtcor <- adjustRtime(xcms_peakpicked, param = ObiwarpParam())
+#'
+#' # Extract the adjusted RTs from the XCMS object
+#' new_rts <- split(rtime(xcms_rtcor)/60, fromFile(xcms_rtcor))
+#' # Apply the retention time correction to the new files
+#' mzMLs_rtcor <- editMSfileRTs(mzMLs, new_rt_list = new_rts)
+#'
+#' # Contrast the two chromatograms to see the peaks aligned
+#' qplotMS1data(grabMSdata(mzMLs)$MS1[mz%between%pmppm(104.1073, 10)])
+#' qplotMS1data(grabMSdata(mzMLs_rtcor)$MS1[mz%between%pmppm(104.1073, 10)])
+#'
+#' # Cleanup
+#' file.remove(mzMLs)
+#' file.remove(mzMLs_rtcor)
+#' }
+editMSfileRTs <- function(files, new_rt_list, new_filenames=NULL,
+                          interp_method="linear", overwrite=FALSE){
+  existing_files <- file.exists(files)
+  if(!all(existing_files)){
+    stop_msg <- paste0(
+      "Not all files found, missing\n",
+      paste(files[!existing_files], collapse = "\n")
+    )
+    stop(stop_msg)
+  }
+  if(length(files)!=length(new_rt_list)){
+    stop("'files' and 'new_rt_list' must be the same length")
+  }
+  if(is.null(new_filenames))new_filenames <- files
+  if(any(new_filenames%in%files) & overwrite==FALSE){
+    warn_msg <- paste0(
+      "New files would overwrite existing files with overwrite=FALSE\n",
+      "Appending _rtcor to each"
+    )
+    warning(warn_msg)
+    new_filenames <- gsub("\\.(?=mzX?ML)", replacement = "_rtcor\\.",
+                          new_filenames, perl = TRUE)
+  }
+  if(length(files)!=length(new_rt_list)){
+    stop("'files' and 'new_rt_list' must be the same length")
+  }
+
+  mzML_file_idxs <- grep("\\.mzML(\\.gz)?$", files)
+  mapply(editMzmlRTs, files[mzML_file_idxs], new_filenames[mzML_file_idxs],
+         new_rt_list[mzML_file_idxs], interp_method)
+
+  mzXML_file_idxs <- grep("\\.mzXML(\\.gz)?$", files)
+  mapply(editMzxmlRTs, files[mzXML_file_idxs], new_filenames[mzXML_file_idxs],
+         new_rt_list[mzXML_file_idxs], interp_method)
+
+  invisible(new_filenames)
+}
+editMzmlRTs <- function(filename, output_filename, new_rts, interp_method="linear"){
+  xml_data <- xml2::read_xml(filename)
+  checkFileType(xml_data, "mzML")
+  scan_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level"]]'
+  scan_nodes <- xml2::xml_find_all(xml_data, scan_xpath)
+
+  if(length(scan_nodes)==length(new_rts)){
+    new_rt_vals <- new_rts
+  } else {
+    ms1_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level" and @value="1"]]'
+    ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
+
+    if(length(ms1_nodes)!=length(new_rts)){
+      stop_msg <- paste0(
+        "new_rts must be equal in length to either the total number of scans (",
+        length(scan_nodes), ") or the number of MS1 scans (", length(ms1_nodes),
+        ") but does not seem to match either (length = ", length(new_rts), ")"
+      )
+      stop(stop_msg)
+    }
+
+    rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
+    all_rt_nodes <- xml2::xml_find_all(scan_nodes, rt_xpath)
+    all_init_rts <- as.numeric(xml2::xml_attr(all_rt_nodes, "value"))
+    ms1_rt_nodes <- xml2::xml_find_all(ms1_nodes, rt_xpath)
+    ms1_init_rts <- as.numeric(xml2::xml_attr(ms1_rt_nodes, "value"))
+
+    new_rt_vals <- approx(x = ms1_init_rts, y = new_rts, xout = all_init_rts,
+                          method=interp_method)$y
+  }
+
+  rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
+  rt_nodes <- xml2::xml_find_all(scan_nodes, rt_xpath)
+  xml2::xml_attr(rt_nodes, "value") <- new_rt_vals
+
+  # Add note that RaMS was used to edit RTs (stolen from minifyMSFunctions.R)
+  proclist_node <- xml2::xml_find_all(xml_data, "//d1:dataProcessingList")
+  xml2::xml_add_child(proclist_node, "dataProcessing", id="RaMS_R_package")
+  proc_node <- xml2::xml_find_all(proclist_node, '//dataProcessing[@id="RaMS_R_package"]')
+  xml2::xml_add_child(proc_node, "processingMethod", order=0, softwareRef="RaMS")
+  meth_node <- xml2::xml_find_all(proclist_node, '//processingMethod[@order="0"]')
+  xml2::xml_add_child(meth_node, "userParam", cvRef="MS", accession="MS:1009003",
+                      name="RT editing via RaMS", value="")
+  process_count <- as.numeric(xml2::xml_attr(proclist_node, "count"))+1
+  xml2::xml_attr(proclist_node, "count") <- process_count
+  softlist_node <- xml2::xml_find_all(xml_data, "//d1:softwareList")
+  xml2::xml_add_child(softlist_node, "software", id="RaMS",
+                      version=as.character(packageVersion("RaMS")))
+  soft_node <- xml2::xml_find_all(softlist_node, 'software[@id="RaMS"]')
+  xml2::xml_add_child(soft_node, "userParam", name="RaMS R package")
+  software_count <- as.numeric(xml2::xml_attr(softlist_node, "count"))+1
+  xml2::xml_attr(softlist_node, "count") <- software_count
+
+  # Write the file out
+  xml2::write_xml(xml_data, file = output_filename)
+}
+editMzxmlRTs <- function(filename, output_filename, new_rts, interp_method="linear"){
+  xml_data <- xml2::read_xml(filename)
+  checkFileType(xml_data, "mzXML")
+  scan_xpath <- '//d1:scan'
+  scan_nodes <- xml2::xml_find_all(xml_data, scan_xpath)
+
+  if(length(scan_nodes)==length(new_rts)){
+    new_rt_vals <- new_rts
+  } else {
+    ms1_xpath <- '//d1:scan[@msLevel="1" and @peaksCount>0]'
+    ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
+
+    if(length(ms1_nodes)!=length(new_rts)){
+      stop_msg <- paste0(
+        "new_rts must be equal in length to either the total number of scans (",
+        length(scan_nodes), ") or the number of MS1 scans (", length(ms1_nodes),
+        ") but does not seem to match either (length = ", length(new_rts), ")"
+      )
+      stop(stop_msg)
+    }
+
+    all_rt_attrs <- xml2::xml_attr(scan_nodes, "retentionTime")
+    all_init_prefixes <- gsub("[0-9].*", "", all_rt_attrs)
+    all_init_suffixes <- gsub(".*[0-9]", "", all_rt_attrs)
+    all_init_rts <- as.numeric(gsub("PT|S", "", all_rt_attrs))
+    ms1_rt_attrs <- xml2::xml_attr(ms1_nodes, "retentionTime")
+    ms1_init_rts <- as.numeric(gsub("PT|S", "", ms1_rt_attrs))
+
+    new_rt_vals <- approx(x = ms1_init_rts, y = new_rts, xout = all_init_rts,
+                          method=interp_method)$y
+    new_rt_vals <- paste0(all_init_prefixes, new_rt_vals, all_init_suffixes)
+  }
+
+  rt_nodes <- xml2::xml_find_all(scan_nodes, scan_xpath)
+  xml2::xml_attr(rt_nodes, "retentionTime") <- new_rt_vals
+
+  # Add note that RaMS was used to edit RTs (stolen from minifyMSFunctions.R)
+  proclist_node <- xml2::xml_find_all(xml_data, "//d1:dataProcessing")
+  xml2::xml_add_sibling(proclist_node, "dataProcessing")
+  proc_node <- xml2::xml_find_first(xml_data, "//dataProcessing")
+  xml2::xml_add_child(proc_node, "software", type="RT editing", name="RaMS",
+                      version=as.character(packageVersion("RaMS")))
+
+  # Write the file out
+  xml2::write_xml(xml_data, file = output_filename)
+}

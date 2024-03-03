@@ -4,7 +4,7 @@
 \alias{grabMzxmlMS2}
 \title{Extract the MS2 data from an mzXML nodeset}
 \usage{
-grabMzxmlMS2(xml_data, file_metadata, rtrange)
+grabMzxmlMS2(xml_data, file_metadata, rtrange, incl_polarity)
 }
 \arguments{
 \item{xml_data}{An `xml2` nodeset, usually created by applying `read_xml` to
@@ -17,9 +17,13 @@ arrays containing m/z and intensity information.}
 retention times of interest. Providing a range here can speed up load times
 (although not enormously, as the entire file must still be read) and reduce
 the final object's size.}
+
+\item{incl_polarity}{Boolean determining whether the polarity of the scan
+should be returned as a column in the table (positive mode = 1, negative
+mode = -1)}
 }
 \value{
-A `data.table` with columns for retention time (rt),  precursor m/z (mz),
+A `data.table` with columns for retention time (rt),  precursor m/z (premz),
 fragment m/z (fragmz), collision energy (voltage), and intensity (int).
 }
 \description{
