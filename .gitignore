@@ -5,6 +5,8 @@
 
 *.mzML
 *.mzXML
+*.sqlite
+*.parquet
 
 .Rproj.user
 README.Rmd

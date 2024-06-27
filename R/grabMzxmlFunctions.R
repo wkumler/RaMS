@@ -638,17 +638,22 @@ grabMzxmlSpectraVoltage <- function(xml_nodes){
 
 grabMzxmlSpectraMzInt <- function(xml_nodes, file_metadata){
   all_peak_nodes <- xml2::xml_text(xml2::xml_find_all(xml_nodes, xpath = "d1:peaks"))
-  vals <- lapply(all_peak_nodes, function(binary){
+  init_peak_encs <- xml2::xml_attr(xml2::xml_find_all(xml_nodes, xpath = "d1:peaks"), "compressionType")
+  all_peak_encs <- rep("none", length(init_peak_encs))
+  all_peak_encs[init_peak_encs=="zlib"] <- "gzip"
+  all_peak_encs[init_peak_encs=="zlib compression"] <- "gzip"
+
+  vals <- mapply(function(binary, encoding_i){
     if(!nchar(binary))return(matrix(ncol = 2, nrow = 0))
     decoded_binary <- base64enc::base64decode(binary)
     raw_binary <- as.raw(decoded_binary)
-    decomp_binary <- memDecompress(raw_binary, type = file_metadata$compression)
+    decomp_binary <- memDecompress(raw_binary, type = encoding_i)
     final_binary <- readBin(decomp_binary, what = "numeric",
                             n=length(decomp_binary)/file_metadata$precision,
                             size = file_metadata$precision,
                             endian = file_metadata$endi_enc)
     matrix(final_binary, ncol = 2, byrow = TRUE)
-  })
+  }, all_peak_nodes, all_peak_encs)
 }
 
 
