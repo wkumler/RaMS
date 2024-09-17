@@ -283,7 +283,8 @@ grabMzmlMetadata <- function(xml_data){
   time_node <- xml2::xml_find_first(xml_data, xpath = "//d1:run")
   time_val <- xml2::xml_attr(time_node, "startTimeStamp")
   if(!is.na(time_val)){
-    time_stamp <- as.POSIXct(strptime(time_val, "%Y-%m-%dT%H:%M:%SZ"))
+    time_val <- sub("Z$", "+0000", time_val)
+    time_stamp <- as.POSIXct(strptime(time_val, "%Y-%m-%dT%H:%M:%S%z", tz="UTC"))
   } else {
     time_stamp <- as.POSIXct(NA)
   }
