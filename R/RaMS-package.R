@@ -12,7 +12,7 @@
 #' alias `%between%`) imported from `data.table`.
 #'
 #' See the package intro on GitHub at https://github.com/wkumler/RaMS and
-#' explore the vignettes with \code{vignette("help", package = "mypkg")}
+#' explore the vignette with \code{vignette("Intro-to-RaMS", package = "RaMS")}
 #'
 #' @keywords internal
 "_PACKAGE"

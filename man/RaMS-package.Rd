@@ -21,7 +21,7 @@ small helper functions are also included, \code{\link[=pmppm]{pmppm()}} and \cod
 alias \verb{\%between\%}) imported from \code{data.table}.
 
 See the package intro on GitHub at https://github.com/wkumler/RaMS and
-explore the vignettes with \code{vignette("help", package = "mypkg")}
+explore the vignette with \code{vignette("Intro-to-RaMS", package = "RaMS")}
 }
 \seealso{
 Useful links:
