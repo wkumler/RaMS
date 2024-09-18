@@ -447,7 +447,7 @@ ggsave("vignettes/figures/ssc_vignette_renders/query_time_gp.png", width = 6.5, 
 
 ![](../vignettes/figures/ssc_vignette_renders/query_time_gp.png){width=100%}
 
-There's a few surprises in the above plot. Most notably, the incredible speed of the mz-indexed SQL database. It's apparently faster to query the database and read that data into R than it is to index through the big RaMS object entirely within memory. That's a pretty darn compelling reason to switch to SQL databases (although note the importance of indexing them - the non-indexed one took 100x longer!). Side note: I originally expected this to be quite slow because I previously *thought* I was creating an index on the mz data using `dbExecute` instead of `dbSendQuery` but apparently that's not how the function works. This actually disagrees with a [similar comparison](https://bioconductor.org/packages/release/bioc/vignettes/MsBackendSql/inst/doc/MsBackendSql.html#4_Performance_comparison_with_other_backends) done by the Spectra package that found the SQL backend to be consistently slower than the in-memory option. This result was so unexpected that I wrote a quick followup to double-check and can confirm that in real time the SQL query felt just as fast as the RaMS object. Wild.
+There's a few surprises in the above plot. Most notably, the incredible speed of the mz-indexed SQLite database. It's apparently faster to query the database and read that data into R than it is to index through the big RaMS object entirely within memory. That's a pretty darn compelling reason to switch to SQL databases (although note the importance of indexing them - the non-indexed one took 100x longer!). Side note: I originally expected this to be quite slow because I previously *thought* I was creating an index on the mz data using `dbExecute` instead of `dbSendQuery` but apparently that's not how the function works. This actually disagrees with a [similar comparison](https://bioconductor.org/packages/release/bioc/vignettes/MsBackendSql/inst/doc/MsBackendSql.html#4_Performance_comparison_with_other_backends) done by the Spectra package that found the SQL backend to be consistently slower than the in-memory option. This result was so unexpected that I wrote a quick followup to double-check and can confirm that in real time the SQL query felt faster than the RaMS object. DuckDB is nearly as good as SQLite and has some other advantages discussed later.
 
 ```{r double-check sql_idx vs RaMS}
 MSdb_idx <- dbConnect(RSQLite::SQLite(), "vignettes/figures/ssc_vignette_renders/MSdata_idx.sqlite")
@@ -459,7 +459,7 @@ dbGetQuery(MSdb_idx, EIC_query, params = query_params) %>% qplotMS1data()
 rams_obj$MS1[mz%between%pmppm(432.2810, ppm = 20)] %>% qplotMS1data()
 ```
 
-Also surprising is the performance of the tmzMLs - I thought they'd do much worse and instead they're about on par with the arrow method. I'm pleasantly surprised that my hacky file type can compete at all. Of course, up at the top are the traditional MS formats. They're not designed for this or optimized for chromatogram extraction at all so it's not especially surprising that they struggle, but the graph does also nicely show the improved performance of more recent versions over older ones.
+Of course, up at the top are the traditional MS formats. They're not designed for this or optimized for chromatogram extraction at all so it's not especially surprising that they struggle, but the graph does also nicely show the improved performance of more recent versions over older ones.
 
 #### Multiple chromatograms
 
@@ -557,7 +557,10 @@ multichrom_timings <- microbenchmark(
   times = 10
 )
 saveRDS(multichrom_timings, "vignettes/figures/ssc_vignette_renders/multichrom_timings.rds")
+```
 
+
+```{r multichrom query plot}
 multichrom_timings <- readRDS("vignettes/figures/ssc_vignette_renders/multichrom_timings.rds")
 multichrom_timings %>%
   as.data.frame() %>%
@@ -567,7 +570,7 @@ multichrom_timings %>%
   mutate(expr=factor(expr, levels=c("rams", "arrow", "sql", "duckdb"),
                      labels=c("RaMS", "Arrow", "SQL", "DuckDB"))) %>%
   mutate(query_type=factor(query_type, levels=c("uni", "loop"),
-                           labels=c("Unified query", "Query loop"))) %>%
+                           labels=c("Unified query", "Loop"))) %>%
   ggplot() + 
   geom_boxplot(aes(x=query_type, y=time/1e9), lwd=1) +
   facet_wrap(~expr, nrow=1) +
@@ -579,7 +582,7 @@ ggsave("vignettes/figures/ssc_vignette_renders/multichrom_gp.png", width = 6.5, 
 
 ![](../vignettes/figures/ssc_vignette_renders/multichrom_gp.png){width=100%}
 
-Once again the indexed SQL database blows the others out of the water, with the unified query performing ~10x better in SQL than Arrow and ~100x better than RaMS. Curiously, the unified query actually takes *longer* when processed via RaMS/data.table than looping. Good to know.
+The indexed SQL database remains about an order of magnitude faster than Arrow and nearly 100x faster than RaMS. DuckDB competes pretty well with SQLite and much prefers looping, much like RaMS does, which is a little surprising to me. Good to know.
 
 ## MS object sizing info
 
@@ -654,8 +657,8 @@ size_list %>%
   mutate(mem_type=factor(mem_type, levels=c("Memory", "Disk"))) %>%
   mutate(expr=factor(expr, levels=c("msnexp", "ondisk", "spectra", "rams",
                                     "tmzml", "arrow", "sql", "sqlidx", "msduck"),
-                     labels=c("MSnExp", "OnDiskMSnExp", "Spectra", "RaMS",
-                              "tmzMLs", "Arrow", "SQL", "SQL (indexed)", "DuckDB"))) %>%
+                     labels=c("MSnExp", "OnDisk\nMSnExp", "Spectra", "RaMS",
+                              "tmzMLs", "Arrow", "SQL", "SQL\n(indexed)", "DuckDB"))) %>%
   ggplot() +
   geom_hline(yintercept = size_list$mzXML/(1024^3)) +
   geom_point(aes(x=expr, y=bytes/(1024^3))) +
@@ -672,9 +675,9 @@ Unsurprisingly, the SQL databases are massive, weighing in at 5-10x the size of 
 
 ## Summary
 
-I started out this project because I'd recently learned about `arrow` and was blown away by how fast it was while still remaining essentially memory-free. At the end of it, I think there's more nuance than I was really expecting, though there are a few clear losers. The MSnExp objects should be almost never used, as they're dominated pretty clearly by the OnDisk equivalent. The Spectra package provides even more improvement on this but extracting a chromatogram is more obnoxious and you're still dealing with a complicated S4 object instead of an intuitive data frame. Similarly, the tmzMLs seem to be unilaterally worse than `arrow`, with access at-best equivalent and a make time much larger. Arrow also plays nicely with `dplyr` commands and has good performance when requesting multiple EICs, though longtime RaMS users may find the intuitive syntax of the tmzMLs (and progress bar!) friendlier as long as they don't need to extract more than a single chromatogram.
+I started out this project because I'd recently learned about `arrow` and was blown away by how fast it was while still remaining essentially memory-free. At the end of it, I think there's more nuance than I was really expecting, though there are a few clear losers. The MSnExp objects should be almost never used, as they're dominated pretty clearly by the OnDisk equivalent. The Spectra package provides even more improvement on this but extracting a chromatogram is more obnoxious and you're still dealing with a complicated S4 object instead of an intuitive data frame. Similarly, the tmzMLs seem to be unilaterally worse than `arrow`, with slower access and a make time much larger. Arrow also plays nicely with `dplyr` commands and has good performance when requesting multiple EICs, though longtime RaMS users may find the intuitive syntax of the tmzMLs (and progress bar!) friendlier as long as they don't need to extract more than a single chromatogram. Since then, I found also stumbled across DuckDB which seems to be a faster (but fatter) version of Arrow.
 
-In general, it seems to come down more to the size of the dataset than anything else. If your dataset is small (<1GB) or you're only loading a small-ish subset of it, RaMS is the go-to. If it's larger than memory but not enormous (10-100GB), Arrow and SQL seem like good contenders. The SQL database size ballooned scarily (but had insanely fast access times) while Arrow provided a file size reduction and more familiar syntax. For truly large datasets (100GB+) I can't imagine using anything but the OnDisk or Spectra infrastructure because it's just not worth trying to duplicate the dataset at all, so reading the data out of the files is the only real option. Of course, if you're looking at data that large then you may actually come all the way back around to Arrow or SQL anyway so you can host the data in the cloud or on a cluster instead of on a personal computer.
+In general, it seems to come down more to the size of the dataset than anything else. If your dataset is small (<1GB) or you're only loading a small-ish subset of it, RaMS is the go-to. If it's larger than memory but not enormous (10-100GB), Arrow, DuckDB, and SQLite seem like good contenders. The SQL database size ballooned scarily (but had insanely fast access times) while Arrow provided a file size reduction and more familiar syntax. For truly large datasets (100GB+) I can't imagine using anything but the OnDisk or Spectra infrastructure because it's just not worth trying to duplicate the dataset at all, so reading the data out of the files is the only real option. Of course, if you're looking at data that large then you may actually come all the way back around to the database solutions anyway so you can host the data in the cloud or on a cluster instead of on a personal computer.
 
 ```{r summary plot}
 make_timings <- readRDS("vignettes/figures/ssc_vignette_renders/make_timings.rds")
