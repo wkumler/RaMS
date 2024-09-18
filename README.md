@@ -74,7 +74,9 @@ msdata <- grabMSdata(files = msdata_files[2:4], grab_what = c("BPC", "MS1"))
 
 Some additional examples can be found below, but a more thorough
 introduction can be found in [the
-vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Intro-to-RaMS.html).
+vignette](https://cran.r-project.org/web/packages/RaMS/vignettes/Intro-to-RaMS.html)
+or by typing `vignette("Intro-to-RaMS", package = "RaMS")` in the R
+console after installation.
 
 #### BPC/TIC data:
 
@@ -101,11 +103,6 @@ plot(msdata$BPC$rt, msdata$BPC$int, type = "l", ylab="Intensity")
 
 ``` r
 library(ggplot2)
-```
-
-    ## Warning: package 'ggplot2' was built under R version 4.4.1
-
-``` r
 ggplot(msdata$BPC) + geom_line(aes(x = rt, y=int, color=filename)) +
   facet_wrap(~filename, scales = "free_y", ncol = 1) +
   labs(x="Retention time (min)", y="Intensity", color="File name: ") +
@@ -268,7 +265,7 @@ knitr::kable(head(chromsdata$chroms, 3))
 
 As of version 1.1.0, `RaMS` has functions that allow irrelevant data to
 be removed from the file to reduce file sizes. See the
-[vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Minifying-files-with-RaMS.html)
+[vignette](https://cran.r-project.org/web/packages/RaMS/vignettes/Minifying-files-with-RaMS.html)
 for more details.
 
 #### tmzML documents
@@ -276,11 +273,11 @@ for more details.
 Version 1.2.0 of RaMS introduced a new file type, the “transposed mzML”
 or “tmzML” file to resolve the large memory requirement when working
 with many files. See [the
-vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Intro-to-tmzML.html)
+vignette](https://cran.r-project.org/web/packages/RaMS/vignettes/Intro-to-tmzML.html)
 for more details, though note that I’ve largely deprecated this file
 type in favor of proper database solutions as in the [speed & size
 comparison
-vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/speed_size_comparison.html).
+vignette](https://cran.r-project.org/web/packages/RaMS/vignettes/speed_size_comparison.html).
 
 ## File types
 
@@ -318,7 +315,7 @@ msdata$metadata
 For an analysis of how RaMS compares to other methods of MS data access
 and alternative file types, consider browsing the [speed & size
 comparison
-vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/speed_size_comparison.html).
+vignette](https://cran.r-project.org/web/packages/RaMS/vignettes/speed_size_comparison.html).
 
 ## Contact
 
