@@ -1,5 +1,9 @@
 # RaMS (development version)
 
+# RaMS 1.4.1
+ - Added timezone support to metadata's timestamps (mzML files are all UTC)
+ - Fixed several bugs in the README and vignettes (it's been a minute since I recompiled these!)
+
 # RaMS 1.4
  - Added MS3 support to file reading and minification
    - MS3 data is not automatically requested with "everything" (the default) and must instead be added (e.g. `grab_what=c("everything", "MS3")`)
