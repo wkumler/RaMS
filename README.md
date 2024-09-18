@@ -101,6 +101,11 @@ plot(msdata$BPC$rt, msdata$BPC$int, type = "l", ylab="Intensity")
 
 ``` r
 library(ggplot2)
+```
+
+    ## Warning: package 'ggplot2' was built under R version 4.4.1
+
+``` r
 ggplot(msdata$BPC) + geom_line(aes(x = rt, y=int, color=filename)) +
   facet_wrap(~filename, scales = "free_y", ncol = 1) +
   labs(x="Retention time (min)", y="Intensity", color="File name: ") +
@@ -214,30 +219,55 @@ For example, we may be interested in the major fragments of a specific
 molecule:
 
 ``` r
-msdata$MS2[premz%between%pmppm(118.0865) & int>mean(int)] %>%
+msdata$MS2[premz%between%pmppm(351.0817) & int>mean(int)] %>%
   plot(int~fragmz, type="h", data=., ylab="Intensity", xlab="Fragment m/z")
 ```
 
 ![](man/figures/README-plotfragdata-1.png)<!-- -->
 
-Or want to search for precursors with a specific neutral loss:
+Or want to search for precursors with a specific neutral loss above a
+certain intensity:
 
 ``` r
-msdata$MS2[, neutral_loss:=premz-fragmz] %>%
-  filter(neutral_loss%between%pmppm(60.02064, 5)) %>%
+msdata$MS2[, neutral_loss:=premz-fragmz][int>1e4] %>%
+  filter(neutral_loss%between%pmppm(126.1408, 5)) %>%
   head(3) %>% knitr::kable()
 ```
 
-|       rt |    premz |   fragmz |        int | voltage | filename         | neutral_loss |
-|---------:|---------:|---------:|-----------:|--------:|:-----------------|-------------:|
-| 4.182333 | 118.0864 | 58.06590 | 390179.500 |      35 | DDApos_2.mzML.gz |     60.02055 |
-| 4.276100 | 116.0709 | 56.05036 |   1093.988 |      35 | DDApos_2.mzML.gz |     60.02050 |
-| 4.521367 | 118.0864 | 58.06589 | 343084.000 |      35 | DDApos_2.mzML.gz |     60.02056 |
+|       rt |    premz |   fragmz |      int | voltage | filename                               | neutral_loss |
+|---------:|---------:|---------:|---------:|--------:|:---------------------------------------|-------------:|
+| 47.27750 | 351.0817 | 224.9409 | 16333.23 |      40 | Blank_129I_1L_pos_20240207-MS3.mzML.gz |     126.1408 |
+| 47.35267 | 351.0818 | 224.9410 | 27353.09 |      40 | Blank_129I_1L_pos_20240207-MS3.mzML.gz |     126.1408 |
+| 47.42767 | 351.0818 | 224.9410 | 33843.92 |      40 | Blank_129I_1L_pos_20240207-MS3.mzML.gz |     126.1408 |
+
+#### SRM/MRM data
+
+Selected/multiple reaction monitoring files don’t have data stored in
+the typical MSn format but instead encode their values as chromatograms.
+To extract data in this format, include `"chroms"` in the `grab_what`
+argument:
+
+``` r
+chromsdata <- grabMSdata(files = msdata_files[7], grab_what = "chroms", verbosity = 0)
+```
+
+which has individual reactions separated by the `chrom_type` column (and
+the associated index) with relevant target/fragment data:
+
+``` r
+knitr::kable(head(chromsdata$chroms, 3))
+```
+
+| chrom_type | chrom_index | target_mz | product_mz |       rt | int | filename         |
+|:-----------|:------------|----------:|-----------:|---------:|----:|:-----------------|
+| TIC        | 0           |        NA |         NA | 2.000000 |   0 | wk_chrom.mzML.gz |
+| TIC        | 0           |        NA |         NA | 2.048077 |   0 | wk_chrom.mzML.gz |
+| TIC        | 0           |        NA |         NA | 2.096154 |   0 | wk_chrom.mzML.gz |
 
 #### Minifying MS files
 
-As of version 1.1.0, `RaMS` also has functions that allow irrelevant
-data to be removed from the file to reduce file sizes. See the
+As of version 1.1.0, `RaMS` has functions that allow irrelevant data to
+be removed from the file to reduce file sizes. See the
 [vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Minifying-files-with-RaMS.html)
 for more details.
 
@@ -247,24 +277,43 @@ Version 1.2.0 of RaMS introduced a new file type, the “transposed mzML”
 or “tmzML” file to resolve the large memory requirement when working
 with many files. See [the
 vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Intro-to-tmzML.html)
-for more details.
+for more details, though note that I’ve largely deprecated this file
+type in favor of proper database solutions as in the [speed & size
+comparison
+vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/speed_size_comparison.html).
 
 ## File types
 
 RaMS is currently limited to the modern **mzML** data format and the
-slightly older **mzXML** format, as well as the custom [**tmzML**
-format](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Intro-to-tmzML.html)
-as of version 1.2.0. Tools to convert data from other formats are
-available through
+slightly older **mzXML** format. Tools to convert data from other
+formats are available through
 [Proteowizard’s](https://proteowizard.sourceforge.io/tools/msconvert.html)
 `msconvert` tool. Data can, however, be gzip compressed (file ending
 .gz) and this compression actually speeds up data retrieval
 significantly as well as reducing file sizes.
 
-Currently, `RaMS` handles MS<sup>1</sup> MS<sup>2</sup>, and MS<sup>3</sup>
-data. This should be easy enough to expand in the future, but right now
-I haven’t observed a demonstrated need for higher fragmentation level
-data collection.
+Currently, `RaMS` handles MS<sup>1</sup>, MS<sup>2</sup>, and
+MS<sup>3</sup> data. This should be easy enough to expand in the future,
+but right now I haven’t observed a demonstrated need for higher
+fragmentation level data collection.
+
+Additionally, note that files can be streamed from the internet directly
+if a URL is provided to `grabMSdata`, although this will usually take
+longer than reading a file from disk:
+
+``` r
+## Not run:
+# Find a file with a web browser:
+browseURL("https://www.ebi.ac.uk/metabolights/MTBLS703/files")
+
+# Copy link address by right-clicking "download" button:
+sample_url <- paste0("https://www.ebi.ac.uk/metabolights/ws/studies/MTBLS703/",
+                     "download/acefcd61-a634-4f35-9c3c-c572ade5acf3?file=",
+                     "FILES/161024_Smp_LB12HL_AB_pos.mzXML")
+
+msdata <- grabMSdata(sample_url, grab_what="everything", verbosity=2)
+msdata$metadata
+```
 
 For an analysis of how RaMS compares to other methods of MS data access
 and alternative file types, consider browsing the [speed & size
@@ -278,4 +327,4 @@ Issues page](https://github.com/wkumler/RaMS/issues).
 
 ------------------------------------------------------------------------
 
-README last built on 2023-11-29
+README last built on 2024-09-17
