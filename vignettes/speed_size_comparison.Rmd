@@ -626,12 +626,13 @@ MSdb_idx <- dbConnect(RSQLite::SQLite(), "vignettes/figures/ssc_vignette_renders
 rs <- dbSendQuery(MSdb_idx, "CREATE INDEX mz ON MS1 (mz)")
 dbClearResult(rs)
 dbDisconnect(MSdb_idx)
-size_list$MSdb_idx <- file.size("vignettes/figures/ssc_vignette_renders/MSdata_idx.sqlite")
+size_list$MSdb_idx <- file.size("vignettes/figures/ssc_vignette_renders/MSdata.sqlite")
 unlink("vignettes/figures/ssc_vignette_renders/MSdata.sqlite")
 
 msduck <- dbConnect(duckdb::duckdb(), "vignettes/figures/ssc_vignette_renders/duckdb")
 dbWriteTable(msduck, "MS1", rams_obj$MS1[order(mz)], overwrite=TRUE)
 size_list$msduck <- file.size("vignettes/figures/ssc_vignette_renders/duckdb")
+dbDisconnect(msduck)
 unlink("vignettes/figures/ssc_vignette_renders/duckdb")
 
 saveRDS(size_list, "vignettes/figures/ssc_vignette_renders/size_list.rds")
