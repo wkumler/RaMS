@@ -21,3 +21,8 @@ test_that("warning thrown when requesting chroms from mzXML", {
   expect_warning(grabMSdata(mzXML_filenames[2], grab_what = "chroms"),
                  regexp = "grab_what = 'chroms' not available for mzXML documents")
 })
+
+test_that("time stamp is correct", {
+  expect_identical(msdata_MRM_everything$metadata$timestamp,
+                   as.POSIXct("2022-08-11 12:34:56",tz="UTC"))
+})

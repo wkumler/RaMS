@@ -1,7 +1,7 @@
 Package: RaMS
 Type: Package
 Title: R Access to Mass-Spec Data
-Version: 1.4.0
+Version: 1.4.1
 Authors@R: c(
   person(given = "William", family = "Kumler", email = "wkumler@uw.edu",
          role = c("aut", "cre", "cph")),
@@ -26,7 +26,7 @@ Imports:
     data.table,
     utils,
     stats
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Suggests: 
     testthat,
     knitr,

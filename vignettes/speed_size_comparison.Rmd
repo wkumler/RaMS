@@ -58,7 +58,7 @@ ms_files <- list.files("vignettes/figures/ssc_vignette_renders/Sample/", full.na
 
 ## Intro
 
-As noted in the [RaMS and friends vignette](https://htmlpreview.github.io/?https://github.com/wkumler/RaMS/blob/master/doc/Minifying-files-with-RaMS.html), one of the major strengths of the 'tidy' data format is how nicely it plays with other packages, allowing for the use of powerful packages that can't normally be applied to MS data. After playing with a few different ones I wanted to do some structured benchmarking to see which is the best use case for various situations.
+As noted in the [RaMS and friends vignette](https://cran.r-project.org/web/packages/RaMS/vignettes/Minifying-files-with-RaMS.html), one of the major strengths of the 'tidy' data format is how nicely it plays with other packages, allowing for the use of powerful packages that can't normally be applied to MS data. After playing with a few different ones I wanted to do some structured benchmarking to see which is the best use case for various situations.
 
 The general constraints I'm interested in are speed and space, with a minor consideration for simplicity afterward. My question of interest is how costly in these areas access to the MS data is, a process that can be broken down into two relevant steps - the transformation of the MS data from mz(X)ML format into a queryable format, and then the actual query itself. The query itself is relatively straightforward and can be measured in just the amount of time it takes, but the transformation has a caveat that it can be stored either in memory (and therefore must be recreated every time R is restarted) or it can be stored on disk (which is robust across restarts). So I'm interested in
 
@@ -235,11 +235,11 @@ make_timings <- microbenchmark(
   tmzml_make_fun(), arrow_make_fun(), sql_make_fun(), sqlidx_make_fun(), 
   duckdb_make_fun(),
   times = 10)
-saveRDS(make_timings, "vignettes/figures/ssc_vignette_renders/make_timings.rds")
+write_csv(make_timings, "vignettes/figures/ssc_vignette_renders/make_timings.csv")
 ```
 
 ```{r plot time2make}
-make_timings <- readRDS("vignettes/figures/ssc_vignette_renders/make_timings.rds")
+make_timings <- read_csv("vignettes/figures/ssc_vignette_renders/make_timings.csv")
 make_timings %>%
   as.data.frame() %>%
   arrange(expr) %>%
@@ -295,11 +295,11 @@ par_tmzml <- function(){
 }
 
 par_timings <- microbenchmark(par_rams(), unpar_rams(), par_tmzml(), unpar_tmzml(), times = 5)
-saveRDS(par_timings, "vignettes/figures/ssc_vignette_renders/par_timings.rds")
+write_csv(par_timings, "vignettes/figures/ssc_vignette_renders/par_timings.csv")
 ```
 
 ```{r parallel proc plot}
-par_timings <- readRDS("vignettes/figures/ssc_vignette_renders/par_timings.rds")
+par_timings <- read_csv("vignettes/figures/ssc_vignette_renders/par_timings.csv")
 par_timings %>%
   as.data.frame() %>%
   separate(expr, into = c("sub_type", "par_type"), sep = "_") %>%
@@ -420,11 +420,11 @@ query_timings <- microbenchmark(
   times = 10
 )
 query_timings
-saveRDS(query_timings, "vignettes/figures/ssc_vignette_renders/query_timings.rds")
+write_csv(query_timings, "vignettes/figures/ssc_vignette_renders/query_timings.csv")
 ```
 
 ```{r time2query plot}
-query_timings <- readRDS("vignettes/figures/ssc_vignette_renders/query_timings.rds")
+query_timings <- read_csv("vignettes/figures/ssc_vignette_renders/query_timings.csv")
 query_timings %>%
   as.data.frame() %>%
   arrange(expr) %>%
@@ -447,7 +447,7 @@ ggsave("vignettes/figures/ssc_vignette_renders/query_time_gp.png", width = 6.5, 
 
 ![](../vignettes/figures/ssc_vignette_renders/query_time_gp.png){width=100%}
 
-There's a few surprises in the above plot. Most notably, the incredible speed of the mz-indexed SQL database. It's apparently faster to query the database and read that data into R than it is to index through the big RaMS object entirely within memory. That's a pretty darn compelling reason to switch to SQL databases (although note the importance of indexing them - the non-indexed one took 100x longer!). Side note: I originally expected this to be quite slow because I previously *thought* I was creating an index on the mz data using `dbExecute` instead of `dbSendQuery` but apparently that's not how the function works. This actually disagrees with a [similar comparison](https://bioconductor.org/packages/release/bioc/vignettes/MsBackendSql/inst/doc/MsBackendSql.html#4_Performance_comparison_with_other_backends) done by the Spectra package that found the SQL backend to be consistently slower than the in-memory option. This result was so unexpected that I wrote a quick followup to double-check and can confirm that in real time the SQL query felt just as fast as the RaMS object. Wild.
+There's a few surprises in the above plot. Most notably, the incredible speed of the mz-indexed SQLite database. It's apparently faster to query the database and read that data into R than it is to index through the big RaMS object entirely within memory. That's a pretty darn compelling reason to switch to SQL databases (although note the importance of indexing them - the non-indexed one took 100x longer!). Side note: I originally expected this to be quite slow because I previously *thought* I was creating an index on the mz data using `dbExecute` instead of `dbSendQuery` but apparently that's not how the function works. This actually disagrees with a [similar comparison](https://bioconductor.org/packages/release/bioc/vignettes/MsBackendSql/inst/doc/MsBackendSql.html#4_Performance_comparison_with_other_backends) done by the Spectra package that found the SQL backend to be consistently slower than the in-memory option. This result was so unexpected that I wrote a quick followup to double-check and can confirm that in real time the SQL query felt faster than the RaMS object. DuckDB is nearly as good as SQLite and has some other advantages discussed later.
 
 ```{r double-check sql_idx vs RaMS}
 MSdb_idx <- dbConnect(RSQLite::SQLite(), "vignettes/figures/ssc_vignette_renders/MSdata_idx.sqlite")
@@ -459,7 +459,7 @@ dbGetQuery(MSdb_idx, EIC_query, params = query_params) %>% qplotMS1data()
 rams_obj$MS1[mz%between%pmppm(432.2810, ppm = 20)] %>% qplotMS1data()
 ```
 
-Also surprising is the performance of the tmzMLs - I thought they'd do much worse and instead they're about on par with the arrow method. I'm pleasantly surprised that my hacky file type can compete at all. Of course, up at the top are the traditional MS formats. They're not designed for this or optimized for chromatogram extraction at all so it's not especially surprising that they struggle, but the graph does also nicely show the improved performance of more recent versions over older ones.
+Of course, up at the top are the traditional MS formats. They're not designed for this or optimized for chromatogram extraction at all so it's not especially surprising that they struggle, but the graph does also nicely show the improved performance of more recent versions over older ones.
 
 #### Multiple chromatograms
 
@@ -556,9 +556,12 @@ multichrom_timings <- microbenchmark(
   sql_uni_fun(), sql_loop_fun(), duckdb_uni_fun(), duckdb_loop_fun(), 
   times = 10
 )
-saveRDS(multichrom_timings, "vignettes/figures/ssc_vignette_renders/multichrom_timings.rds")
+write_csv(multichrom_timings, "vignettes/figures/ssc_vignette_renders/multichrom_timings.csv")
+```
 
-multichrom_timings <- readRDS("vignettes/figures/ssc_vignette_renders/multichrom_timings.rds")
+
+```{r multichrom query plot}
+multichrom_timings <- read_csv("vignettes/figures/ssc_vignette_renders/multichrom_timings.csv")
 multichrom_timings %>%
   as.data.frame() %>%
   arrange(expr) %>%
@@ -567,7 +570,7 @@ multichrom_timings %>%
   mutate(expr=factor(expr, levels=c("rams", "arrow", "sql", "duckdb"),
                      labels=c("RaMS", "Arrow", "SQL", "DuckDB"))) %>%
   mutate(query_type=factor(query_type, levels=c("uni", "loop"),
-                           labels=c("Unified query", "Query loop"))) %>%
+                           labels=c("Unified query", "Loop"))) %>%
   ggplot() + 
   geom_boxplot(aes(x=query_type, y=time/1e9), lwd=1) +
   facet_wrap(~expr, nrow=1) +
@@ -579,7 +582,7 @@ ggsave("vignettes/figures/ssc_vignette_renders/multichrom_gp.png", width = 6.5, 
 
 ![](../vignettes/figures/ssc_vignette_renders/multichrom_gp.png){width=100%}
 
-Once again the indexed SQL database blows the others out of the water, with the unified query performing ~10x better in SQL than Arrow and ~100x better than RaMS. Curiously, the unified query actually takes *longer* when processed via RaMS/data.table than looping. Good to know.
+The indexed SQL database remains about an order of magnitude faster than Arrow and nearly 100x faster than RaMS. DuckDB competes pretty well with SQLite and much prefers looping, much like RaMS does, which is a little surprising to me. Good to know.
 
 ## MS object sizing info
 
@@ -626,24 +629,26 @@ MSdb_idx <- dbConnect(RSQLite::SQLite(), "vignettes/figures/ssc_vignette_renders
 rs <- dbSendQuery(MSdb_idx, "CREATE INDEX mz ON MS1 (mz)")
 dbClearResult(rs)
 dbDisconnect(MSdb_idx)
-size_list$MSdb_idx <- file.size("vignettes/figures/ssc_vignette_renders/MSdata_idx.sqlite")
+size_list$MSdb_idx <- file.size("vignettes/figures/ssc_vignette_renders/MSdata.sqlite")
 unlink("vignettes/figures/ssc_vignette_renders/MSdata.sqlite")
 
 msduck <- dbConnect(duckdb::duckdb(), "vignettes/figures/ssc_vignette_renders/duckdb")
 dbWriteTable(msduck, "MS1", rams_obj$MS1[order(mz)], overwrite=TRUE)
 size_list$msduck <- file.size("vignettes/figures/ssc_vignette_renders/duckdb")
+dbDisconnect(msduck)
 unlink("vignettes/figures/ssc_vignette_renders/duckdb")
 
-saveRDS(size_list, "vignettes/figures/ssc_vignette_renders/size_list.rds")
+size_list %>%
+  unlist() %>%
+  data.frame(bytes=.) %>%
+  rownames_to_column("expr") %>%
+  write_csv("vignettes/figures/ssc_vignette_renders/size_list.csv")
 ```
 
 ```{r plot size info}
-size_list <- readRDS("vignettes/figures/ssc_vignette_renders/size_list.rds")
-size_list %>%
-  within(rm(mzXML)) %>%
-  sapply(as.numeric) %>%
-  data.frame(bytes=.) %>%
-  rownames_to_column("expr") %>%
+size_df <- read_csv("vignettes/figures/ssc_vignette_renders/size_list.csv")
+size_df %>%
+  filter(expr!="mzXML") %>%
   mutate(expr=str_remove(expr, "_obj")) %>%
   mutate(expr=str_replace(expr, "MSdb_?", "sql")) %>%
   mutate(mem_type=case_when(
@@ -652,11 +657,11 @@ size_list %>%
   )) %>%
   mutate(mem_type=factor(mem_type, levels=c("Memory", "Disk"))) %>%
   mutate(expr=factor(expr, levels=c("msnexp", "ondisk", "spectra", "rams",
-                                    "tmzml", "arrow", "sql", "sqlidx", "msduck"),
-                     labels=c("MSnExp", "OnDiskMSnExp", "Spectra", "RaMS",
-                              "tmzMLs", "Arrow", "SQL", "SQL (indexed)", "DuckDB"))) %>%
+                                    "tmzml", "arrow", "sql", "sqlidx", "duckdb"),
+                     labels=c("MSnExp", "OnDisk\nMSnExp", "Spectra", "RaMS",
+                              "tmzMLs", "Arrow", "SQL", "SQL\n(indexed)", "DuckDB"))) %>%
   ggplot() +
-  geom_hline(yintercept = size_list$mzXML/(1024^3)) +
+  geom_hline(yintercept = size_df$bytes[size_df$expr=="mzXML"]/(1024^3)) +
   geom_point(aes(x=expr, y=bytes/(1024^3))) +
   scale_y_log10(breaks=c(0.001, 0.01, 0.1, 1, 10), labels=c("1MB", "10MB", "100MB", "1GB", "10GB"),
                 limits=c(0.001, 10)) +
@@ -671,18 +676,14 @@ Unsurprisingly, the SQL databases are massive, weighing in at 5-10x the size of 
 
 ## Summary
 
-I started out this project because I'd recently learned about `arrow` and was blown away by how fast it was while still remaining essentially memory-free. At the end of it, I think there's more nuance than I was really expecting, though there are a few clear losers. The MSnExp objects should be almost never used, as they're dominated pretty clearly by the OnDisk equivalent. The Spectra package provides even more improvement on this but extracting a chromatogram is more obnoxious and you're still dealing with a complicated S4 object instead of an intuitive data frame. Similarly, the tmzMLs seem to be unilaterally worse than `arrow`, with access at-best equivalent and a make time much larger. Arrow also plays nicely with `dplyr` commands and has good performance when requesting multiple EICs, though longtime RaMS users may find the intuitive syntax of the tmzMLs (and progress bar!) friendlier as long as they don't need to extract more than a single chromatogram.
+I started out this project because I'd recently learned about `arrow` and was blown away by how fast it was while still remaining essentially memory-free. At the end of it, I think there's more nuance than I was really expecting, though there are a few clear losers. The MSnExp objects should be almost never used, as they're dominated pretty clearly by the OnDisk equivalent. The Spectra package provides even more improvement on this but extracting a chromatogram is more obnoxious and you're still dealing with a complicated S4 object instead of an intuitive data frame. Similarly, the tmzMLs seem to be unilaterally worse than `arrow`, with slower access and a make time much larger. Arrow also plays nicely with `dplyr` commands and has good performance when requesting multiple EICs, though longtime RaMS users may find the intuitive syntax of the tmzMLs (and progress bar!) friendlier as long as they don't need to extract more than a single chromatogram. Since then, I also stumbled across DuckDB which seems to be a faster (but fatter) version of Arrow.
 
-In general, it seems to come down more to the size of the dataset than anything else. If your dataset is small (<1GB) or you're only loading a small-ish subset of it, RaMS is the go-to. If it's larger than memory but not enormous (10-100GB), Arrow and SQL seem like good contenders. The SQL database size ballooned scarily (but had insanely fast access times) while Arrow provided a file size reduction and more familiar syntax. For truly large datasets (100GB+) I can't imagine using anything but the OnDisk or Spectra infrastructure because it's just not worth trying to duplicate the dataset at all, so reading the data out of the files is the only real option. Of course, if you're looking at data that large then you may actually come all the way back around to Arrow or SQL anyway so you can host the data in the cloud or on a cluster instead of on a personal computer.
+In general, it seems to come down more to the size of the dataset than anything else. If your dataset is small (<1GB) or you're only loading a small-ish subset of it, RaMS is the go-to. If it's larger than memory but not enormous (10-100GB), Arrow, DuckDB, and SQLite seem like good contenders. The SQL database size ballooned scarily (but had insanely fast access times) while Arrow provided a file size reduction and more familiar syntax. For truly large datasets (100GB+) I can't imagine using anything but the OnDisk or Spectra infrastructure because it's just not worth trying to duplicate the dataset at all, so reading the data out of the files is the only real option. Of course, if you're looking at data that large then you may actually come all the way back around to the database solutions anyway so you can host the data in the cloud or on a cluster instead of on a personal computer.
 
 ```{r summary plot}
-make_timings <- readRDS("vignettes/figures/ssc_vignette_renders/make_timings.rds")
-query_timings <- readRDS("vignettes/figures/ssc_vignette_renders/query_timings.rds")
-size_df <- readRDS("vignettes/figures/ssc_vignette_renders/size_list.rds") %>%
-  sapply(as.numeric) %>%
-  data.frame(size=.) %>%
-  mutate(size=size/1024^3) %>%
-  rownames_to_column("expr") %>%
+make_timings <- read_csv("vignettes/figures/ssc_vignette_renders/make_timings.csv")
+query_timings <- read_csv("vignettes/figures/ssc_vignette_renders/query_timings.csv")
+size_df <- read_csv("vignettes/figures/ssc_vignette_renders/size_list.csv") %>%
   mutate(expr=str_remove(expr, "_obj")) %>%
   mutate(expr=str_replace(expr, "MSdb_?", "sql")) %>%
   mutate(expr=ifelse(expr=="msduck", "duckdb", expr))
@@ -711,7 +712,7 @@ bind_rows(make_timings, query_timings) %>%
   geom_linerange(aes(y=med_time_query, xmin=med_time_make-IQR_time_make*2, 
                      xmax=med_time_make+IQR_time_make*2, color=expr)) +
   geom_point(aes(x=med_time_make, y=med_time_query, color=expr, 
-                 size=size, shape=rep_type)) +
+                 size=bytes, shape=rep_type)) +
   scale_y_log10() +
   coord_flip() +
   guides(color = guide_legend(order = 1), shape = guide_legend(order = 2), 
@@ -753,9 +754,9 @@ bind_rows(make_timings, query_timings) %>%
                               "tmzMLs", "Arrow", "SQL", "SQL (indexed)", "DuckDB"))) %>%
   pivot_wider(names_from = time_type, values_from=c("med_time", "IQR_time")) %>%
   ggplot() +
-  geom_linerange(aes(x=size, ymin=med_time_query-IQR_time_query, 
+  geom_linerange(aes(x=bytes, ymin=med_time_query-IQR_time_query, 
                      ymax=med_time_query+IQR_time_query, color=expr), linewidth=1) +
-  geom_point(aes(x=size, y=med_time_query, color=expr), size=3) +
+  geom_point(aes(x=bytes, y=med_time_query, color=expr), size=3) +
   scale_y_log10() +
   guides(color = guide_legend(order = 1)) +
   labs(x="Size (GB)", y="Time to query (s)") +
