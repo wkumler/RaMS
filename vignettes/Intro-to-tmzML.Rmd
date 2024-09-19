@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
 
 This vignette deals with a feature still undergoing active development. While I
 can't promise to update it immediately with changes, I will do my best to keep
-you in the loop as this functionality evolves. Please also see the [speed & size comparison vignette](https://cran.r-project.org/web/packages/RaMS/vignettes/speed_size_comparison.html) for more stable alternatives.
+you in the loop as this functionality evolves. Please also see the [speed & size comparison vignette](https://cran.r-project.org/package=RaMS/vignettes/speed_size_comparison.html) for more stable alternatives.
 
 **Table of contents:**
 

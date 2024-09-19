@@ -1,8 +1,9 @@
 # RaMS (development version)
 
-# RaMS 1.4.1
+# RaMS 1.4.2
  - Added timezone support to metadata's timestamps (mzML files are all UTC)
  - Fixed several bugs in the README and vignettes (it's been a minute since I recompiled these!)
+ - Switched to canonical CRAN URLs
 
 # RaMS 1.4
  - Added MS3 support to file reading and minification
