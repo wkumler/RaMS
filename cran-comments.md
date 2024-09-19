@@ -1,18 +1,11 @@
 
 ## Resubmission
 
-This is a resubmission. In this version I have set data.table to use only two
-threads to avoid CPU time > 2.5 times elapsed time in the vignettes
-
-
-## Resubmission (prior)
-
-This is a resubmission. In this version I have reduced the example runtimes to
-below 5s (I hope) for tests and examples and set data.table to use only two
-threads to avoid CPU time > 2.5 times elapsed time
+This is a resubmission, updating the package from v1.4.0 to v1.4.2 with some
+additional bug fixes.
 
 ## Test environments
-* local R installation, R 4.3.2
+* local R installation, R 4.4.0
 * windows-latest (release) (via GitHub Actions)
 * macOS-latest (release) (via GitHub Actions)
 * ubuntu-latest (release) (via GitHub Actions)
