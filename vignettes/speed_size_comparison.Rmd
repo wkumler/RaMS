@@ -58,7 +58,7 @@ ms_files <- list.files("vignettes/figures/ssc_vignette_renders/Sample/", full.na
 
 ## Intro
 
-As noted in the [RaMS and friends vignette](https://cran.r-project.org/web/packages/RaMS/vignettes/Minifying-files-with-RaMS.html), one of the major strengths of the 'tidy' data format is how nicely it plays with other packages, allowing for the use of powerful packages that can't normally be applied to MS data. After playing with a few different ones I wanted to do some structured benchmarking to see which is the best use case for various situations.
+As noted in the [RaMS and friends vignette](https://cran.r-project.org/package=RaMS/vignettes/Minifying-files-with-RaMS.html), one of the major strengths of the 'tidy' data format is how nicely it plays with other packages, allowing for the use of powerful packages that can't normally be applied to MS data. After playing with a few different ones I wanted to do some structured benchmarking to see which is the best use case for various situations.
 
 The general constraints I'm interested in are speed and space, with a minor consideration for simplicity afterward. My question of interest is how costly in these areas access to the MS data is, a process that can be broken down into two relevant steps - the transformation of the MS data from mz(X)ML format into a queryable format, and then the actual query itself. The query itself is relatively straightforward and can be measured in just the amount of time it takes, but the transformation has a caveat that it can be stored either in memory (and therefore must be recreated every time R is restarted) or it can be stored on disk (which is robust across restarts). So I'm interested in
 
