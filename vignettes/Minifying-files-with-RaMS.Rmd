@@ -124,7 +124,7 @@ incredibly useful to include some standalone MS data for demos and vignettes
 like this one. I don't actually run this code in the vignette itself to save
 compilation time but it will run if you test it yourself.
 
-These files originate from the [Ingalls Lab](https://sites.google.com/view/anitra-ingalls) at the University of Washington, USA and are published in the manuscript [**"Metabolic consequences of cobalamin scarcity in diatoms as revealed through metabolomics"**](https://www.sciencedirect.com/science/article/pii/S1434461018301184). Files are downloaded from the corresponding [Metabolights repository](https://www.ebi.ac.uk/metabolights/MTBLS703/files).
+These files originate from the [Ingalls Lab](https://sites.google.com/view/anitra-ingalls) at the University of Washington, USA and are published in the manuscript [**"Metabolic consequences of cobalamin scarcity in diatoms as revealed through metabolomics"**](https://doi.org/10.1016/j.protis.2019.05.004). Files are downloaded from the corresponding [Metabolights repository](https://www.ebi.ac.uk/metabolights/MTBLS703/files).
 
 First, we identify the *m/z* values we'd like to keep in the minified files. For
 the demo data, I'll use the Ingalls Lab list of targeted compounds - those we
