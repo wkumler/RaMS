@@ -44,23 +44,31 @@ test_that("qplotMS1data works as expected", {
   test_df$int <- rep(dnorm(seq(-10, 10, length.out=100)), 10)*10+runif(1000)
   test_df$filename <- rep(LETTERS[1:10], each=100)
 
-  ggplot_output <- qplotMS1data(test_df)
-  expect_s3_class(ggplot_output, "ggplot")
-
   baseplot_output <- qplotMS1data(test_df, force_base = TRUE)
   expect_null(baseplot_output)
 
-  test_df$startime <- rep(gl(2, 5, labels = c("Morn", "Eve")), each=100)
-  expect_no_error(qplotMS1data(test_df, color_col="startime", facet_col="startime"))
-  expect_no_error({
-    qplotMS1data(test_df, color_col="startime", facet_col="startime",
-                 facet_args=list(ncol=2, scales="free"))
-  })
+  if(requireNamespace("ggplot2", quietly = TRUE)){
+    ggplot_output <- qplotMS1data(test_df)
+    expect_s3_class(ggplot_output, "ggplot")
+
+
+    test_df$startime <- rep(gl(2, 5, labels = c("Morn", "Eve")), each=100)
+    expect_no_error(qplotMS1data(test_df, color_col="startime", facet_col="startime"))
+    expect_no_error({
+      qplotMS1data(test_df, color_col="startime", facet_col="startime",
+                   facet_args=list(ncol=2, scales="free"))
+    })
+
+    expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(118.0865)]))
+    expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(138.0555, 10)]))
+  }
   expect_warning(qplotMS1data(test_df, color_col="startime", force_base = TRUE))
   expect_warning(qplotMS1data(test_df, facet_col="startime", force_base = TRUE))
 
-  expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(118.0865)]))
-  expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(138.0555, 10)]))
+  expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(118.0865)],
+                               force_base = TRUE))
+  expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(138.0555, 10)],
+                               force_base=TRUE))
 })
 
 test_that("mz_group works as expected", {
