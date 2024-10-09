@@ -434,7 +434,7 @@ minifyMzml <- function(filename, output_filename, ppm,
 
 
 # minifyMzxml ----
-#' Shrink mzxML files by including only data points near masses of interest
+#' Shrink mzXML files by including only data points near masses of interest
 #'
 #' mzXML files can be annoyingly large if only a few masses are of interest. This large size makes it
 #' difficult to share them online for debugging purposes and often means that untargeted algorithms

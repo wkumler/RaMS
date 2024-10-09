@@ -128,7 +128,7 @@ created_files <- mapply(tmzmlMaker, files_to_convert, files_to_create)
 ```
 
 These files should now exist in the folder and can be opened with Notepad or
-a similar word processer if you're curious, but they're mostly encoded so it
+a similar word processor if you're curious, but they're mostly encoded so it
 may not be incredibly informative.
 
 Extracting a chromatogram from a tmzML document should feel very familiar to

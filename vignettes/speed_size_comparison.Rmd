@@ -321,7 +321,7 @@ ggsave("vignettes/figures/ssc_vignette_renders/par_time_gp.png", width = 6.5, he
 
 ## MS data query timings
 
-After the MS data has been transformed into an accessible format, it still needs to be queried for a single chromatogram of interest. This typically means performing a search across the ~75 millon entries of mz/rt/int data for the m/z values within a certain window, and can be performed either on an object in memory (e.g. MSnExp & RaMS) or on a disk object.
+After the MS data has been transformed into an accessible format, it still needs to be queried for a single chromatogram of interest. This typically means performing a search across the ~75 million entries of mz/rt/int data for the m/z values within a certain window, and can be performed either on an object in memory (e.g. MSnExp & RaMS) or on a disk object.
 
 ```{r time2query}
 msnexp_obj <- readMSData(ms_files, mode="inMemory", msLevel. = 1)

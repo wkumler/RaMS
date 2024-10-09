@@ -756,7 +756,7 @@ grabSpectraPremz <- function(xml_nodes){
 }
 
 
-#' Extract the collison energies from the spectra of an mzML nodeset
+#' Extract the collision energies from the spectra of an mzML nodeset
 #'
 #' Although the collision energy is typically fixed per file, it's equally fast
 #' (afaik) to just grab them all individually here. Also, I'm worried about

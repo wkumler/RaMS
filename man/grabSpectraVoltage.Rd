@@ -2,7 +2,7 @@
 % Please edit documentation in R/grabMzmlFunctions.R
 \name{grabSpectraVoltage}
 \alias{grabSpectraVoltage}
-\title{Extract the collison energies from the spectra of an mzML nodeset}
+\title{Extract the collision energies from the spectra of an mzML nodeset}
 \usage{
 grabSpectraVoltage(xml_nodes)
 }

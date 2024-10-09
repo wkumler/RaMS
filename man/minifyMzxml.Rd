@@ -2,7 +2,7 @@
 % Please edit documentation in R/minifyMSFunctions.R
 \name{minifyMzxml}
 \alias{minifyMzxml}
-\title{Shrink mzxML files by including only data points near masses of interest}
+\title{Shrink mzXML files by including only data points near masses of interest}
 \usage{
 minifyMzxml(
   filename,
