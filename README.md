@@ -1,7 +1,8 @@
-R-based access to Mass-Spec data (RaMS)
-================
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# R-based access to Mass-Spec data (RaMS) <img src="man/figures/RaMS_2.jpg" align="right" height="138" alt="RaMS hex sticker (image credit: Josh Sacks)"/>
+
 <!-- badges: start -->
 
 [![R build
@@ -231,11 +232,11 @@ msdata$MS2[, neutral_loss:=premz-fragmz][int>1e4] %>%
   head(3) %>% knitr::kable()
 ```
 
-|       rt |    premz |   fragmz |      int | voltage | filename                               | neutral_loss |
-|---------:|---------:|---------:|---------:|--------:|:---------------------------------------|-------------:|
-| 47.27750 | 351.0817 | 224.9409 | 16333.23 |      40 | Blank_129I_1L_pos_20240207-MS3.mzML.gz |     126.1408 |
-| 47.35267 | 351.0818 | 224.9410 | 27353.09 |      40 | Blank_129I_1L_pos_20240207-MS3.mzML.gz |     126.1408 |
-| 47.42767 | 351.0818 | 224.9410 | 33843.92 |      40 | Blank_129I_1L_pos_20240207-MS3.mzML.gz |     126.1408 |
+| rt | premz | fragmz | int | voltage | filename | neutral_loss |
+|---:|---:|---:|---:|---:|:---|---:|
+| 47.27750 | 351.0817 | 224.9409 | 16333.23 | 40 | Blank_129I_1L_pos_20240207-MS3.mzML.gz | 126.1408 |
+| 47.35267 | 351.0818 | 224.9410 | 27353.09 | 40 | Blank_129I_1L_pos_20240207-MS3.mzML.gz | 126.1408 |
+| 47.42767 | 351.0818 | 224.9410 | 33843.92 | 40 | Blank_129I_1L_pos_20240207-MS3.mzML.gz | 126.1408 |
 
 #### SRM/MRM data
 
@@ -324,4 +325,4 @@ Issues page](https://github.com/wkumler/RaMS/issues).
 
 ------------------------------------------------------------------------
 
-README last built on 2024-09-19
+README last built on 2025-07-29
