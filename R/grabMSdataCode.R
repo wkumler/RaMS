@@ -173,6 +173,7 @@ grabMSdata <- function(files, grab_what="everything", verbosity=NULL,
     names(all_file_data)[[i]] <- basename(filename)
     if(verbosity>0 & length(files)>=2){
       setTxtProgressBar(pb, i)
+      cat("\n")
     }
   }
   if(verbosity>0){
