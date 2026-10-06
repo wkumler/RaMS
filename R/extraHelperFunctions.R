@@ -196,25 +196,27 @@ trapz <- function(rts, ints, baseline="none"){
 #' available but has a base plot implementation for use even in ultra
 #' lightweight situations. Accepts the default MS1 output from `grabMSdata`
 #' of a data.table (or base data.frame) with columns for rt (retention time)
-#' and int (intensity) as well as filename. Creates a plot of intensity vs
-#' retention time with one trace per file. A few additional `ggplot2` arguments
-#' are also made available for easy coloring or facetting by providing the
-#' name of the associated column to the `color_col` and `facet_col` arguments,
-#' respectively.
+#' and int (intensity), usually with filename. Creates a plot of intensity vs
+#' retention time with one trace per file (and per level of `color_col`, if
+#' that column is discrete). Facets and other customizations can be added to
+#' the `ggplot2` output with the usual + syntax.
 #'
-#' @param MS1_df A data.table with at least three columns named rt, int, and filename
+#' @param MS1_df A data.table with columns named rt and int, and usually filename
 #' @param color_col The name of the column to color by. Must be quoted.
-#' @param facet_col The name of the column to facet by. Must be quoted.
-#' @param facet_args Since the call to facet_wrap is within the function, you
-#' can provide additional facet customization arguments here as a list. Although
-#' if you're starting to fiddle with facets you'll probably be better served by
-#' the proper `ggplot` call.
+#' Discrete columns (character, factor, logical, integer) get one color per
+#' level and double columns a continuous gradient. Defaults to "filename" if
+#' that column exists; use NULL for no coloring.
 #' @param force_base Boolean option to force base R graphics instead of `ggplot`
 #' even if the `ggplot2` package is installed.
+#' @param slice_max Boolean option to keep only the most intense point in each
+#' scan of each file (and each level of `color_col`), like
+#' `dplyr::slice_max(int, by=c(rt, filename, color_col), with_ties=FALSE)`.
+#' Useful when a wide m/z window picks up several points per scan, which
+#' otherwise draws as a zigzag line.
 #'
 #' @return If `ggplot2` is installed, a `ggplot` object that can be further
-#' modified via additional + commands. Otherwise, NULL and the plot appears
-#' via base graphics at the active device.
+#' modified via additional + commands. Otherwise, NULL (invisibly) and the plot
+#' appears via base graphics at the active device.
 #' @export
 #'
 #' @examples
@@ -225,9 +227,12 @@ trapz <- function(rts, ints, baseline="none"){
 #' qplotMS1data(test_df)
 #'
 #' test_df$startime <- rep(gl(2, 5, labels = c("Morn", "Eve")), each=100)
-#' qplotMS1data(test_df, color_col="startime", facet_col="startime")
-#' qplotMS1data(test_df, color_col="startime", facet_col="startime",
-#'             facet_args=list(ncol=2, scales="free"))
+#' qplotMS1data(test_df, color_col="startime")
+#' qplotMS1data(test_df, color_col="startime", force_base=TRUE)
+#' if(requireNamespace("ggplot2", quietly=TRUE)){
+#'   qplotMS1data(test_df, color_col="startime") +
+#'     ggplot2::facet_wrap(~startime, ncol=1)
+#' }
 #'
 #' # Using data from the `grabMSdata` function:
 #' \dontrun{
@@ -235,46 +240,200 @@ trapz <- function(rts, ints, baseline="none"){
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
 #' msdata <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
 #' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865)])
+#'
+#' # A wide window catches several points per scan; keep the biggest
+#' qplotMS1data(msdata$MS1[mz%between%pmppm(119.0865, 100)], slice_max=TRUE)
+#'
+#' # Or separate them into m/z groups and keep the biggest in each
+#' library(dplyr)
+#' msdata$MS1 %>%
+#'   filter(mz%between%pmppm(119.0865, 100)) %>%
+#'   arrange(desc(int)) %>%
+#'   mutate(mz_group=mz_group(mz, ppm=5, max_groups=3, mz_factor=TRUE)) %>%
+#'   filter(!is.na(mz_group)) %>%
+#'   qplotMS1data(color_col="mz_group", slice_max=TRUE)
 #' }
-qplotMS1data <- function(MS1_df, color_col=NULL, facet_col=NULL,
-                         facet_args=list(ncol=1), force_base=FALSE){
-  if(requireNamespace("ggplot2", quietly=TRUE) & !force_base){
-    ggplotMSdata(MS1_df, color_col, facet_col, facet_args)
-  } else if(requireNamespace("graphics", quietly=TRUE)) {
-    if(!is.null(color_col))warning("Argument 'color_col' is currently only available via ggplot2")
-    if(!is.null(facet_col))warning("Argument 'facet_col' is currently only available via ggplot2")
-    baseplotMSdata(MS1_df)
+qplotMS1data <- function(MS1_df, color_col="filename", force_base=FALSE, slice_max=FALSE){
+  if(missing(color_col) && !"filename"%in%names(MS1_df))color_col <- NULL
+  if(!is.null(color_col)){
+    if(!color_col%in%names(MS1_df))stop("Column '", color_col, "' not found in MS1_df")
+    # Treat integers (e.g. mz_group IDs) as discrete rather than a gradient
+    if(is.integer(MS1_df[[color_col]]))MS1_df[[color_col]] <- factor(MS1_df[[color_col]])
+  }
+  if(slice_max)MS1_df <- MS1_df[slice_max_int(MS1_df, color_col),]
+  if(!force_base && requireNamespace("ggplot2", quietly=TRUE)){
+    ggplotMSdata(MS1_df, color_col)
   } else {
-    stop("No graphics package detected. Please install either 'graphics' or 'ggplot2'.")
+    baseplotMSdata(MS1_df, color_col)
   }
 }
-ggplotMSdata <- function(MS1_df, color_col, facet_col, facet_args){
+ggplotMSdata <- function(MS1_df, color_col){
   out_plot <- ggplot2::ggplot(MS1_df) +
-    ggplot2::aes(x=rt, y=int, group=filename) +
+    ggplot2::aes(x=rt, y=int) +
     ggplot2::geom_line() +
     ggplot2::labs(x="Retention time (minutes)", y="Intensity")
-  if(!is.null(color_col)){
-    out_plot <- out_plot + ggplot2::aes(color=get(color_col)) + ggplot2::labs(color=color_col)
+  trace_syms <- lapply(trace_cols(MS1_df, color_col), as.name)
+  if(length(trace_syms)>0){
+    out_plot <- out_plot + ggplot2::aes(group=interaction(!!!trace_syms))
   }
-  if(!is.null(facet_col)){
-    arg_list <- c(list(facets=ggplot2::vars(get(facet_col))), facet_args)
-    out_plot <- out_plot + do.call(what=ggplot2::facet_wrap, args = arg_list)
+  if(!is.null(color_col)){
+    out_plot <- out_plot + ggplot2::aes(color=!!as.name(color_col))
   }
   int <- NULL #To prevent R CMD check "notes"  when using ggplot2 syntax
   rt <- NULL
   filename <- NULL
   out_plot
 }
-baseplotMSdata <- function(MS1_df){
-  plot(MS1_df$rt, MS1_df$int, type="n",
-       xlab = "Retention time (minutes)", ylab="Intensity")
-  ordered_df <- MS1_df[order(MS1_df$rt),]
-  spldf <- split(ordered_df, ordered_df$filename)
-  sapply(spldf, function(spldf_i)graphics::lines(x=spldf_i$rt, y=spldf_i$int))
+baseplotMSdata <- function(MS1_df, color_col){
+  if(all(is.na(MS1_df$int)))stop("No intensity data to plot")
+  graphics::plot(MS1_df$rt, MS1_df$int, type="n",
+                 xlab = "Retention time (minutes)", ylab="Intensity")
+  MS1_df <- MS1_df[order(MS1_df$rt),]
+  color_map <- base_colors(MS1_df, color_col)
+  trace_vals <- lapply(trace_cols(MS1_df, color_col), function(col)MS1_df[[col]])
+  traces <- if(length(trace_vals)>0){
+    split(seq_len(nrow(MS1_df)), trace_vals, drop=TRUE)
+  } else {
+    list(seq_len(nrow(MS1_df)))
+  }
+  for(idx in traces){
+    # Each line takes the color of its first point, which is exact for discrete
+    # and per-file columns
+    graphics::lines(MS1_df$rt[idx], MS1_df$int[idx], col=color_map$colors[idx[1]])
+  }
+  if(!is.null(color_col)){
+    graphics::legend("topright", legend=color_map$labels, col=color_map$legend_cols,
+                     lty=1, lwd=2, title=color_col, bty="n", cex=0.8)
+  }
   invisible(NULL)
 }
+# Columns that split the data into separate traces: filename (if present) and
+# a discrete color column, so e.g. each mz_group in each file gets its own line
+trace_cols <- function(df, color_col){
+  unique(c(if("filename"%in%names(df)) "filename",
+           if(!is.null(color_col) && !is.numeric(df[[color_col]])) color_col))
+}
+# Like dplyr::slice_max(int, by=c(rt, <trace_cols>), with_ties=FALSE): flags
+# the most intense point in each scan of each trace. order() is stable, so a
+# tie goes to whichever point came first
+slice_max_int <- function(MS1_df, color_col=NULL){
+  group_cols <- c("rt", trace_cols(MS1_df, color_col))
+  group_key <- do.call(paste, lapply(group_cols, function(col)MS1_df[[col]]))
+  int_ord <- order(MS1_df$int, decreasing=TRUE)
+  seq_len(nrow(MS1_df)) %in% int_ord[!duplicated(group_key[int_ord])]
+}
+# One color per row for the base plots, plus labels and colors for a legend
+base_colors <- function(df, color_col){
+  if(is.null(color_col))return(list(colors=rep("black", nrow(df))))
+  color_vals <- df[[color_col]]
+  if(is.numeric(color_vals)){
+    # Drop Plasma's pale yellow end, which is nearly invisible on white
+    palette <- grDevices::hcl.colors(120, palette="Plasma")[1:100]
+    list(colors=palette[cut(color_vals, breaks=100, labels=FALSE)],
+         labels=format(range(color_vals, na.rm=TRUE)), legend_cols=palette[c(1, 100)])
+  } else {
+    color_vals <- as.factor(color_vals)
+    level_cols <- grDevices::hcl.colors(nlevels(color_vals), palette="Dark 3")
+    list(colors=level_cols[color_vals], labels=levels(color_vals), legend_cols=level_cols)
+  }
+}
 
-
+#' Quick plot for MS2 data
+#'
+#' Syntactic sugar for a common fragmentation spectrum plot, drawing each
+#' fragment as a vertical line from zero up to its intensity with a point on
+#' top. Like \code{\link{qplotMS1data}}, uses `ggplot2` if available and base
+#' graphics otherwise. Accepts the default MS2 output from `grabMSdata`, or
+#' any data.table or data.frame with columns named fragmz and int. Usually
+#' filtered to a single precursor first (e.g. with `premz` and `pmppm`).
+#'
+#' @param MS2_df A data.table with at least two columns named fragmz and int
+#' @param color_col The name of the column to color by. Must be quoted.
+#' Discrete columns (character, factor, logical, integer) get one color per
+#' level and double columns a continuous gradient. Defaults to "filename" if
+#' that column exists; use NULL for no coloring.
+#' @param force_base Boolean option to force base R graphics instead of `ggplot`
+#' even if the `ggplot2` package is installed.
+#' @param relative Boolean option to scale each spectrum so that its most
+#' intense fragment is 100\%, making spectra of very different intensities
+#' comparable by shape. A spectrum is all the rows sharing a filename and rt
+#' (i.e. one scan), using whichever of those columns are present.
+#'
+#' @return If `ggplot2` is installed, a `ggplot` object that can be further
+#' modified via additional + commands. Otherwise, NULL (invisibly) and the plot
+#' appears via base graphics at the active device.
+#' @export
+#'
+#' @examples
+#' \dontshow{data.table::setDTthreads(2)}
+#' test_df <- data.frame(fragmz=c(58.0651, 59.0730, 60.0808, 118.0863),
+#'                       int=c(100, 15, 30, 60), filename="A")
+#' qplotMS2data(test_df)
+#' qplotMS2data(test_df, force_base=TRUE)
+#'
+#' \dontrun{
+#' sample_dir <- system.file("extdata", package = "RaMS")
+#' sample_files <- list.files(sample_dir, full.names=TRUE)
+#' msdata <- grabMSdata(sample_files[7], grab_what="MS2")
+#' adenine_ms2 <- msdata$MS2[premz%between%pmppm(136.0618, 5)]
+#' qplotMS2data(adenine_ms2)
+#'
+#' # Compare scans of different intensities by shape
+#' qplotMS2data(adenine_ms2, color_col="rt", relative=TRUE)
+#' if(requireNamespace("ggplot2", quietly=TRUE)){
+#'   qplotMS2data(adenine_ms2) +
+#'     ggplot2::facet_wrap(~rt, ncol=1)
+#' }
+#' }
+qplotMS2data <- function(MS2_df, color_col=NULL, force_base=FALSE, relative=FALSE){
+  if(missing(color_col) && !"filename"%in%names(MS2_df))color_col <- NULL
+  if(!is.null(color_col)){
+    if(!color_col%in%names(MS2_df))stop("Column '", color_col, "' not found in MS2_df")
+    # Treat integers (e.g. voltage) as discrete rather than a gradient
+    if(is.integer(MS2_df[[color_col]]))MS2_df[[color_col]] <- factor(MS2_df[[color_col]])
+  }
+  y_lab <- "Intensity"
+  if(relative){
+    # Percent of the most intense fragment in each spectrum (filename + rt)
+    spectrum_vals <- lapply(intersect(c("filename", "rt"), names(MS2_df)), function(col)MS2_df[[col]])
+    spectrum_max <- do.call(stats::ave, c(list(MS2_df$int), spectrum_vals, list(FUN=max)))
+    MS2_df$int <- MS2_df$int/spectrum_max*100
+    y_lab <- "Relative intensity (%)"
+  }
+  if(!force_base && requireNamespace("ggplot2", quietly=TRUE)){
+    ggplotMS2data(MS2_df, color_col, y_lab)
+  } else {
+    baseplotMS2data(MS2_df, color_col, y_lab)
+  }
+}
+ggplotMS2data <- function(MS2_df, color_col, y_lab){
+  out_plot <- ggplot2::ggplot(MS2_df) +
+    ggplot2::aes(x=fragmz, y=int, xend=fragmz, yend=0) +
+    ggplot2::geom_segment() +
+    ggplot2::geom_point() +
+    ggplot2::labs(x="Fragment m/z", y=y_lab)
+  if(!is.null(color_col)){
+    out_plot <- out_plot + ggplot2::aes(color=!!as.name(color_col))
+  }
+  int <- NULL #To prevent R CMD check "notes"  when using ggplot2 syntax
+  fragmz <- NULL
+  out_plot
+}
+baseplotMS2data <- function(MS2_df, color_col, y_lab){
+  if(all(is.na(MS2_df$int)))stop("No intensity data to plot")
+  graphics::plot(MS2_df$fragmz, MS2_df$int, type="n",
+                 ylim=c(0, max(MS2_df$int, na.rm=TRUE)),
+                 xlab="Fragment m/z", ylab=y_lab)
+  color_map <- base_colors(MS2_df, color_col)
+  graphics::segments(x0=MS2_df$fragmz, y0=0, x1=MS2_df$fragmz, y1=MS2_df$int,
+                     col=color_map$colors)
+  graphics::points(MS2_df$fragmz, MS2_df$int, pch=19, cex=0.7, col=color_map$colors)
+  if(!is.null(color_col)){
+    graphics::legend("topright", legend=color_map$labels, col=color_map$legend_cols,
+                     lty=1, lwd=2, title=color_col, bty="n", cex=0.8)
+  }
+  invisible(NULL)
+}
 
 #' Group m/z values into bins of a specified ppm width
 #'

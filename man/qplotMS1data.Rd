@@ -6,42 +6,42 @@
 \usage{
 qplotMS1data(
   MS1_df,
-  color_col = NULL,
-  facet_col = NULL,
-  facet_args = list(ncol = 1),
-  force_base = FALSE
+  color_col = "filename",
+  force_base = FALSE,
+  slice_max = FALSE
 )
 }
 \arguments{
-\item{MS1_df}{A data.table with at least three columns named rt, int, and filename}
+\item{MS1_df}{A data.table with columns named rt and int, and usually filename}
 
-\item{color_col}{The name of the column to color by. Must be quoted.}
-
-\item{facet_col}{The name of the column to facet by. Must be quoted.}
-
-\item{facet_args}{Since the call to facet_wrap is within the function, you
-can provide additional facet customization arguments here as a list. Although
-if you're starting to fiddle with facets you'll probably be better served by
-the proper `ggplot` call.}
+\item{color_col}{The name of the column to color by. Must be quoted.
+Discrete columns (character, factor, logical, integer) get one color per
+level and double columns a continuous gradient. Defaults to "filename" if
+that column exists; use NULL for no coloring.}
 
 \item{force_base}{Boolean option to force base R graphics instead of `ggplot`
 even if the `ggplot2` package is installed.}
+
+\item{slice_max}{Boolean option to keep only the most intense point in each
+scan of each file (and each level of `color_col`), like
+`dplyr::slice_max(int, by=c(rt, filename, color_col), with_ties=FALSE)`.
+Useful when a wide m/z window picks up several points per scan, which
+otherwise draws as a zigzag line.}
 }
 \value{
 If `ggplot2` is installed, a `ggplot` object that can be further
-modified via additional + commands. Otherwise, NULL and the plot appears
-via base graphics at the active device.
+modified via additional + commands. Otherwise, NULL (invisibly) and the plot
+appears via base graphics at the active device.
 }
 \description{
 Syntactic sugar for a common chromatogram plot. Will use `ggplot2` if
 available but has a base plot implementation for use even in ultra
 lightweight situations. Accepts the default MS1 output from `grabMSdata`
 of a data.table (or base data.frame) with columns for rt (retention time)
-and int (intensity) as well as filename. Creates a plot of intensity vs
-retention time with one trace per file. A few additional `ggplot2` arguments
-are also made available for easy coloring or facetting by providing the
-name of the associated column to the `color_col` and `facet_col` arguments,
-respectively.
+and int (intensity), usually with filename. Creates a plot of intensity vs
+retention time with one trace per file (and per level of `color_col`, if
+that column is discrete). Facets and other customizations can be added to
+the `ggplot2` output with the usual + syntax.
 }
 \examples{
 \dontshow{data.table::setDTthreads(2)}
@@ -51,9 +51,12 @@ test_df$filename <- rep(LETTERS[1:10], each=100)
 qplotMS1data(test_df)
 
 test_df$startime <- rep(gl(2, 5, labels = c("Morn", "Eve")), each=100)
-qplotMS1data(test_df, color_col="startime", facet_col="startime")
-qplotMS1data(test_df, color_col="startime", facet_col="startime",
-            facet_args=list(ncol=2, scales="free"))
+qplotMS1data(test_df, color_col="startime")
+qplotMS1data(test_df, color_col="startime", force_base=TRUE)
+if(requireNamespace("ggplot2", quietly=TRUE)){
+  qplotMS1data(test_df, color_col="startime") +
+    ggplot2::facet_wrap(~startime, ncol=1)
+}
 
 # Using data from the `grabMSdata` function:
 \dontrun{
@@ -61,5 +64,17 @@ sample_dir <- system.file("extdata", package = "RaMS")
 sample_files <- list.files(sample_dir, full.names=TRUE)
 msdata <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
 qplotMS1data(msdata$MS1[mz\%between\%pmppm(118.0865)])
+
+# A wide window catches several points per scan; keep the biggest
+qplotMS1data(msdata$MS1[mz\%between\%pmppm(119.0865, 100)], slice_max=TRUE)
+
+# Or separate them into m/z groups and keep the biggest in each
+library(dplyr)
+msdata$MS1 \%>\%
+  filter(mz\%between\%pmppm(119.0865, 100)) \%>\%
+  arrange(desc(int)) \%>\%
+  mutate(mz_group=mz_group(mz, ppm=5, max_groups=3, mz_factor=TRUE)) \%>\%
+  filter(!is.na(mz_group)) \%>\%
+  qplotMS1data(color_col="mz_group", slice_max=TRUE)
 }
 }
