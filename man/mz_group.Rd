@@ -4,23 +4,41 @@
 \alias{mz_group}
 \title{Group m/z values into bins of a specified ppm width}
 \usage{
-mz_group(mz_vals, ppm, min_group_size = 0, max_groups = NULL)
+mz_group(
+  mz_vals,
+  ppm,
+  min_group_size = 1,
+  max_groups = NULL,
+  mz_factor = FALSE
+)
 }
 \arguments{
-\item{mz_vals}{A numeric vector of m/z values}
+\item{mz_vals}{A numeric vector of m/z values. NAs are allowed and are
+returned as NA.}
 
-\item{ppm}{A length-1 numeric vector specifying the desired window size in ppm}
+\item{ppm}{A length-1 positive numeric specifying the window half-width in
+ppm, as in \code{pmppm()}.}
 
-\item{min_group_size}{A length-1 numeric vector specifying the minimum number
-of points that must fall within an m/z window to be assigned a group number}
+\item{min_group_size}{A length-1 numeric specifying the minimum number of
+points that must fall within an m/z window for it to be kept as a group.
+Points in windows smaller than this are returned as NA.}
 
-\item{max_groups}{A length-1 numeric vector specifying the maximum number
-of total groups to assign.}
+\item{max_groups}{A length-1 numeric specifying the maximum number of groups
+to return. Groups are kept in the order they are found (i.e. by the order
+of \code{mz_vals}), and windows dropped by \code{min_group_size} do not count
+toward this limit. If fewer groups exist, all of them are returned.}
+
+\item{mz_factor}{Logical. If FALSE (the default), groups are identified by
+consecutive integers in the order they were found. If TRUE, a factor is
+returned whose levels are the mean m/z of each group's members formatted to
+5 decimal places (e.g. "118.08626"), ordered by increasing m/z. Use
+\code{as.numeric(as.character(x))} to recover the masses, since
+\code{as.numeric(x)} returns the level codes.}
 }
 \value{
-A numeric vector of the same length as mz_vals specifying the group
-into which each m/z value was binned. Values not assigned to a group are
-returned as NAs.
+A vector of the same length as mz_vals specifying the group into
+which each m/z value was binned: integer if \code{mz_factor = FALSE},
+factor if \code{mz_factor = TRUE}. Values not assigned to a group are returned as NA.
 }
 \description{
 This function bins m/z values based on their proximity to each other in m/z
@@ -35,6 +53,11 @@ only a certain number of groups. Because the algorithm uses the first value
 in the m/z vector as the window center, it's often a good idea to first
 sort the values by decreasing intensity.
 }
+\details{
+Internally the values are sorted once and each window is located by binary
+search, so run time scales roughly as n log n rather than n times the number
+of groups, making it practical on full MS1 tables as well as EIC slices.
+}
 \examples{
 \dontshow{data.table::setDTthreads(2)}
 example_mz_vals <- c(118.0, 118.1, 138.0, 152.0, 118.2, 138.1, 118.1)
@@ -44,6 +67,7 @@ mz_group(example_mz_vals, ppm = 200000)
 
 mz_group(example_mz_vals, ppm = 1000, min_group_size = 2)
 mz_group(example_mz_vals, ppm = 1000, max_groups = 2)
+mz_group(example_mz_vals, ppm = 1000, mz_factor = TRUE)
 
 \dontrun{
 sample_dir <- system.file("extdata", package = "RaMS")
@@ -65,7 +89,7 @@ msdata$MS1[mz\%between\%pmppm(119.0865, 100)] \%>\%
 
 msdata$MS1[mz\%between\%pmppm(119.0865, 100)] \%>\%
   arrange(desc(int)) \%>\%
-  mutate(mz_group=mz_group(mz, ppm=5)) \%>\%
+  mutate(mz_group=mz_group(mz, ppm=5, mz_factor=TRUE)) \%>\%
   qplotMS1data(facet_col = "mz_group")
 msdata$MS1[mz\%between\%pmppm(119.0865, 100)] \%>\%
   arrange(desc(int)) \%>\%

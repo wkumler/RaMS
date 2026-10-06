@@ -196,16 +196,31 @@ baseplotMSdata <- function(MS1_df){
 #' in the m/z vector as the window center, it's often a good idea to first
 #' sort the values by decreasing intensity.
 #'
-#' @param mz_vals A numeric vector of m/z values
-#' @param ppm A length-1 numeric vector specifying the desired window size in ppm
-#' @param min_group_size A length-1 numeric vector specifying the minimum number
-#' of points that must fall within an m/z window to be assigned a group number
-#' @param max_groups A length-1 numeric vector specifying the maximum number
-#' of total groups to assign.
+#' Internally the values are sorted once and each window is located by binary
+#' search, so run time scales roughly as n log n rather than n times the number
+#' of groups, making it practical on full MS1 tables as well as EIC slices.
 #'
-#' @return A numeric vector of the same length as mz_vals specifying the group
-#' into which each m/z value was binned. Values not assigned to a group are
-#' returned as NAs.
+#' @param mz_vals A numeric vector of m/z values. NAs are allowed and are
+#' returned as NA.
+#' @param ppm A length-1 positive numeric specifying the window half-width in
+#' ppm, as in \code{pmppm()}.
+#' @param min_group_size A length-1 numeric specifying the minimum number of
+#' points that must fall within an m/z window for it to be kept as a group.
+#' Points in windows smaller than this are returned as NA.
+#' @param max_groups A length-1 numeric specifying the maximum number of groups
+#' to return. Groups are kept in the order they are found (i.e. by the order
+#' of \code{mz_vals}), and windows dropped by \code{min_group_size} do not count
+#' toward this limit. If fewer groups exist, all of them are returned.
+#' @param mz_factor Logical. If FALSE (the default), groups are identified by
+#' consecutive integers in the order they were found. If TRUE, a factor is
+#' returned whose levels are the mean m/z of each group's members formatted to
+#' 5 decimal places (e.g. "118.08626"), ordered by increasing m/z. Use
+#' \code{as.numeric(as.character(x))} to recover the masses, since
+#' \code{as.numeric(x)} returns the level codes.
+#'
+#' @return A vector of the same length as mz_vals specifying the group into
+#' which each m/z value was binned: integer if \code{mz_factor = FALSE},
+#' factor if \code{mz_factor = TRUE}. Values not assigned to a group are returned as NA.
 #' @export
 #'
 #' @examples
@@ -217,6 +232,7 @@ baseplotMSdata <- function(MS1_df){
 #'
 #' mz_group(example_mz_vals, ppm = 1000, min_group_size = 2)
 #' mz_group(example_mz_vals, ppm = 1000, max_groups = 2)
+#' mz_group(example_mz_vals, ppm = 1000, mz_factor = TRUE)
 #'
 #' \dontrun{
 #' sample_dir <- system.file("extdata", package = "RaMS")
@@ -238,47 +254,72 @@ baseplotMSdata <- function(MS1_df){
 #'
 #' msdata$MS1[mz%between%pmppm(119.0865, 100)] %>%
 #'   arrange(desc(int)) %>%
-#'   mutate(mz_group=mz_group(mz, ppm=5)) %>%
+#'   mutate(mz_group=mz_group(mz, ppm=5, mz_factor=TRUE)) %>%
 #'   qplotMS1data(facet_col = "mz_group")
 #' msdata$MS1[mz%between%pmppm(119.0865, 100)] %>%
 #'   arrange(desc(int)) %>%
 #'   mutate(mz_group=mz_group(mz, ppm=5, max_groups = 2)) %>%
 #'   qplotMS1data(facet_col = "mz_group")
 #' }
-mz_group <- function(mz_vals, ppm, min_group_size=0, max_groups=NULL){
+mz_group <- function(mz_vals, ppm, min_group_size=1, max_groups=NULL, mz_factor=FALSE){
+  is_num1 <- function(x)is.numeric(x) && length(x)==1 && !is.na(x)
   if(!is.numeric(mz_vals))stop("'mz_vals' must be a numeric vector")
-  if(!is.numeric(ppm))stop("'ppm' must be a length-1 numeric")
-  if(!is.numeric(min_group_size))stop("'ppm' must be a length-1 numeric")
+  if(!is_num1(ppm) || ppm<=0)stop("'ppm' must be a length-1 positive numeric")
+  if(!is_num1(min_group_size))stop("'min_group_size' must be a length-1 numeric")
   if(!is.null(max_groups)){
-    if(!is.numeric(max_groups))stop("'max_groups' must be a length-1 numeric")
+    if(!is_num1(max_groups) || max_groups<0)
+      stop("'max_groups' must be a length-1 non-negative numeric")
   }
+  if(!(isTRUE(mz_factor) || isFALSE(mz_factor)))stop("'mz_factor' must be TRUE or FALSE")
 
-  mz_groups <- numeric(length(mz_vals))
-  needs_group <- !logical(length(mz_vals))
+  n <- length(mz_vals)
+  mz_groups <- rep(NA_integer_, n)
+  has_mz <- which(!is.na(mz_vals))
+  max_groups <- if(is.null(max_groups)) Inf else max_groups
 
-  if(is.null(max_groups)){
-    group_idx <- 1L
-    while(sum(needs_group)>0){
-      mz_idxs <- mz_vals%between%pmppm(mz_vals[needs_group][1], ppm)
-      if(sum(mz_idxs[needs_group])>min_group_size){
-        mz_groups[mz_idxs&needs_group] <- group_idx
+  if(length(has_mz) && max_groups>=1){
+    # Sort once and find every point's window [mz-ppm, mz+ppm] (inclusive, same
+    # arithmetic as pmppm) by binary search, so each pass of the loop below
+    # only touches the points inside its own window. The window bounds are
+    # looked up in sorted order because findInterval() starts each search from
+    # the previous result, which is much faster than random-order lookups
+    mz_ord <- has_mz[order(mz_vals[has_mz])]
+    sorted_mz <- mz_vals[mz_ord]
+    sorted_pos <- integer(n)
+    sorted_pos[mz_ord] <- seq_along(mz_ord)
+    win_lo <- (findInterval(sorted_mz*(1-ppm/1e6), sorted_mz, left.open=TRUE) + 1L)[sorted_pos]
+    win_hi <- findInterval(sorted_mz*(1+ppm/1e6), sorted_mz)[sorted_pos]
+
+    taken <- logical(length(mz_ord))
+    group_idx <- 0L
+    for(i in has_mz){
+      if(taken[sorted_pos[i]])next
+      win_idxs <- win_lo[i]:win_hi[i]
+      win_idxs <- win_idxs[!taken[win_idxs]]
+      taken[win_idxs] <- TRUE
+      if(length(win_idxs)>=min_group_size){
         group_idx <- group_idx + 1L
+        mz_groups[mz_ord[win_idxs]] <- group_idx
+        if(group_idx>=max_groups)break
       }
-      needs_group[mz_idxs] <- FALSE
-    }
-  } else {
-    for(group_idx in seq_len(max_groups)){
-      mz_idxs <- mz_vals%between%pmppm(mz_vals[needs_group][1], ppm)
-      if(sum(mz_idxs[needs_group])>min_group_size){
-        mz_groups[mz_idxs&needs_group] <- group_idx
-      }
-      needs_group[mz_idxs] <- FALSE
     }
   }
-  mz_groups[mz_groups==0] <- NA
+
+  if(mz_factor){
+    in_group <- !is.na(mz_groups)
+    group_means <- rowsum(mz_vals[in_group], mz_groups[in_group], reorder=TRUE)[,1]/
+      tabulate(mz_groups[in_group])
+    # Build the factor from integer codes directly; factor() would coerce
+    # every value to character first, which is slow on long vectors. Groups
+    # whose means round to the same label share a level
+    mz_labels <- sprintf("%.5f", group_means)
+    mz_levels <- unique(mz_labels[order(group_means)])
+    mz_groups <- structure(match(mz_labels, mz_levels)[mz_groups],
+                           levels=mz_levels, class="factor")
+  }
+
   mz_groups
 }
-
 
 
 
