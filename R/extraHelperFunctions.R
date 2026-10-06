@@ -11,6 +11,8 @@
 #'
 #' @return A length-2 numeric representing the mass range requested
 #'
+#' @seealso \code{\link{pmppm_vec}} for multiple masses at once
+#'
 #' @export
 #'
 #' @examples
@@ -19,12 +21,100 @@
 #' pmppm(118.0865, 2.5)
 #' pmppm(892.535313, 10)
 pmppm <- function(mass, ppm=4){
-  if(length(mass)>1)stop("Vectorized masses are not supported in pmppm")
+  if(length(mass)>1)stop("Vectorized masses are not supported in pmppm; use pmppm_vec()")
   if(length(ppm)>1)stop("Vectorized ppms are not supported in pmppm")
   if(!is.numeric(mass))stop("'mass' must be numeric")
   if(!is.numeric(ppm))stop("'ppm' must be numeric")
   if(ppm<0)warning("'ppm' should be positive")
   c(mass*(1-ppm/1000000), mass*(1+ppm/1000000))
+}
+
+#' Plus/minus parts per million for multiple masses
+#'
+#' A vectorized version of \code{\link{pmppm}} that converts any number of
+#' masses into mass windows of the same ppm width. All the lower bounds are
+#' returned together and all the upper bounds together, which is the format
+#' expected by \code{\%inrange\%} and \code{\%between\%} (re-exported from
+#' data.table) and by range joins.
+#'
+#' With \code{\%inrange\%}, each value is checked against every window, which
+#' is useful for extracting data for several masses at once (e.g. inside
+#' \code{dplyr::filter()}). With \code{\%between\%}, each value is checked only
+#' against its own window, so \code{mass} should be the same length as the
+#' values being checked.
+#'
+#' @section Use in tidyverse pipelines:
+#' Because the bounds are grouped by type rather than by mass,
+#' \code{pmppm_vec()} is not suited to creating a list-column with one window
+#' per row: \code{mutate(mz_range=pmppm_vec(mz))} errors for most data
+#' frames and, with exactly two rows, silently creates incorrect windows. For
+#' one window per row, use \code{purrr::map(mz, pmppm)} instead, or add the
+#' bounds as two columns with \code{mutate(as_tibble(pmppm_vec(mz)))}. See the
+#' examples.
+#'
+#' @param mass A numeric vector of masses for which mass ranges are desired.
+#' @param ppm A length-1 numeric giving the parts-per-million accuracy of the
+#' mass spectrometer on which the data was collected. The same ppm is applied
+#' to every mass.
+#'
+#' @return A list with two numeric elements, \code{lower} and \code{upper},
+#' each the same length as \code{mass}, giving the bounds of the mass window
+#' around each mass. A list is returned even when \code{mass} is length 1.
+#'
+#' @seealso \code{\link{pmppm}} for a single mass
+#'
+#' @export
+#'
+#' @examples
+#' pmppm_vec(c(118.0865, 104.1070, 136.0618), 5)
+#'
+#' # Is each value within 5 ppm of any of the masses?
+#' mz_vals <- c(104.1071, 104.2, 118.0866, 136.0619, 150)
+#' mz_vals %inrange% pmppm_vec(c(118.0865, 104.1070, 136.0618), 5)
+#'
+#' \dontrun{
+#' library(dplyr)
+#' library(purrr)
+#' library(ggplot2)
+#' sample_dir <- system.file("extdata", package = "RaMS")
+#' sample_files <- list.files(sample_dir, full.names=TRUE)
+#' msdata <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
+#'
+#' cmpds <- tribble(
+#'   ~cmpd_name, ~cmpd_mz,
+#'   "Glycine betaine", 118.0865,
+#'   "Choline", 104.1070,
+#'   "Adenine", 136.0618
+#' )
+#'
+#' # All data points within 5 ppm of any of the compounds
+#' msdata$MS1 %>%
+#'   filter(mz %inrange% pmppm_vec(cmpds$cmpd_mz, 5))
+#'
+#' # Label each data point with the compound it matched using a range join
+#' cmpd_eics <- cmpds %>%
+#'   mutate(as_tibble(pmppm_vec(cmpd_mz, 5))) %>%
+#'   inner_join(msdata$MS1, join_by(between(y$mz, x$lower, x$upper)))
+#' cmpd_eics %>%
+#'   ggplot() +
+#'   geom_line(aes(x=rt, y=int, color=filename)) +
+#'   facet_wrap(~cmpd_name, ncol=1, scales="free_y")
+#'
+#' # For one window per row in a list-column, use pmppm() with map() rather
+#' # than pmppm_vec(), which returns all the lower and upper bounds together
+#' cmpds %>%
+#'   mutate(mz_range=map(cmpd_mz, pmppm, ppm=5)) %>%
+#'   mutate(eic=map(mz_range, ~filter(msdata$MS1, mz %between% .x)))
+#'
+#' # The same windows work with data.table syntax
+#' msdata$MS1[mz %inrange% pmppm_vec(cmpds$cmpd_mz, 5)]
+#' }
+pmppm_vec <- function(mass, ppm=4){
+  if(length(mass)==1)message("Single mass values can also be handed to pmppm for a simpler output format")
+  if(!is.numeric(mass))stop("'mass' must be numeric")
+  if(!is.numeric(ppm) || length(ppm)!=1 || is.na(ppm))stop("'ppm' must be a length-1 numeric")
+  if(ppm<0)warning("'ppm' should be positive")
+  list(lower=mass*(1-ppm/1000000), upper=mass*(1+ppm/1000000))
 }
 
 #' Trapezoidal integration of mass-spec retention time / intensity values

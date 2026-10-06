@@ -26,3 +26,6 @@ pmppm(1000000, 5)
 pmppm(118.0865, 2.5)
 pmppm(892.535313, 10)
 }
+\seealso{
+\code{\link{pmppm_vec}} for multiple masses at once
+}
