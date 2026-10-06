@@ -28,6 +28,6 @@ test_that("time stamp is correct", {
 })
 
 test_that("chroms convert to minutes if in seconds", {
-  chrom_filename <- system.file("extdata/tiny.pwiz.1.1.mzML", package = "RaMS")
+  chrom_filename <- system.file("extdata/tiny.pwiz.1.1.mzML.gz", package = "RaMS")
   expect_true(all(grabMSdata(chrom_filename, "chroms")$chroms$rt<2))
 })

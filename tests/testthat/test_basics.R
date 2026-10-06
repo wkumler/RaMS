@@ -73,10 +73,11 @@ test_that("mzML BPC/TIC looks normal", {
   expect_gt(nrow(mzML_data$BPC), 0)
 
   # Check that only expected columns exist
-  expect_setequal(names(mzML_data$BPC), c("rt", "int", "filename"))
+  expect_setequal(names(mzML_data$BPC), c("rt", "base_peak_mz", "int", "filename"))
 
   # Check column types
   expect_type(mzML_data$BPC$rt, "double")
+  expect_type(mzML_data$BPC$base_peak_mz, "double")
   expect_type(mzML_data$BPC$int, "double")
   expect_type(mzML_data$BPC$filename, "character")
 
@@ -86,10 +87,11 @@ test_that("mzML BPC/TIC looks normal", {
   expect_gt(nrow(mzML_data$TIC), 0)
 
   # Check that only expected columns exist
-  expect_setequal(names(mzML_data$TIC), c("rt", "int", "filename"))
+  expect_setequal(names(mzML_data$TIC), c("rt", "base_peak_mz", "int", "filename"))
 
   # Check column types
   expect_type(mzML_data$TIC$rt, "double")
+  expect_type(mzML_data$TIC$base_peak_mz, "double")
   expect_type(mzML_data$TIC$int, "double")
   expect_type(mzML_data$TIC$filename, "character")
 
