@@ -488,16 +488,3 @@ timeReport <- function(last_time, text=NULL){
   cat(text)
   Sys.time()
 }
-
-# Import area ----
-
-#' @import xml2
-#' @import data.table
-#' @import utils
-#' @importFrom base64enc base64decode base64encode
-#' @importFrom stats approx
-#' @export
-data.table::between
-#' @export
-data.table::`%between%`
-NULL

@@ -1,4 +1,9 @@
 
+#' @export
+data.table::`%between%`
+#' @export
+data.table::`%inrange%`
+
 #' Plus/minus parts per million
 #'
 #' It shouldn't be hard to translate a point mass into a mass window bounded by

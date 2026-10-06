@@ -3,8 +3,8 @@
 \docType{import}
 \name{reexports}
 \alias{reexports}
-\alias{between}
 \alias{\%between\%}
+\alias{\%inrange\%}
 \title{Objects exported from other packages}
 \keyword{internal}
 \description{
@@ -12,6 +12,6 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
-  \item{data.table}{\code{\link[data.table:between]{\%between\%}}, \code{\link[data.table]{between}}}
+  \item{data.table}{\code{\link[data.table:between]{\%between\%}}, \code{\link[data.table:between]{\%inrange\%}}}
 }}
 

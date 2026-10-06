@@ -16,3 +16,10 @@
 #'
 #' @keywords internal
 "_PACKAGE"
+
+#' @import xml2
+#' @import data.table
+#' @import utils
+#' @importFrom base64enc base64decode base64encode
+#' @importFrom stats approx
+NULL
