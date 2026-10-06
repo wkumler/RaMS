@@ -675,10 +675,15 @@ grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE, incl_polarity){
   int_xpath_full <- paste0('d1:cvParam[@name="', int_xpath, '"]')
   int_nodes <- xml2::xml_find_all(ms1_nodes, xpath = int_xpath_full)
   int_vals <- as.numeric(xml2::xml_attr(int_nodes, "value"))
+
+  bpmz_xpath <- 'd1:cvParam[@name="base peak m/z"]'
+  bpmz_nodes <- xml2::xml_find_all(xml_nodes, bpmz_xpath)
+  bpmz_vals <- as.numeric(xml2::xml_attr(bpmz_nodes, "value"))
+
   if(incl_polarity){
-    return(data.table(rt=rt_vals, int=int_vals, polarity=pol_vals))
+    return(data.table(rt=rt_vals, base_peak_mz=bpmz_vals, int=int_vals, polarity=pol_vals))
   }
-  return(data.table(rt=rt_vals, int=int_vals))
+  return(data.table(rt=rt_vals, base_peak_mz=bpmz_vals, int=int_vals))
 }
 
 #' Extract the DAD data from an mzML nodeset
@@ -784,7 +789,6 @@ grabSpectraPolarity <- function(xml_nodes){
   num_pol[pol_vals=="negative scan"] <- -1
   num_pol
 }
-
 
 
 #' Extract the mass-to-charge data from the spectra of an mzML nodeset
