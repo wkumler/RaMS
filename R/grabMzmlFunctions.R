@@ -105,6 +105,7 @@ grabMzmlData <- function(filename, grab_what, verbosity=0, incl_polarity=FALSE,
   checkFileType(xml_data, "mzML")
   rtrange <- checkRTrange(rtrange)
   prefilter <- checkProvidedPrefilter(prefilter)
+  if(!incl_polarity)checkMixedPolarity(xml_data, filename, "mzML")
 
   output_data <- list()
 

@@ -460,8 +460,6 @@ checkProvidedPrefilter <- function(prefilter){
 }
 
 checkQuickMLs <- function(files){
-  init_warn_val <- getOption("warn")
-  options(warn=1)
   ml_check <- grepl("\\.mzx?ml$|\\.mzx?ml\\.gz$", files, ignore.case = TRUE)
   if(!all(ml_check)){
     nonml_files <- files[!ml_check]
@@ -477,9 +475,28 @@ checkQuickMLs <- function(files){
         paste(nonml_files, collapse = "\n")
       )
     }
+    old_opts <- options(warn=max(1, getOption("warn")))
+    on.exit(options(old_opts))
     warning(warn_string)
   }
-  options(warn=init_warn_val)
+}
+
+checkMixedPolarity <- function(xml_data, filename, file_type){
+  if(file_type=="mzML"){
+    pos_xpath <- 'boolean(//d1:cvParam[@name="positive scan"])'
+    neg_xpath <- 'boolean(//d1:cvParam[@name="negative scan"])'
+  } else {
+    pos_xpath <- 'boolean(//d1:scan[@polarity="+"])'
+    neg_xpath <- 'boolean(//d1:scan[@polarity="-"])'
+  }
+  has_pos <- xml2::xml_find_lgl(xml_data, pos_xpath)
+  has_neg <- xml2::xml_find_lgl(xml_data, neg_xpath)
+  if(has_pos && has_neg){
+    old_opts <- options(warn=max(1, getOption("warn")))
+    on.exit(options(old_opts))
+    warning(basename(filename), " contains both positive and negative mode scans. ",
+            "Use incl_polarity=TRUE to tell them apart.")
+  }
 }
 
 timeReport <- function(last_time, text=NULL){
