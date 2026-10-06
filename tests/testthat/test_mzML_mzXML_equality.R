@@ -19,6 +19,13 @@ test_that("mzML_MS2 matches mzXML_MS2", {
 })
 
 test_that("mzML_BPC matches mzXML_BPC", {
+  expect_identical(names(mzML_comp_data), names(mzXML_comp_data))
+
+  expect_identical(names(mzML_comp_data$MS1), names(mzXML_comp_data$MS1))
+  expect_identical(names(mzML_comp_data$MS2), names(mzXML_comp_data$MS2))
+  expect_identical(names(mzML_comp_data$BPC), names(mzXML_comp_data$BPC))
+  expect_identical(names(mzML_comp_data$TIC), names(mzXML_comp_data$TIC))
+
   expect_equal(mzML_comp_data$BPC$rt, mzXML_comp_data$BPC$rt, tolerance = 0.001)
   expect_equal(mzML_comp_data$BPC$int, mzXML_comp_data$BPC$int, tolerance = 0.1)
 

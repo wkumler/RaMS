@@ -542,19 +542,22 @@ grabMzxmlBPC <- function(xml_data, TIC=FALSE, rtrange, incl_polarity){
   int_attr <- ifelse(TIC, "totIonCurrent", "basePeakIntensity")
   int_vals <- as.numeric(xml2::xml_attr(scan_nodes, int_attr))
 
+  bpmz_vals <- as.numeric(xml2::xml_attr(scan_nodes, "basePeakMz"))
+
   pol_vals <- grabMzxmlSpectraPolarity(scan_nodes)
 
   if(!is.null(rtrange)){
     int_vals <- int_vals[rt_vals%between%rtrange]
-    rt_vals <- rt_vals[rt_vals%between%rtrange]
+    bpmz_vals <- bpmz_vals[rt_vals%between%rtrange]
     if(incl_polarity){
       pol_vals <- pol_vals[rt_vals%between%rtrange]
     }
+    rt_vals <- rt_vals[rt_vals%between%rtrange]
   }
   if(incl_polarity){
-    return(data.table(rt=rt_vals, int=int_vals, polarity=pol_vals))
+    return(data.table(rt=rt_vals, base_peak_mz=bpmz_vals, int=int_vals, polarity=pol_vals))
   }
-  return(data.table(rt=rt_vals, int=int_vals))
+  return(data.table(rt=rt_vals, base_peak_mz=bpmz_vals, int=int_vals))
 }
 
 
