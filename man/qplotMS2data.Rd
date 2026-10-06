@@ -4,15 +4,21 @@
 \alias{qplotMS2data}
 \title{Quick plot for MS2 data}
 \usage{
-qplotMS2data(MS2_df, color_col = NULL, force_base = FALSE, relative = FALSE)
+qplotMS2data(
+  MS2_df,
+  color_col = "filename",
+  force_base = FALSE,
+  relative = FALSE
+)
 }
 \arguments{
 \item{MS2_df}{A data.table with at least two columns named fragmz and int}
 
 \item{color_col}{The name of the column to color by. Must be quoted.
 Discrete columns (character, factor, logical, integer) get one color per
-level and double columns a continuous gradient. Defaults to "filename" if
-that column exists; use NULL for no coloring.}
+level and double columns a continuous gradient (base graphics treat every
+column as discrete). Defaults to "filename" when there are multiple files;
+use NULL for no coloring.}
 
 \item{force_base}{Boolean option to force base R graphics instead of `ggplot`
 even if the `ggplot2` package is installed.}
@@ -37,24 +43,26 @@ filtered to a single precursor first (e.g. with `premz` and `pmppm`).
 }
 \examples{
 \dontshow{data.table::setDTthreads(2)}
-test_df <- data.frame(fragmz=c(58.0651, 59.0730, 60.0808, 118.0863),
-                      int=c(100, 15, 30, 60), filename="A")
-qplotMS2data(test_df)
-qplotMS2data(test_df, force_base=TRUE)
+msdata <- grabMSdata(system.file("extdata/S30657.mzML.gz", package = "RaMS"))
 
-\dontrun{
-sample_dir <- system.file("extdata", package = "RaMS")
-sample_files <- list.files(sample_dir, full.names=TRUE)
-msdata <- grabMSdata(sample_files[7], grab_what="MS2")
-adenine_ms2 <- msdata$MS2[premz\%between\%pmppm(136.0618, 5)]
-qplotMS2data(adenine_ms2)
+# All the MS2 scans with glycine betaine's m/z as the precursor
+betaine_ms1 <- msdata$MS1[mz\%between\%pmppm(118.0865, 10)]
+betaine_ms2 <- msdata$MS2[premz\%between\%pmppm(118.0865, 10)]
 
-# Compare scans of different intensities by shape
-adenine_ms2$scan <- factor(round(adenine_ms2$rt, 2))
-qplotMS2data(adenine_ms2, color_col="scan", relative=TRUE)
-if(requireNamespace("ggplot2", quietly=TRUE)){
-  qplotMS2data(adenine_ms2) +
-    ggplot2::facet_wrap(~scan, ncol=1)
-}
-}
+\dontshow{if (requireNamespace("ggplot2", quietly=TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+# Mark when each MS2 scan was taken on the MS1 chromatogram
+library(ggplot2)
+qplotMS1data(betaine_ms1) +
+  geom_vline(xintercept = unique(betaine_ms2$rt))
+\dontshow{\}) # examplesIf}
+# Treat each scan's rt as a label so each scan gets its own color
+betaine_ms2$rt <- factor(betaine_ms2$rt)
+qplotMS2data(betaine_ms2, color_col = "rt")
+qplotMS2data(betaine_ms2, force_base = TRUE)
+
+\dontshow{if (requireNamespace("ggplot2", quietly=TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+# Scale each scan to its biggest fragment and facet by scan to show diffs
+qplotMS2data(betaine_ms2, relative=TRUE) +
+  facet_wrap(~rt, ncol=1)
+\dontshow{\}) # examplesIf}
 }

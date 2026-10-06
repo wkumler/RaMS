@@ -205,8 +205,8 @@ trapz <- function(rts, ints, baseline="none"){
 #' @param color_col The name of the column to color by. Must be quoted.
 #' Discrete columns (character, factor, logical, integer) get one color per
 #' level and double columns a continuous gradient (base graphics treat every
-#' column as discrete). Defaults to "filename" if that column exists; use NULL
-#' for no coloring.
+#' column as discrete). Defaults to "filename" when there are multiple files;
+#' use NULL for no coloring.
 #' @param force_base Boolean option to force base R graphics instead of `ggplot`
 #' even if the `ggplot2` package is installed.
 #' @param slice_max Boolean option to keep only the most intense point in each
@@ -224,32 +224,32 @@ trapz <- function(rts, ints, baseline="none"){
 #' \dontshow{data.table::setDTthreads(2)}
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
-#' msdata <- grabMSdata(sample_files[c(3, 5, 6, 7)], grab_what=c("MS1", "BPC"),
-#'                      incl_polarity=TRUE)
+#' msdata <- grabMSdata(sample_files[c(3, 5, 6)])
 #'
-#' # Base peak chromatogram of every file, all in one color. S30657 switches
-#' # polarity every scan, so keep only the positive mode scans to avoid a zigzag
-#' qplotMS1data(msdata$BPC[polarity==1], color_col=NULL)
+#' # Base peak chromatogram of every file, colored by file
+#' qplotMS1data(msdata$BPC)
 #'
 #' # Extracted ion chromatogram of glycine betaine, colored by file
 #' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865, 10)])
 #'
-#' # A wide m/z window picks up other ions in some scans, drawn as spikes;
+#' # A wide m/z window picks up other ions in some scans, drawn as vertical spikes;
 #' # slice_max keeps only the biggest point in each scan
 #' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865, 1000)])
 #' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865, 1000)], slice_max=TRUE)
 #'
-#' # Base graphics work even without ggplot2 installed
+#' # Base graphics work even without ggplot2 installed, also are a good bit faster
+#' # if rendering speed is important
 #' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865, 10)], force_base=TRUE)
 #'
 #' @examplesIf requireNamespace("ggplot2", quietly=TRUE)
-#' # The ggplot2 output can be customized as usual, e.g. to mark the
-#' # retention time windows used to split the MS2 spectra in ?qplotMS2data
+#' # The ggplot2 output can be customized as usual, e.g. to mark the edges of
+#' # the betaine peak and give each file its own panel
 #' library(ggplot2)
 #' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865, 10)]) +
-#'   geom_vline(xintercept=c(8.2, 9.5), linetype="dashed")
+#'   geom_vline(xintercept=c(7.6, 8.2)) +
+#'   facet_wrap(~filename, ncol=1)
 qplotMS1data <- function(MS1_df, color_col="filename", force_base=FALSE, slice_max=FALSE){
-  if(missing(color_col) && !"filename"%in%names(MS1_df))color_col <- NULL
+  if(missing(color_col) && length(unique(MS1_df$filename))<2)color_col <- NULL
   if(!is.null(color_col)){
     if(!color_col%in%names(MS1_df))stop("Column '", color_col, "' not found in MS1_df")
     # Treat integers (e.g. mz_group IDs) as discrete rather than a gradient
@@ -339,8 +339,8 @@ base_colors <- function(df, color_col){
 #' @param color_col The name of the column to color by. Must be quoted.
 #' Discrete columns (character, factor, logical, integer) get one color per
 #' level and double columns a continuous gradient (base graphics treat every
-#' column as discrete). Defaults to "filename" if that column exists; use NULL
-#' for no coloring.
+#' column as discrete). Defaults to "filename" when there are multiple files;
+#' use NULL for no coloring.
 #' @param force_base Boolean option to force base R graphics instead of `ggplot`
 #' even if the `ggplot2` package is installed.
 #' @param relative Boolean option to scale each spectrum so that its most
@@ -355,29 +355,30 @@ base_colors <- function(df, color_col){
 #'
 #' @examples
 #' \dontshow{data.table::setDTthreads(2)}
-#' sample_dir <- system.file("extdata", package = "RaMS")
-#' sample_files <- list.files(sample_dir, full.names=TRUE)
-#' msdata <- grabMSdata(sample_files[7], grab_what="MS2")
+#' msdata <- grabMSdata(system.file("extdata/S30657.mzML.gz", package = "RaMS"))
 #'
 #' # All the MS2 scans with glycine betaine's m/z as the precursor
+#' betaine_ms1 <- msdata$MS1[mz%between%pmppm(118.0865, 10)]
 #' betaine_ms2 <- msdata$MS2[premz%between%pmppm(118.0865, 10)]
-#' qplotMS2data(betaine_ms2)
 #'
-#' # Scale each scan to its biggest fragment so smaller scans are visible
-#' qplotMS2data(betaine_ms2, relative=TRUE)
-#' qplotMS2data(betaine_ms2, relative=TRUE, force_base=TRUE)
-#'
-#' @examplesIf requireNamespace("ggplot2", quietly=TRUE) && requireNamespace("dplyr", quietly=TRUE)
-#' # The three scans come from three different chromatographic peaks (see the
-#' # last example in ?qplotMS1data), so split them up and compare their spectra
+#' @examplesIf requireNamespace("ggplot2", quietly=TRUE)
+#' # Mark when each MS2 scan was taken on the MS1 chromatogram
 #' library(ggplot2)
-#' library(dplyr)
-#' betaine_ms2 %>%
-#'   mutate(rt_bin=cut(rt, breaks=c(4, 8.2, 9.5, 15))) %>%
-#'   qplotMS2data(relative=TRUE) +
-#'   facet_wrap(~rt_bin, ncol=1)
+#' qplotMS1data(betaine_ms1) +
+#'   geom_vline(xintercept = unique(betaine_ms2$rt))
+#'
+#' @examples
+#' # Treat each scan's rt as a label so each scan gets its own color
+#' betaine_ms2$rt <- factor(betaine_ms2$rt)
+#' qplotMS2data(betaine_ms2, color_col = "rt")
+#' qplotMS2data(betaine_ms2, force_base = TRUE)
+#'
+#' @examplesIf requireNamespace("ggplot2", quietly=TRUE)
+#' # Scale each scan to its biggest fragment and facet by scan to show diffs
+#' qplotMS2data(betaine_ms2, relative=TRUE) +
+#'   facet_wrap(~rt, ncol=1)
 qplotMS2data <- function(MS2_df, color_col="filename", force_base=FALSE, relative=FALSE){
-  if(missing(color_col) && !"filename"%in%names(MS2_df))color_col <- NULL
+  if(missing(color_col) && length(unique(MS2_df$filename))<2)color_col <- NULL
   if(!is.null(color_col)){
     if(!color_col%in%names(MS2_df))stop("Column '", color_col, "' not found in MS2_df")
     # Treat integers (e.g. voltage) as discrete rather than a gradient

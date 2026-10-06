@@ -16,8 +16,9 @@ qplotMS1data(
 
 \item{color_col}{The name of the column to color by. Must be quoted.
 Discrete columns (character, factor, logical, integer) get one color per
-level and double columns a continuous gradient. Defaults to "filename" if
-that column exists; use NULL for no coloring.}
+level and double columns a continuous gradient (base graphics treat every
+column as discrete). Defaults to "filename" when there are multiple files;
+use NULL for no coloring.}
 
 \item{force_base}{Boolean option to force base R graphics instead of `ggplot`
 even if the `ggplot2` package is installed.}
@@ -45,36 +46,31 @@ the `ggplot2` output with the usual + syntax.
 }
 \examples{
 \dontshow{data.table::setDTthreads(2)}
-test_df <- expand.grid(rt=rep(1:100, length.out=1000))
-test_df$int <- rep(dnorm(seq(-10, 10, length.out=100)), 10)*10+runif(1000)
-test_df$filename <- rep(LETTERS[1:10], each=100)
-qplotMS1data(test_df)
-
-test_df$startime <- rep(gl(2, 5, labels = c("Morn", "Eve")), each=100)
-qplotMS1data(test_df, color_col="startime")
-qplotMS1data(test_df, color_col="startime", force_base=TRUE)
-if(requireNamespace("ggplot2", quietly=TRUE)){
-  qplotMS1data(test_df, color_col="startime") +
-    ggplot2::facet_wrap(~startime, ncol=1)
-}
-
-# Using data from the `grabMSdata` function:
-\dontrun{
 sample_dir <- system.file("extdata", package = "RaMS")
 sample_files <- list.files(sample_dir, full.names=TRUE)
-msdata <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
-qplotMS1data(msdata$MS1[mz\%between\%pmppm(118.0865)])
+msdata <- grabMSdata(sample_files[c(3, 5, 6)])
 
-# A wide window catches several points per scan; keep the biggest
-qplotMS1data(msdata$MS1[mz\%between\%pmppm(119.0865, 100)], slice_max=TRUE)
+# Base peak chromatogram of every file, colored by file
+qplotMS1data(msdata$BPC)
 
-# Or separate them into m/z groups and keep the biggest in each
-library(dplyr)
-msdata$MS1 \%>\%
-  filter(mz\%between\%pmppm(119.0865, 100)) \%>\%
-  arrange(desc(int)) \%>\%
-  mutate(mz_group=mz_group(mz, ppm=5, max_groups=3, mz_factor=TRUE)) \%>\%
-  filter(!is.na(mz_group)) \%>\%
-  qplotMS1data(color_col="mz_group", slice_max=TRUE)
-}
+# Extracted ion chromatogram of glycine betaine, colored by file
+qplotMS1data(msdata$MS1[mz\%between\%pmppm(118.0865, 10)])
+
+# A wide m/z window picks up other ions in some scans, drawn as vertical spikes;
+# slice_max keeps only the biggest point in each scan
+qplotMS1data(msdata$MS1[mz\%between\%pmppm(118.0865, 1000)])
+qplotMS1data(msdata$MS1[mz\%between\%pmppm(118.0865, 1000)], slice_max=TRUE)
+
+# Base graphics work even without ggplot2 installed, also are a good bit faster
+# if rendering speed is important
+qplotMS1data(msdata$MS1[mz\%between\%pmppm(118.0865, 10)], force_base=TRUE)
+
+\dontshow{if (requireNamespace("ggplot2", quietly=TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+# The ggplot2 output can be customized as usual, e.g. to mark the edges of
+# the betaine peak and give each file its own panel
+library(ggplot2)
+qplotMS1data(msdata$MS1[mz\%between\%pmppm(118.0865, 10)]) +
+  geom_vline(xintercept=c(7.6, 8.2)) +
+  facet_wrap(~filename, ncol=1)
+\dontshow{\}) # examplesIf}
 }
