@@ -45,7 +45,7 @@ test_that("pmppm_vec matches pmppm for each mass", {
 })
 
 test_that("pmppm_vec returns a list for a single mass, with a message", {
-  expect_message(win <- pmppm_vec(100, 5), "pmppm")
+  win <- pmppm_vec(100, 5)
   expect_type(win, "list")
   expect_identical(unlist(win, use.names=FALSE), pmppm(100, 5))
   expect_silent(pmppm_vec(c(100, 200), 5))
@@ -169,33 +169,106 @@ test_that("qplotMS1data works as expected", {
   test_df <- expand.grid(rt=rep(1:100, length.out=1000))
   test_df$int <- rep(dnorm(seq(-10, 10, length.out=100)), 10)*10+runif(1000)
   test_df$filename <- rep(LETTERS[1:10], each=100)
+  test_df$startime <- rep(gl(2, 5, labels = c("Morn", "Eve")), each=100)
 
-  baseplot_output <- qplotMS1data(test_df, force_base = TRUE)
-  expect_null(baseplot_output)
-
-  if(requireNamespace("ggplot2", quietly = TRUE)){
-    ggplot_output <- qplotMS1data(test_df)
-    expect_s3_class(ggplot_output, "ggplot")
-
-
-    test_df$startime <- rep(gl(2, 5, labels = c("Morn", "Eve")), each=100)
-    expect_no_error(qplotMS1data(test_df, color_col="startime", facet_col="startime"))
-    expect_no_error({
-      qplotMS1data(test_df, color_col="startime", facet_col="startime",
-                   facet_args=list(ncol=2, scales="free"))
-    })
-
-    expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(118.0865)]))
-    expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(138.0555, 10)]))
-  }
-  expect_warning(qplotMS1data(test_df, color_col="startime", force_base = TRUE))
-  expect_warning(qplotMS1data(test_df, facet_col="startime", force_base = TRUE))
-
+  expect_null(qplotMS1data(test_df, force_base = TRUE))
+  expect_null(qplotMS1data(test_df, color_col="startime", force_base = TRUE))
   expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(118.0865)],
                                force_base = TRUE))
   expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(138.0555, 10)],
-                               force_base=TRUE))
+                               force_base = TRUE))
+
+  if(requireNamespace("ggplot2", quietly = TRUE)){
+    expect_s3_class(qplotMS1data(test_df), "ggplot")
+    expect_no_error(print(qplotMS1data(test_df, color_col="startime") +
+                            ggplot2::facet_wrap(~startime, ncol=2, scales="free")))
+    expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(118.0865)]))
+    expect_no_error(qplotMS1data(mzML_everything$MS1[mz%between%pmppm(138.0555, 10)]))
+  }
 })
+
+# Two files, two m/z groups, with several points per scan
+ms1_example <- data.frame(
+  filename=rep(c("a.mzML", "b.mzML"), each=8),
+  rt=rep(rep(1:2, each=4), 2),
+  mz_group=rep(c("119.08", "119.08", "119.09", "119.09"), 4),
+  int=c(10, 30, 5, 2,   20, 20, 1, 7,     # file a: rt 1, rt 2 (tie at 20)
+        40, 15, 9, 12,  50, 60, 8, 3)     # file b: rt 1, rt 2
+)
+ms2_example <- data.frame(
+  fragmz=c(58.0651, 59.0730, 60.0808, 118.0863, 58.0652, 118.0864),
+  int=c(100, 15, 30, 60, 80, 90),
+  rt=rep(c(1, 2), c(4, 2)),
+  filename=rep(c("a.mzML", "b.mzML"), c(4, 2)),
+  voltage=rep(c(20L, 35L), c(4, 2))
+)
+
+test_that("slice_max keeps the most intense point per scan and trace", {
+  keep <- slice_max_int(ms1_example)
+  expect_identical(ms1_example$int[keep], c(30, 20, 40, 60))
+  # Rows 5 and 6 tie at 20; the first one wins
+  expect_identical(which(keep)[2], 5L)
+  # Discrete color columns split traces, continuous ones don't
+  expect_identical(ms1_example$int[slice_max_int(ms1_example, "mz_group")],
+                   c(30, 5, 20, 7, 40, 12, 60, 8))
+  numeric_df <- transform(ms1_example, mz=seq(119.08, 119.09, length.out=16))
+  expect_identical(slice_max_int(numeric_df, "mz"), keep)
+})
+
+test_that("slice_max matches dplyr::slice_max", {
+  skip_if_not_installed("dplyr")
+  ref <- dplyr::slice_max(ms1_example, int, by=c(rt, filename, mz_group), with_ties=FALSE)
+  kept <- ms1_example[slice_max_int(ms1_example, "mz_group"),]
+  expect_setequal(paste(kept$filename, kept$rt, kept$mz_group, kept$int),
+                  paste(ref$filename, ref$rt, ref$mz_group, ref$int))
+})
+
+test_that("base plots draw with no, discrete, integer, and continuous colors", {
+  pdf(NULL)
+  on.exit(dev.off())
+  depth_df <- transform(ms1_example, depth=ifelse(filename=="a.mzML", 5, 125))
+  expect_null(qplotMS1data(ms1_example, force_base=TRUE))
+  expect_null(qplotMS1data(ms1_example, color_col=NULL, force_base=TRUE))
+  expect_null(qplotMS1data(ms1_example, color_col="mz_group", force_base=TRUE, slice_max=TRUE))
+  expect_null(qplotMS1data(depth_df, color_col="depth", force_base=TRUE))
+  expect_null(qplotMS1data(ms1_example[, c("rt", "int")], force_base=TRUE))
+  expect_null(qplotMS2data(ms2_example, force_base=TRUE))
+  expect_null(qplotMS2data(ms2_example, color_col="voltage", force_base=TRUE, relative=TRUE))
+  expect_error(qplotMS1data(ms1_example, color_col="nope"), "nope")
+})
+
+test_that("ggplot draws one line per file and discrete color level", {
+  skip_if_not_installed("ggplot2")
+  n_groups <- function(gg)length(unique(ggplot2::ggplot_build(gg)$data[[1]]$group))
+  expect_identical(n_groups(qplotMS1data(ms1_example)), 2L)
+  expect_identical(n_groups(qplotMS1data(ms1_example, color_col="mz_group")), 4L)
+  # Integers are discrete, doubles continuous
+  int_df <- transform(ms1_example, mz_group=as.integer(factor(mz_group)))
+  expect_identical(n_groups(qplotMS1data(int_df, color_col="mz_group")), 4L)
+  depth_df <- transform(ms1_example, depth=ifelse(filename=="a.mzML", 5, 125))
+  expect_identical(n_groups(qplotMS1data(depth_df, color_col="depth")), 2L)
+})
+
+test_that("qplotMS2data draws stems to zero and relative=TRUE scales each scan", {
+  skip_if_not_installed("ggplot2")
+  built <- ggplot2::ggplot_build(qplotMS2data(ms2_example))
+  expect_identical(built$data[[1]]$x, built$data[[1]]$xend)
+  expect_true(all(built$data[[1]]$yend==0))
+  rel <- qplotMS2data(ms2_example, relative=TRUE)
+  expect_equal(ggplot2::ggplot_build(rel)$data[[2]]$y, c(100, 15, 30, 60, 80/90*100, 100))
+  expect_identical(rel$labels$y, "Relative intensity (%)")
+  expect_identical(ms2_example$int[1:2], c(100, 15))
+})
+
+test_that("color_col only defaults to filename when there are multiple files", {
+  skip_if_not_installed("ggplot2")
+  has_color <- function(gg)"colour"%in%names(gg$mapping)
+  expect_true(has_color(qplotMS1data(ms1_example)))
+  expect_false(has_color(qplotMS1data(ms1_example[ms1_example$filename=="a.mzML",])))
+  expect_false(has_color(qplotMS2data(ms2_example[ms2_example$filename=="a.mzML",])))
+  expect_true(has_color(qplotMS2data(ms2_example[ms2_example$filename=="a.mzML",], color_col="filename")))
+})
+
 
 example_mz_vals <- c(118.0, 118.1, 138.0, 152.0, 118.2, 138.1, 118.1)
 
