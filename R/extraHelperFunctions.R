@@ -110,7 +110,6 @@ pmppm <- function(mass, ppm=4){
 #' msdata$MS1[mz %inrange% pmppm_vec(cmpds$cmpd_mz, 5)]
 #' }
 pmppm_vec <- function(mass, ppm=4){
-  if(length(mass)==1)message("Single mass values can also be handed to pmppm for a simpler output format")
   if(!is.numeric(mass))stop("'mass' must be numeric")
   if(!is.numeric(ppm) || length(ppm)!=1 || is.na(ppm))stop("'ppm' must be a length-1 numeric")
   if(ppm<0)warning("'ppm' should be positive")

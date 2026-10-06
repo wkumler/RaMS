@@ -13,6 +13,132 @@ test_that("pmppm works as expected", {
   expect_error(pmppm(100:110, 10))
 })
 
+test_that("pmppm returns a length-2 window around a single mass", {
+  expect_equal(pmppm(100, 5), c(99.9995, 100.0005))
+  expect_equal(pmppm(1000000, 5), c(999995, 1000005))
+  expect_length(pmppm(118.0865), 2)
+})
+
+test_that("pmppm rejects vectorized input and points to pmppm_vec", {
+  expect_error(pmppm(c(100, 200), 5), "pmppm_vec")
+  expect_error(pmppm(100, c(5, 10)), "ppm")
+  expect_error(pmppm("100", 5), "mass")
+  expect_error(pmppm(100, "5"), "ppm")
+  expect_warning(pmppm(100, -5), "positive")
+})
+
+test_that("pmppm_vec returns a named list of lower and upper bounds", {
+  masses <- c(100, 118.0865, 1000000)
+  win <- pmppm_vec(masses, 5)
+  expect_type(win, "list")
+  expect_named(win, c("lower", "upper"))
+  expect_equal(win$lower, masses*(1-5/1e6))
+  expect_equal(win$upper, masses*(1+5/1e6))
+})
+
+test_that("pmppm_vec matches pmppm for each mass", {
+  masses <- c(90.0555, 104.1070, 118.0865, 892.535313)
+  win <- pmppm_vec(masses, 2.5)
+  for(i in seq_along(masses)){
+    expect_identical(c(win$lower[i], win$upper[i]), pmppm(masses[i], 2.5))
+  }
+})
+
+test_that("pmppm_vec returns a list for a single mass, with a message", {
+  expect_message(win <- pmppm_vec(100, 5), "pmppm")
+  expect_type(win, "list")
+  expect_identical(unlist(win, use.names=FALSE), pmppm(100, 5))
+  expect_silent(pmppm_vec(c(100, 200), 5))
+})
+
+test_that("pmppm_vec handles empty and NA masses", {
+  expect_identical(pmppm_vec(numeric(0), 5), list(lower=numeric(0), upper=numeric(0)))
+  win <- pmppm_vec(c(100, NA), 5)
+  expect_identical(is.na(win$lower), c(FALSE, TRUE))
+  expect_identical(is.na(win$upper), c(FALSE, TRUE))
+})
+
+test_that("pmppm_vec uses the default ppm of 4", {
+  expect_identical(pmppm_vec(c(100, 200)), pmppm_vec(c(100, 200), 4))
+})
+
+test_that("pmppm_vec validates its inputs", {
+  expect_error(pmppm_vec(c("100", "200"), 5), "mass")
+  expect_error(pmppm_vec(c(100, 200), "5"), "ppm")
+  expect_error(pmppm_vec(c(100, 200), c(5, 10)), "ppm")
+  expect_error(pmppm_vec(c(100, 200), NA_real_), "ppm")
+  expect_error(pmppm_vec(c(100, 200), numeric(0)), "ppm")
+  expect_warning(pmppm_vec(c(100, 200), -5), "positive")
+})
+
+test_that("pmppm_vec output works with data.table's %inrange%", {
+  mz_vals <- c(90.0551, 104.1071, 104.2, 118.0866, 150)
+  expect_identical(
+    mz_vals %inrange% pmppm_vec(c(118.0865, 104.1070, 90.0555), 5),
+    c(TRUE, TRUE, FALSE, TRUE, FALSE)
+  )
+  # Same answer as checking each window with pmppm and combining
+  any_window <- Reduce(`|`, lapply(c(118.0865, 104.1070, 90.0555), function(m){
+    mz_vals %between% pmppm(m, 5)
+  }))
+  expect_identical(mz_vals %inrange% pmppm_vec(c(118.0865, 104.1070, 90.0555), 5),
+                   any_window)
+})
+
+test_that("pmppm_vec output works with data.table's %between% per element", {
+  mz_vals <- c(90.0551, 104.1071, 104.2, 118.0866, 118.0866)
+  targets <- c(90.0555, 104.1070, 104.1070, 118.0865, 90.0555)
+  expect_identical(mz_vals %between% pmppm_vec(targets, 5),
+                   c(TRUE, TRUE, FALSE, TRUE, FALSE))
+  # Mismatched lengths error rather than recycling silently
+  expect_error(mz_vals %between% pmppm_vec(c(100, 200), 5))
+})
+
+test_that("pmppm_vec bounds can be assigned as columns for a non-equi join", {
+  compounds <- data.table::data.table(compound=c("betaine", "choline"),
+                                      mass=c(118.0865, 104.1070))
+  compounds[, c("lower", "upper"):=pmppm_vec(mass, 5)]
+  expect_equal(compounds$lower, c(118.0865, 104.1070)*(1-5/1e6))
+  expect_equal(compounds$upper, c(118.0865, 104.1070)*(1+5/1e6))
+
+  pts <- data.table::data.table(mz=c(90.0551, 104.1071, 118.0866, 150))
+  joined <- pts[compounds, .(compound, mz=x.mz), on=.(mz>=lower, mz<=upper),
+                nomatch=NULL]
+  expect_identical(joined$compound, c("betaine", "choline"))
+  expect_identical(joined$mz, c(118.0866, 104.1071))
+})
+
+test_that("pmppm_vec works in the documented tidyverse patterns", {
+  skip_if_not_installed("dplyr")
+  skip_if_not_installed("purrr")
+  ms1 <- data.frame(rt=1:6, mz=c(104.1071, 104.2, 118.0866, 118.0864, 136.0619, 150))
+  cmpds <- data.frame(cmpd_name=c("betaine", "choline", "adenine"),
+                      cmpd_mz=c(118.0865, 104.1070, 136.0618))
+
+  filtered <- dplyr::filter(ms1, mz %inrange% pmppm_vec(cmpds$cmpd_mz, 5))
+  expect_identical(filtered$rt, c(1L, 3L, 4L, 5L))
+
+  windows <- dplyr::mutate(cmpds, tibble::as_tibble(pmppm_vec(cmpd_mz, 5)))
+  expect_named(windows, c("cmpd_name", "cmpd_mz", "lower", "upper"))
+  joined <- dplyr::inner_join(windows, ms1,
+                              dplyr::join_by(between(y$mz, x$lower, x$upper)))
+  expect_identical(joined$cmpd_name, c("betaine", "betaine", "choline", "adenine"))
+  expect_identical(joined$mz, c(118.0866, 118.0864, 104.1071, 136.0619))
+
+  # One window per row comes from map(mz, pmppm), and agrees with pmppm_vec
+  per_row <- dplyr::mutate(cmpds, mz_range=purrr::map(cmpd_mz, pmppm, ppm=5))
+  vec <- pmppm_vec(cmpds$cmpd_mz, 5)
+  expect_identical(per_row$mz_range, unname(purrr::map2(vec$lower, vec$upper, c)))
+  eic_rows <- purrr::map_int(per_row$mz_range, ~nrow(dplyr::filter(ms1, mz %between% .x)))
+  expect_identical(eic_rows, c(2L, 1L, 1L))
+})
+
+test_that("pmppm_vec isn't a per-row list-column (documented pitfall)", {
+  skip_if_not_installed("dplyr")
+  three <- data.frame(mz=c(118.0865, 104.1070, 136.0618))
+  expect_error(dplyr::mutate(three, mz_range=pmppm_vec(mz)), "size")
+})
+
 test_that("trapz works as expected", {
   expect_equal(trapz(1:10, 1:10), 49.5)
   expect_equal(trapz(1:10, 10:1), 49.5)
