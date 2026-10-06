@@ -204,8 +204,9 @@ trapz <- function(rts, ints, baseline="none"){
 #' @param MS1_df A data.table with columns named rt and int, and usually filename
 #' @param color_col The name of the column to color by. Must be quoted.
 #' Discrete columns (character, factor, logical, integer) get one color per
-#' level and double columns a continuous gradient. Defaults to "filename" if
-#' that column exists; use NULL for no coloring.
+#' level and double columns a continuous gradient (base graphics treat every
+#' column as discrete). Defaults to "filename" if that column exists; use NULL
+#' for no coloring.
 #' @param force_base Boolean option to force base R graphics instead of `ggplot`
 #' even if the `ggplot2` package is installed.
 #' @param slice_max Boolean option to keep only the most intense point in each
@@ -221,38 +222,32 @@ trapz <- function(rts, ints, baseline="none"){
 #'
 #' @examples
 #' \dontshow{data.table::setDTthreads(2)}
-#' test_df <- expand.grid(rt=rep(1:100, length.out=1000))
-#' test_df$int <- rep(dnorm(seq(-10, 10, length.out=100)), 10)*10+runif(1000)
-#' test_df$filename <- rep(LETTERS[1:10], each=100)
-#' qplotMS1data(test_df)
-#'
-#' test_df$startime <- rep(gl(2, 5, labels = c("Morn", "Eve")), each=100)
-#' qplotMS1data(test_df, color_col="startime")
-#' qplotMS1data(test_df, color_col="startime", force_base=TRUE)
-#' if(requireNamespace("ggplot2", quietly=TRUE)){
-#'   qplotMS1data(test_df, color_col="startime") +
-#'     ggplot2::facet_wrap(~startime, ncol=1)
-#' }
-#'
-#' # Using data from the `grabMSdata` function:
-#' \dontrun{
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
-#' msdata <- grabMSdata(sample_files[c(3, 5, 6)], grab_what="MS1")
-#' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865)])
+#' msdata <- grabMSdata(sample_files[c(3, 5, 6, 7)], grab_what=c("MS1", "BPC"),
+#'                      incl_polarity=TRUE)
 #'
-#' # A wide window catches several points per scan; keep the biggest
-#' qplotMS1data(msdata$MS1[mz%between%pmppm(119.0865, 100)], slice_max=TRUE)
+#' # Base peak chromatogram of every file, all in one color. S30657 switches
+#' # polarity every scan, so keep only the positive mode scans to avoid a zigzag
+#' qplotMS1data(msdata$BPC[polarity==1], color_col=NULL)
 #'
-#' # Or separate them into m/z groups and keep the biggest in each
-#' library(dplyr)
-#' msdata$MS1 %>%
-#'   filter(mz%between%pmppm(119.0865, 100)) %>%
-#'   arrange(desc(int)) %>%
-#'   mutate(mz_group=mz_group(mz, ppm=5, max_groups=3, mz_factor=TRUE)) %>%
-#'   filter(!is.na(mz_group)) %>%
-#'   qplotMS1data(color_col="mz_group", slice_max=TRUE)
-#' }
+#' # Extracted ion chromatogram of glycine betaine, colored by file
+#' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865, 10)])
+#'
+#' # A wide m/z window picks up other ions in some scans, drawn as spikes;
+#' # slice_max keeps only the biggest point in each scan
+#' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865, 1000)])
+#' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865, 1000)], slice_max=TRUE)
+#'
+#' # Base graphics work even without ggplot2 installed
+#' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865, 10)], force_base=TRUE)
+#'
+#' @examplesIf requireNamespace("ggplot2", quietly=TRUE)
+#' # The ggplot2 output can be customized as usual, e.g. to mark the
+#' # retention time windows used to split the MS2 spectra in ?qplotMS2data
+#' library(ggplot2)
+#' qplotMS1data(msdata$MS1[mz%between%pmppm(118.0865, 10)]) +
+#'   geom_vline(xintercept=c(8.2, 9.5), linetype="dashed")
 qplotMS1data <- function(MS1_df, color_col="filename", force_base=FALSE, slice_max=FALSE){
   if(missing(color_col) && !"filename"%in%names(MS1_df))color_col <- NULL
   if(!is.null(color_col)){
@@ -322,20 +317,13 @@ slice_max_int <- function(MS1_df, color_col=NULL){
   int_ord <- order(MS1_df$int, decreasing=TRUE)
   seq_len(nrow(MS1_df)) %in% int_ord[!duplicated(group_key[int_ord])]
 }
-# One color per row for the base plots, plus labels and colors for a legend
+# One color per row for the base plots, treating every color column as
+# discrete, plus the labels and colors for a legend
 base_colors <- function(df, color_col){
   if(is.null(color_col))return(list(colors=rep("black", nrow(df))))
-  color_vals <- df[[color_col]]
-  if(is.numeric(color_vals)){
-    # Drop Plasma's pale yellow end, which is nearly invisible on white
-    palette <- grDevices::hcl.colors(120, palette="Plasma")[1:100]
-    list(colors=palette[cut(color_vals, breaks=100, labels=FALSE)],
-         labels=format(range(color_vals, na.rm=TRUE)), legend_cols=palette[c(1, 100)])
-  } else {
-    color_vals <- as.factor(color_vals)
-    level_cols <- grDevices::hcl.colors(nlevels(color_vals), palette="Dark 3")
-    list(colors=level_cols[color_vals], labels=levels(color_vals), legend_cols=level_cols)
-  }
+  color_vals <- as.factor(df[[color_col]])
+  level_cols <- grDevices::hcl.colors(nlevels(color_vals), palette="Dark 3")
+  list(colors=level_cols[color_vals], labels=levels(color_vals), legend_cols=level_cols)
 }
 
 #' Quick plot for MS2 data
@@ -350,8 +338,9 @@ base_colors <- function(df, color_col){
 #' @param MS2_df A data.table with at least two columns named fragmz and int
 #' @param color_col The name of the column to color by. Must be quoted.
 #' Discrete columns (character, factor, logical, integer) get one color per
-#' level and double columns a continuous gradient. Defaults to "filename" if
-#' that column exists; use NULL for no coloring.
+#' level and double columns a continuous gradient (base graphics treat every
+#' column as discrete). Defaults to "filename" if that column exists; use NULL
+#' for no coloring.
 #' @param force_base Boolean option to force base R graphics instead of `ggplot`
 #' even if the `ggplot2` package is installed.
 #' @param relative Boolean option to scale each spectrum so that its most
@@ -366,26 +355,28 @@ base_colors <- function(df, color_col){
 #'
 #' @examples
 #' \dontshow{data.table::setDTthreads(2)}
-#' test_df <- data.frame(fragmz=c(58.0651, 59.0730, 60.0808, 118.0863),
-#'                       int=c(100, 15, 30, 60), filename="A")
-#' qplotMS2data(test_df)
-#' qplotMS2data(test_df, force_base=TRUE)
-#'
-#' \dontrun{
 #' sample_dir <- system.file("extdata", package = "RaMS")
 #' sample_files <- list.files(sample_dir, full.names=TRUE)
 #' msdata <- grabMSdata(sample_files[7], grab_what="MS2")
-#' adenine_ms2 <- msdata$MS2[premz%between%pmppm(136.0618, 5)]
-#' qplotMS2data(adenine_ms2)
 #'
-#' # Compare scans of different intensities by shape
-#' qplotMS2data(adenine_ms2, color_col="rt", relative=TRUE)
-#' if(requireNamespace("ggplot2", quietly=TRUE)){
-#'   qplotMS2data(adenine_ms2) +
-#'     ggplot2::facet_wrap(~rt, ncol=1)
-#' }
-#' }
-qplotMS2data <- function(MS2_df, color_col=NULL, force_base=FALSE, relative=FALSE){
+#' # All the MS2 scans with glycine betaine's m/z as the precursor
+#' betaine_ms2 <- msdata$MS2[premz%between%pmppm(118.0865, 10)]
+#' qplotMS2data(betaine_ms2)
+#'
+#' # Scale each scan to its biggest fragment so smaller scans are visible
+#' qplotMS2data(betaine_ms2, relative=TRUE)
+#' qplotMS2data(betaine_ms2, relative=TRUE, force_base=TRUE)
+#'
+#' @examplesIf requireNamespace("ggplot2", quietly=TRUE) && requireNamespace("dplyr", quietly=TRUE)
+#' # The three scans come from three different chromatographic peaks (see the
+#' # last example in ?qplotMS1data), so split them up and compare their spectra
+#' library(ggplot2)
+#' library(dplyr)
+#' betaine_ms2 %>%
+#'   mutate(rt_bin=cut(rt, breaks=c(4, 8.2, 9.5, 15))) %>%
+#'   qplotMS2data(relative=TRUE) +
+#'   facet_wrap(~rt_bin, ncol=1)
+qplotMS2data <- function(MS2_df, color_col="filename", force_base=FALSE, relative=FALSE){
   if(missing(color_col) && !"filename"%in%names(MS2_df))color_col <- NULL
   if(!is.null(color_col)){
     if(!color_col%in%names(MS2_df))stop("Column '", color_col, "' not found in MS2_df")
