@@ -871,11 +871,25 @@ grabMzmlChroms <- function(xml_data, file_metadata){
 }
 
 grabChromRt <- function(chrom_nodes, file_metadata){
-  # Exactly the same as grabbing the mz values for spectra
-  # In chromatograms, the first vector is time
-  # In spectra, the first vector is mz
-  # We index by the first vector so these are identical
-  grabSpectraMz(chrom_nodes, file_metadata)
+  mz_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[1]'
+  mz_nodes <- xml2::xml_find_all(chrom_nodes, mz_xpath)
+  lapply(mz_nodes, function(mz_node_i){
+    binary <- xml2::xml_text(xml_child(mz_node_i, "d1:binary"))
+    if(!nchar(binary))return(numeric(0))
+
+    decoded_binary <- base64enc::base64decode(binary)
+    raw_binary <- as.raw(decoded_binary)
+    decomp_binary <- memDecompress(raw_binary, type = file_metadata$compression)
+    final_binary <- readBin(decomp_binary, what = "double",
+                            n=length(decomp_binary)/file_metadata$mz_precision,
+                            size = file_metadata$mz_precision)
+    time_array <- xml_child(mz_node_i, 'd1:cvParam[@name="time array"]')
+    time_unit <- xml2::xml_attr(time_array, "unitName")
+    if(time_unit=="second"){
+      final_binary <- final_binary/60
+    }
+    final_binary
+  })
 }
 grabChromInt <- function(chrom_nodes, file_metadata){
   # Exactly the same as for spectra

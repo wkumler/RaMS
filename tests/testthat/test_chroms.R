@@ -26,3 +26,8 @@ test_that("time stamp is correct", {
   expect_identical(msdata_MRM_everything$metadata$timestamp,
                    as.POSIXct("2022-08-11 12:34:56",tz="UTC"))
 })
+
+test_that("chroms convert to minutes if in seconds", {
+  chrom_filename <- system.file("extdata/tiny.pwiz.1.1.mzML", package = "RaMS")
+  expect_true(all(grabMSdata(chrom_filename, "chroms")$chroms$rt<2))
+})
