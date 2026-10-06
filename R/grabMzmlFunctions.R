@@ -677,7 +677,7 @@ grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE, incl_polarity){
   int_vals <- as.numeric(xml2::xml_attr(int_nodes, "value"))
 
   bpmz_xpath <- 'd1:cvParam[@name="base peak m/z"]'
-  bpmz_nodes <- xml2::xml_find_all(xml_nodes, bpmz_xpath)
+  bpmz_nodes <- xml2::xml_find_all(ms1_nodes, bpmz_xpath)
   bpmz_vals <- as.numeric(xml2::xml_attr(bpmz_nodes, "value"))
 
   if(incl_polarity){
