@@ -50,9 +50,9 @@ valine/glycine betaine and homarine.
 library(RaMS)
 msdata_files <- list.files(
   system.file("extdata", package = "RaMS"), full.names = TRUE, pattern = "mzML"
-)[1:4]
+)[2:5]
 
-initial_filename <- msdata_files[1]
+initial_filename <- msdata_files[4]
 output_filename <- gsub(x=paste0("minified_", basename(initial_filename)), "\\.gz", "")
 
 masses_of_interest <- c(118.0865, 138.0555)
@@ -64,8 +64,8 @@ Then, when we open the file up (with `RaMS` or other software) we are left with
 the data corresponding only to those compounds:
 
 ```{r opendata, results='hide'}
-init_msdata <- grabMSdata(initial_filename)
-msdata <- grabMSdata(output_filename)
+init_msdata <- grabMSdata(initial_filename, incl_polarity = TRUE)
+msdata <- grabMSdata(output_filename, incl_polarity = TRUE)
 ```
 
 ```{r showmini}
@@ -77,8 +77,10 @@ Both the TIC and BPC are updated to reflect the smaller file size as well:
 
 ```{r TICBPCdiffs}
 par(mfrow=c(2, 1), mar=c(2.1, 2.1, 1.1, 0.1))
-plot(init_msdata$BPC$rt, init_msdata$BPC$int, type = "l", main = "Initial BPC")
-plot(msdata$BPC$rt, msdata$BPC$int, type = "l", main = "New BPC")
+init_bpc_pos <- init_msdata$BPC[polarity==1]
+mini_bpc_pos <- msdata$BPC[polarity==1]
+plot(init_bpc_pos$rt, init_bpc_pos$int, type = "l", main = "Initial BPC")
+plot(mini_bpc_pos$rt, mini_bpc_pos$int, type = "l", main = "New BPC")
 ```
 
 ```{r cleanmini, include=FALSE}
