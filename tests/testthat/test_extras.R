@@ -110,7 +110,6 @@ test_that("pmppm_vec bounds can be assigned as columns for a non-equi join", {
 
 test_that("pmppm_vec works in the documented tidyverse patterns", {
   skip_if_not_installed("dplyr")
-  skip_if_not_installed("purrr")
   ms1 <- data.frame(rt=1:6, mz=c(104.1071, 104.2, 118.0866, 118.0864, 136.0619, 150))
   cmpds <- data.frame(cmpd_name=c("betaine", "choline", "adenine"),
                       cmpd_mz=c(118.0865, 104.1070, 136.0618))
@@ -118,18 +117,19 @@ test_that("pmppm_vec works in the documented tidyverse patterns", {
   filtered <- dplyr::filter(ms1, mz %inrange% pmppm_vec(cmpds$cmpd_mz, 5))
   expect_identical(filtered$rt, c(1L, 3L, 4L, 5L))
 
-  windows <- dplyr::mutate(cmpds, tibble::as_tibble(pmppm_vec(cmpd_mz, 5)))
+  windows <- dplyr::mutate(cmpds, as.data.frame(pmppm_vec(cmpd_mz, 5)))
   expect_named(windows, c("cmpd_name", "cmpd_mz", "lower", "upper"))
   joined <- dplyr::inner_join(windows, ms1,
                               dplyr::join_by(between(y$mz, x$lower, x$upper)))
   expect_identical(joined$cmpd_name, c("betaine", "betaine", "choline", "adenine"))
   expect_identical(joined$mz, c(118.0866, 118.0864, 104.1071, 136.0619))
 
-  # One window per row comes from map(mz, pmppm), and agrees with pmppm_vec
-  per_row <- dplyr::mutate(cmpds, mz_range=purrr::map(cmpd_mz, pmppm, ppm=5))
+  # One window per row comes from mapping pmppm over each mass (lapply here,
+  # purrr's map() in the docs), and agrees with pmppm_vec
+  per_row <- dplyr::mutate(cmpds, mz_range=lapply(cmpd_mz, pmppm, ppm=5))
   vec <- pmppm_vec(cmpds$cmpd_mz, 5)
-  expect_identical(per_row$mz_range, unname(purrr::map2(vec$lower, vec$upper, c)))
-  eic_rows <- purrr::map_int(per_row$mz_range, ~nrow(dplyr::filter(ms1, mz %between% .x)))
+  expect_identical(per_row$mz_range, Map(c, vec$lower, vec$upper))
+  eic_rows <- vapply(per_row$mz_range, function(mzr)nrow(dplyr::filter(ms1, mz %between% mzr)), integer(1))
   expect_identical(eic_rows, c(2L, 1L, 1L))
 })
 
