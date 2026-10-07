@@ -16,9 +16,13 @@ more control over the file reading is desired, both \code{\link[=grabMzmlData]{g
 available if a specific accession value from an mzML file is desired.
 
 Other useful functions in the package include \code{\link[=minifyMSdata]{minifyMSdata()}} and
-\code{\link[=tmzmlMaker]{tmzmlMaker()}} which have their own documentation pages and vignettes. Two
-small helper functions are also included, \code{\link[=pmppm]{pmppm()}} and \code{\link[=between]{between()}} (with the
-alias \verb{\%between\%}) imported from \code{data.table}.
+\code{\link[=tmzmlMaker]{tmzmlMaker()}} which have their own documentation pages and vignettes. A few
+small helper functions are also included: \code{\link[=pmppm]{pmppm()}} for building a ppm range
+from a single mass (and its vectorized form \code{\link[=pmppm_vec]{pmppm_vec()}}); \code{\link[=trapz]{trapz()}} for
+peak integration given RT/int vectors, and \code{\link[=qplotMS1data]{qplotMS1data()}}
+and \code{\link[=qplotMS2data]{qplotMS2data()}} because I got tired of typing out the same plotting
+commands. \code{\link[=reexports]{\%between\%}} and \code{\link[=reexports]{\%inrange\%}} are imported
+from \code{data.table} for ease of use.
 
 See the package intro on GitHub at https://github.com/wkumler/RaMS and
 explore the vignette with \code{vignette("Intro-to-RaMS", package = "RaMS")}

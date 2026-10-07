@@ -7,9 +7,13 @@
 #' available if a specific accession value from an mzML file is desired.
 #'
 #' Other useful functions in the package include [minifyMSdata()] and
-#' [tmzmlMaker()] which have their own documentation pages and vignettes. Two
-#' small helper functions are also included, [pmppm()] and [between()] (with the
-#' alias `%between%`) imported from `data.table`.
+#' [tmzmlMaker()] which have their own documentation pages and vignettes. A few
+#' small helper functions are also included: [pmppm()] for building a ppm range
+#' from a single mass (and its vectorized form [pmppm_vec()]); [trapz()] for
+#' peak integration given RT/int vectors, and [qplotMS1data()]
+#' and [qplotMS2data()] because I got tired of typing out the same plotting
+#' commands. [`%between%`][reexports] and [`%inrange%`][reexports] are imported
+#' from `data.table` for ease of use.
 #'
 #' See the package intro on GitHub at https://github.com/wkumler/RaMS and
 #' explore the vignette with \code{vignette("Intro-to-RaMS", package = "RaMS")}
