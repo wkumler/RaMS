@@ -1,4 +1,5 @@
 # RaMS (development version)
+ - mzML files that mark MS1 spectra with `MS:1000579` instead of `ms level`, such as Bruker exports, now return MS1, BPC and TIC data instead of empty tables (#50).
 
 # RaMS 1.4.3 (patch)
  - Added timezone support to metadata's timestamps (mzML files are all UTC afaik)
