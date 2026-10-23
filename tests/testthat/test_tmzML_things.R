@@ -11,7 +11,8 @@ tmzml_filenames <- gsub(x = output_filenames, "\\.mzML.*", ".tmzML")
 mapply(tmzmlMaker, mzML_filenames[1:4], tmzml_filenames[1:4], verbosity=0)
 
 test_that("tmzML conversion warns if no spectra found", {
-  expect_warning(expect_error(tmzmlMaker(mzML_filenames[8])))
+  chrom_filename <- system.file("extdata/wk_chrom.mzML.gz", package = "RaMS")
+  expect_warning(expect_error(tmzmlMaker(chrom_filename)))
 })
 
 # test_that("tmzML conversion works for mzMLs", {
