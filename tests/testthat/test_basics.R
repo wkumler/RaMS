@@ -142,3 +142,16 @@ test_that("incl_polarity works on mzMLs", {
   expect_contains(names(ms3_file$MS3), "polarity")
   expect_equal(unique(ms3_file$MS3$polarity), 1)
 })
+
+test_that("MS1 spectra flagged with MS:1000579 are found", {
+  bruker_file <- system.file("extdata/timstof_ms1.mzML.gz", package = "RaMS")
+  bruker_data <- grabMSdata(bruker_file, grab_what = c("MS1", "BPC", "TIC", "metadata"))
+  expect_equal(nrow(bruker_data$MS1), 143)
+  expect_equal(nrow(bruker_data$BPC), 143)
+  expect_equal(nrow(bruker_data$TIC), 143)
+  expect_equal(bruker_data$metadata$ms_levels, "MS1")
+
+  output_filename <- file.path(tempdir(), "timstof_ms1_newrts.mzML")
+  expect_no_error(editMzmlRTs(bruker_file, output_filename, new_rts = 1:143))
+  file.remove(output_filename)
+})

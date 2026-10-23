@@ -7,9 +7,11 @@
 minifyMzxml(
   filename,
   output_filename,
-  ppm,
+  ppm = NULL,
   mz_exclude = NULL,
   mz_include = NULL,
+  rt_min = NULL,
+  rt_max = NULL,
   prefilter = -1,
   warn = TRUE
 )
@@ -20,7 +22,8 @@ or something similar.}
 
 \item{output_filename}{The name of the file to be written out.}
 
-\item{ppm}{The parts-per-million error of the instrument used to collect the original file.}
+\item{ppm}{The parts-per-million error of the instrument used to collect the original file.
+Required when using mz_include or mz_exclude.}
 
 \item{mz_exclude}{A vector of m/z values that should be excluded from the minified file. This argument
 must be used with the `ppm` argument and should not be used with mz_include. For each mass provided, an
@@ -29,6 +32,12 @@ m/z window of +/- `ppm` is calculated, and all data points within that window ar
 \item{mz_include}{A vector of m/z values that should be included in the minified file. This argument
 must be used with the `ppm` argument and should not be used with mz_exclude. For each mass provided, an
 m/z window of +/- `ppm` is calculated, and all data points within that window are kept.}
+
+\item{rt_min}{A single number giving the minimum retention time (in minutes) to include.
+Entire scans with retention times below this value will be removed.}
+
+\item{rt_max}{A single number giving the maximum retention time (in minutes) to include.
+Entire scans with retention times above this value will be removed.}
 
 \item{prefilter}{A single number corresponding to the minimum intensity of
 interest in the MS1 data. Data points with intensities below this threshold

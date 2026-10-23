@@ -19,6 +19,11 @@
 #' must be used with the `ppm` argument and should not be used with mz_exclude. For each mass provided, an
 #' m/z window of +/- `ppm` is calculated, and all data points within that window are kept.
 #' @param ppm The parts-per-million error of the instrument used to collect the original file.
+#'   Required when using mz_include or mz_exclude.
+#' @param rt_min A single number giving the minimum retention time (in minutes) to include.
+#'   Entire scans with retention times below this value will be removed.
+#' @param rt_max A single number giving the maximum retention time (in minutes) to include.
+#'   Entire scans with retention times above this value will be removed.
 #' @param warn Boolean. Should the function warn the user when removing an index from an mzML file?
 #' @param prefilter A single number corresponding to the minimum intensity of
 #'   interest in the MS1 data. Data points with intensities below this threshold
@@ -56,8 +61,8 @@
 #' unlink(output_filename)
 #' }
 minifyMSdata <- function(files, output_files=NULL, mz_exclude=NULL,
-                         mz_include=NULL, ppm=NULL, warn=TRUE,
-                         prefilter=-1, verbosity=NULL){
+                         mz_include=NULL, ppm=NULL, rt_min=NULL, rt_max=NULL,
+                         warn=TRUE, prefilter=-1, verbosity=NULL){
   # Check that files were provided
   if(!length(files)>0)stop("No files provided")
 
@@ -75,10 +80,14 @@ minifyMSdata <- function(files, output_files=NULL, mz_exclude=NULL,
     }
   }
 
-  # Check that ppm is not NULL
-  if(is.null(ppm)){
-    stop("`ppm` must be provided by the user, but seems to still be NULL.")
+  # Check that ppm is provided when m/z filtering is requested
+  if(is.null(ppm) && (!is.null(mz_include) || !is.null(mz_exclude))){
+    stop("`ppm` must be provided when using mz_include or mz_exclude.")
   }
+  if(is.null(mz_include) && is.null(mz_exclude) && is.null(rt_min) && is.null(rt_max)){
+    stop("At least one filter must be provided: mz_include, mz_exclude, rt_min, or rt_max.")
+  }
+  rt_bounds(rt_min, rt_max)
 
   # Warn if originals are going to be overwritten
   if(is.null(output_files)){
@@ -119,11 +128,13 @@ minifyMSdata <- function(files, output_files=NULL, mz_exclude=NULL,
     if(grepl("mzML", basename(files[i]), ignore.case = TRUE)){
       minifyMzml(files[i], output_filename = output_files[i],
                  mz_exclude = mz_exclude, mz_include = mz_include,
-                 ppm = ppm, warn = warn, prefilter = prefilter)
+                 ppm = ppm, warn = warn, prefilter = prefilter,
+                 rt_min = rt_min, rt_max = rt_max)
     } else if(grepl("mzXML", basename(files[i]), ignore.case = TRUE)){
       minifyMzxml(files[i], output_filename = output_files[i],
                   mz_exclude = mz_exclude, mz_include = mz_include,
-                  ppm = ppm, prefilter = prefilter)
+                  ppm = ppm, prefilter = prefilter,
+                  rt_min = rt_min, rt_max = rt_max)
     } else {
       stop(paste("Unable to determine file type for", files[i]))
     }
@@ -165,6 +176,11 @@ minifyMSdata <- function(files, output_files=NULL, mz_exclude=NULL,
 #' must be used with the `ppm` argument and should not be used with mz_exclude. For each mass provided, an
 #' m/z window of +/- `ppm` is calculated, and all data points within that window are kept.
 #' @param ppm The parts-per-million error of the instrument used to collect the original file.
+#'   Required when using mz_include or mz_exclude.
+#' @param rt_min A single number giving the minimum retention time (in minutes) to include.
+#'   Entire scans with retention times below this value will be removed.
+#' @param rt_max A single number giving the maximum retention time (in minutes) to include.
+#'   Entire scans with retention times above this value will be removed.
 #' @param warn Boolean. Should the function warn the user when removing an index from an mzML file?
 #' @param prefilter A single number corresponding to the minimum intensity of
 #'   interest in the MS1 data. Data points with intensities below this threshold
@@ -192,15 +208,17 @@ minifyMSdata <- function(files, output_files=NULL, mz_exclude=NULL,
 #' minifyMzml(filename, output_filename, mz_exclude=exclude_mzs, ppm=5)
 #' unlink(output_filename)
 #' }
-minifyMzml <- function(filename, output_filename, ppm,
+minifyMzml <- function(filename, output_filename, ppm=NULL,
                        mz_exclude=NULL, mz_include=NULL,
+                       rt_min=NULL, rt_max=NULL,
                        warn=TRUE, prefilter=-1){
-  if(missing(ppm)){
-    stop("Must provide ppm value!")
+  if(is.null(ppm) && (!is.null(mz_include) || !is.null(mz_exclude))){
+    stop("Must provide ppm value when using mz_include or mz_exclude!")
   }
-  if(is.null(mz_exclude) & is.null(mz_include)){
-    stop("Either `mz_include` or `mz_exclude` must not be NULL")
+  if(is.null(mz_exclude) && is.null(mz_include) && is.null(rt_min) && is.null(rt_max)){
+    stop("At least one filter must be provided: mz_include, mz_exclude, rt_min, or rt_max")
   }
+  rtrange <- rt_bounds(rt_min, rt_max)
   xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzML")
@@ -228,112 +246,125 @@ minifyMzml <- function(filename, output_filename, ppm,
     xml2::xml_remove(chromlist_node)
   }
 
+  # Drop spectra outside the requested RT window
+  if(!is.null(rt_min) || !is.null(rt_max)){
+    all_spec_nodes <- xml2::xml_find_all(xml_data, "//d1:spectrum")
+    rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
+    rt_nodes <- xml2::xml_find_first(all_spec_nodes, rt_xpath)
+    rt_vals <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
+    if(!"minute"%in%xml2::xml_attr(rt_nodes, "unitName")) rt_vals <- rt_vals/60
+    xml2::xml_remove(all_spec_nodes[which(!rt_vals%between%rtrange)])
+  }
+
   # MS1 things
-  ### Find MS1 intensity and m/z nodes
-  ms1_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
-                      '@value="1"]][d1:cvParam[@name="base peak intensity"]]')
-  ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
-  mz_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[1]/d1:binary'
-  ms1_mz_nodes <- xml2::xml_find_all(ms1_nodes, mz_xpath)
-  int_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[2]/d1:binary'
-  ms1_int_nodes <- xml2::xml_find_all(ms1_nodes, int_xpath)
+  recode_ms1 <- !is.null(mz_include) || !is.null(mz_exclude) || prefilter>0
+  if(recode_ms1){
+    ### Find MS1 intensity and m/z nodes
+    ms1_xpath <- paste0(mzml_ms1_xpath,
+                        '[d1:cvParam[@name="base peak intensity"]]')
+    ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
+    mz_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[1]/d1:binary'
+    ms1_mz_nodes <- xml2::xml_find_all(ms1_nodes, mz_xpath)
+    int_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[2]/d1:binary'
+    ms1_int_nodes <- xml2::xml_find_all(ms1_nodes, int_xpath)
 
-  ### Convert MS1 nodes into data.tables
-  ms1_minified <- mapply(function(ms1_mz_node, ms1_int_node){
-    mzs <- getEncoded(xml2::xml_text(ms1_mz_node),
-                      compression_type = file_metadata$compression,
-                      bin_precision = file_metadata$mz_precision,
-                      endi_enc = file_metadata$endi_enc)
-    ints <- getEncoded(xml2::xml_text(ms1_int_node),
-                       compression_type = file_metadata$compression,
-                       bin_precision = file_metadata$int_precision,
-                       endi_enc = file_metadata$endi_enc)
-    if(!is.null(mz_include)){
-      whitelist_data <- lapply(mz_include, function(mz_i){
-        range_i <- pmppm(mz_i, ppm)
-        mz_idxs <- mzs>min(range_i)&mzs<max(range_i)
-        ints <- ints[mz_idxs]
-        mzs <- mzs[mz_idxs]
-        cbind(mzs=mzs, ints=ints)
-      })
-      if(all(sapply(whitelist_data, length)==0)){
-        output_mat <- cbind(mzs=numeric(0), ints=numeric(0))
+    ### Convert MS1 nodes into data.tables
+    ms1_minified <- mapply(function(ms1_mz_node, ms1_int_node){
+      mzs <- getEncoded(xml2::xml_text(ms1_mz_node),
+                        compression_type = file_metadata$compression,
+                        bin_precision = file_metadata$mz_precision,
+                        endi_enc = file_metadata$endi_enc)
+      ints <- getEncoded(xml2::xml_text(ms1_int_node),
+                         compression_type = file_metadata$compression,
+                         bin_precision = file_metadata$int_precision,
+                         endi_enc = file_metadata$endi_enc)
+      if(!is.null(mz_include)){
+        whitelist_data <- lapply(mz_include, function(mz_i){
+          range_i <- pmppm(mz_i, ppm)
+          mz_idxs <- mzs>min(range_i)&mzs<max(range_i)
+          ints <- ints[mz_idxs]
+          mzs <- mzs[mz_idxs]
+          cbind(mzs=mzs, ints=ints)
+        })
+        if(all(sapply(whitelist_data, length)==0)){
+          output_mat <- cbind(mzs=numeric(0), ints=numeric(0))
+        } else {
+          output_mat <- do.call(what = "rbind", whitelist_data)
+        }
+      } else if(!is.null(mz_exclude)){
+        iterated_mzs <- mzs
+        iterated_ints <- ints
+        for(mz_i in unique(mz_exclude)){
+          range_i <- pmppm(mz_i, ppm)
+          iterate_idxs <- iterated_mzs>min(range_i)&iterated_mzs<max(range_i)
+          iterated_mzs <- iterated_mzs[!iterate_idxs]
+          iterated_ints <- iterated_ints[!iterate_idxs]
+        }
+        output_mat <- cbind(mzs=iterated_mzs, ints=iterated_ints)
       } else {
-        output_mat <- do.call(what = "rbind", whitelist_data)
+        output_mat <- cbind(mzs=mzs, ints=ints)
       }
-    } else if(!is.null(mz_exclude)){
-      iterated_mzs <- mzs
-      iterated_ints <- ints
-      for(mz_i in unique(mz_exclude)){
-        range_i <- pmppm(mz_i, ppm)
-        iterate_idxs <- iterated_mzs>min(range_i)&iterated_mzs<max(range_i)
-        iterated_mzs <- iterated_mzs[!iterate_idxs]
-        iterated_ints <- iterated_ints[!iterate_idxs]
+      subfilter_idxs <- output_mat[,"ints"]<prefilter
+      output_mat <- output_mat[!subfilter_idxs, ,drop=FALSE]
+      if(nrow(output_mat)==0){
+        recoded_mzs <- ""
+        recoded_ints <- ""
+        bpmz <- 0
+        bpint <- 0
+        ticur <- 0
+        minmz <- 0
+        maxmz <- 0
+
+        arraylength <- 0
+      } else {
+        recoded_mzs <- giveEncoding(output_mat[,"mzs"],
+                                    compression_type = file_metadata$compression,
+                                    bin_precision = file_metadata$mz_precision,
+                                    endi_enc = file_metadata$endi_enc)
+        recoded_ints <- giveEncoding(output_mat[,"ints"],
+                                     compression_type = file_metadata$compression,
+                                     bin_precision = file_metadata$int_precision,
+                                     endi_enc = file_metadata$endi_enc)
+        bpmz <- unname(output_mat[which.max(output_mat[,"ints"]), "mzs"])
+        bpint <- max(output_mat[,"ints"], na.rm = TRUE)
+        ticur <- sum(output_mat[,"ints"], na.rm = TRUE)
+        minmz <- min(output_mat[,"mzs"], na.rm = TRUE)
+        maxmz <- max(output_mat[,"mzs"], na.rm = TRUE)
+
+        arraylength <- nrow(output_mat)
       }
-      output_mat <- cbind(mzs=iterated_mzs, ints=iterated_ints)
-    } else {
-      print("This should never show up!")
-    }
-    subfilter_idxs <- output_mat[,"ints"]<prefilter
-    output_mat <- output_mat[!subfilter_idxs, ,drop=FALSE]
-    if(nrow(output_mat)==0){
-      recoded_mzs <- ""
-      recoded_ints <- ""
-      bpmz <- 0
-      bpint <- 0
-      ticur <- 0
-      minmz <- 0
-      maxmz <- 0
+      data.frame(
+        mzs=recoded_mzs, ints=recoded_ints,
+        bpmz=bpmz, bpint=bpint,
+        ticur=ticur, minmz=minmz, maxmz=maxmz,
+        mz_enclength=nchar(recoded_mzs),
+        int_enclength=nchar(recoded_ints),
+        arraylength=arraylength
+      )
+    }, ms1_mz_nodes, ms1_int_nodes, SIMPLIFY = FALSE)
+    ms1_minified <- do.call(what = "rbind", ms1_minified)
 
-      arraylength <- 0
-    } else {
-      recoded_mzs <- giveEncoding(output_mat[,"mzs"],
-                                  compression_type = file_metadata$compression,
-                                  bin_precision = file_metadata$mz_precision,
-                                  endi_enc = file_metadata$endi_enc)
-      recoded_ints <- giveEncoding(output_mat[,"ints"],
-                                   compression_type = file_metadata$compression,
-                                   bin_precision = file_metadata$int_precision,
-                                   endi_enc = file_metadata$endi_enc)
-      bpmz <- unname(output_mat[which.max(output_mat[,"ints"]), "mzs"])
-      bpint <- max(output_mat[,"ints"], na.rm = TRUE)
-      ticur <- sum(output_mat[,"ints"], na.rm = TRUE)
-      minmz <- min(output_mat[,"mzs"], na.rm = TRUE)
-      maxmz <- max(output_mat[,"mzs"], na.rm = TRUE)
+    ### Replace with new data
+    xml2::xml_text(ms1_mz_nodes) <- ms1_minified$mzs
+    xml2::xml_text(ms1_int_nodes) <- ms1_minified$ints
+    xml2::xml_attr(ms1_nodes, "defaultArrayLength") <- ms1_minified$arraylength
+    mz_enclength_xpath <- "d1:binaryDataArrayList/d1:binaryDataArray[d1:cvParam[@name='m/z array']]"
+    mz_enclength_nodes <- xml2::xml_find_all(ms1_nodes, mz_enclength_xpath)
+    xml2::xml_attr(mz_enclength_nodes, "encodedLength") <- ms1_minified$mz_enclength
+    int_enclength_xpath <- "d1:binaryDataArrayList/d1:binaryDataArray[d1:cvParam[@name='intensity array']]"
+    int_enclength_nodes <- xml2::xml_find_all(ms1_nodes, int_enclength_xpath)
+    xml2::xml_attr(int_enclength_nodes, "encodedLength") <- ms1_minified$int_enclength
 
-      arraylength <- nrow(output_mat)
-    }
-    data.frame(
-      mzs=recoded_mzs, ints=recoded_ints,
-      bpmz=bpmz, bpint=bpint,
-      ticur=ticur, minmz=minmz, maxmz=maxmz,
-      mz_enclength=nchar(recoded_mzs),
-      int_enclength=nchar(recoded_ints),
-      arraylength=arraylength
-    )
-  }, ms1_mz_nodes, ms1_int_nodes, SIMPLIFY = FALSE)
-  ms1_minified <- do.call(what = "rbind", ms1_minified)
-
-  ### Replace with new data
-  xml2::xml_text(ms1_mz_nodes) <- ms1_minified$mzs
-  xml2::xml_text(ms1_int_nodes) <- ms1_minified$ints
-  xml2::xml_attr(ms1_nodes, "defaultArrayLength") <- ms1_minified$arraylength
-  mz_enclength_xpath <- "d1:binaryDataArrayList/d1:binaryDataArray[d1:cvParam[@name='m/z array']]"
-  mz_enclength_nodes <- xml2::xml_find_all(ms1_nodes, mz_enclength_xpath)
-  xml2::xml_attr(mz_enclength_nodes, "encodedLength") <- ms1_minified$mz_enclength
-  int_enclength_xpath <- "d1:binaryDataArrayList/d1:binaryDataArray[d1:cvParam[@name='intensity array']]"
-  int_enclength_nodes <- xml2::xml_find_all(ms1_nodes, int_enclength_xpath)
-  xml2::xml_attr(int_enclength_nodes, "encodedLength") <- ms1_minified$int_enclength
-
-  ### Update MS1 scan metadata
-  param_xpath <- c("base peak m/z", "base peak intensity", "total ion current",
-                   "lowest observed m/z", "highest observed m/z")
-  param_cols <- c("bpmz", "bpint", "ticur", "minmz", "maxmz")
-  mapply(function(xpath, val){
-    full_xpath <- paste0("d1:cvParam[@name='", xpath, "']")
-    node <- xml2::xml_find_all(ms1_nodes, full_xpath)
-    xml2::xml_attr(node, "value") <- ms1_minified[[val]]
-  }, param_xpath, param_cols)
+    ### Update MS1 scan metadata
+    param_xpath <- c("base peak m/z", "base peak intensity", "total ion current",
+                     "lowest observed m/z", "highest observed m/z")
+    param_cols <- c("bpmz", "bpint", "ticur", "minmz", "maxmz")
+    mapply(function(xpath, val){
+      full_xpath <- paste0("d1:cvParam[@name='", xpath, "']")
+      node <- xml2::xml_find_all(ms1_nodes, full_xpath)
+      xml2::xml_attr(node, "value") <- ms1_minified[[val]]
+    }, param_xpath, param_cols)
+  }
 
 
   # MS2 things
@@ -408,13 +439,20 @@ minifyMzml <- function(filename, output_filename, ppm,
     xml2::xml_add_child(meth_node, "userParam", cvRef="MS", accession="MS:1009000",
                         name="Minification by m/z whitelist",
                         value=paste0(mz_include, collapse = "; "))
-  } else {
+  } else if(!is.null(mz_exclude)){
     xml2::xml_add_child(meth_node, "userParam", cvRef="MS", accession="MS:1009001",
                         name="Minification by m/z blacklist",
                         value=paste0(mz_exclude, collapse = "; "))
   }
-  xml2::xml_add_child(meth_node, "userParam", cvRef="MS", accession="MS:1009002",
-                      name="ppm error for minification", value=ppm)
+  if(!is.null(ppm)){
+    xml2::xml_add_child(meth_node, "userParam", cvRef="MS", accession="MS:1009002",
+                        name="ppm error for minification", value=ppm)
+  }
+  if(!is.null(rt_min) || !is.null(rt_max)){
+    xml2::xml_add_child(meth_node, "userParam", cvRef="MS", accession="MS:1009003",
+                        name="Minification by retention time",
+                        value=paste(rtrange[1], "to", rtrange[2], "min"))
+  }
   process_count <- as.numeric(xml2::xml_attr(proclist_node, "count"))+1
   xml2::xml_attr(proclist_node, "count") <- process_count
   softlist_node <- xml2::xml_find_all(xml_data, "//d1:softwareList")
@@ -453,6 +491,11 @@ minifyMzml <- function(filename, output_filename, ppm,
 #' must be used with the `ppm` argument and should not be used with mz_exclude. For each mass provided, an
 #' m/z window of +/- `ppm` is calculated, and all data points within that window are kept.
 #' @param ppm The parts-per-million error of the instrument used to collect the original file.
+#'   Required when using mz_include or mz_exclude.
+#' @param rt_min A single number giving the minimum retention time (in minutes) to include.
+#'   Entire scans with retention times below this value will be removed.
+#' @param rt_max A single number giving the maximum retention time (in minutes) to include.
+#'   Entire scans with retention times above this value will be removed.
 #' @param warn Boolean. Should the function warn the user when removing an index from an mzML file?
 #' @param prefilter A single number corresponding to the minimum intensity of
 #'   interest in the MS1 data. Data points with intensities below this threshold
@@ -480,95 +523,113 @@ minifyMzml <- function(filename, output_filename, ppm,
 #' minifyMzxml(filename, output_filename, mz_exclude=exclude_mzs, ppm=5)
 #' unlink(output_filename)
 #' }
-minifyMzxml <- function(filename, output_filename, ppm, mz_exclude=NULL,
-                        mz_include=NULL, prefilter=-1, warn=TRUE){
+minifyMzxml <- function(filename, output_filename, ppm=NULL, mz_exclude=NULL,
+                        mz_include=NULL, rt_min=NULL, rt_max=NULL,
+                        prefilter=-1, warn=TRUE){
+  if(is.null(ppm) && (!is.null(mz_include) || !is.null(mz_exclude))){
+    stop("Must provide ppm value when using mz_include or mz_exclude!")
+  }
+  if(is.null(mz_exclude) && is.null(mz_include) && is.null(rt_min) && is.null(rt_max)){
+    stop("At least one filter must be provided: mz_include, mz_exclude, rt_min, or rt_max")
+  }
+  rtrange <- rt_bounds(rt_min, rt_max)
   xml_data <- xml2::read_xml(filename)
 
   checkFileType(xml_data, "mzXML")
   prefilter <- checkProvidedPrefilter(prefilter)
   file_metadata <- grabMzxmlEncodingData(xml_data)
 
-  # Find MS1 intensity and m/z nodes
-  ms1_xpath <- '//d1:scan[@msLevel="1" and @peaksCount>0]'
-  ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
+  # Drop scans outside the requested RT window
+  if(!is.null(rt_min) || !is.null(rt_max)){
+    rt_scan_nodes <- xml2::xml_find_all(xml_data, "//d1:scan")
+    rt_vals <- grabMzxmlSpectraRt(rt_scan_nodes)
+    xml2::xml_remove(rt_scan_nodes[which(!rt_vals%between%rtrange)])
+  }
 
-  mz_int_vals <- grabMzxmlSpectraMzInt(ms1_nodes, file_metadata)
+  recode_ms1 <- !is.null(mz_include) || !is.null(mz_exclude) || prefilter>0
+  if(recode_ms1){
+    # Find MS1 intensity and m/z nodes
+    ms1_xpath <- '//d1:scan[@msLevel="1" and @peaksCount>0]'
+    ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
 
-  # Convert MS1 nodes into data.tables
-  ms1_minified <- lapply(mz_int_vals, function(mz_int_val){
-    mzs <- mz_int_val[,1]
-    ints <- mz_int_val[,2]
+    mz_int_vals <- grabMzxmlSpectraMzInt(ms1_nodes, file_metadata)
 
-    if(!is.null(mz_include)){
-      whitelist_data <- lapply(mz_include, function(mz_i){
-        range_i <- pmppm(mz_i, ppm)
-        mz_idxs <- mzs>min(range_i)&mzs<max(range_i)
-        ints <- ints[mz_idxs]
-        mzs <- mzs[mz_idxs]
-        cbind(mzs=mzs, ints=ints)
-      })
-      if(all(sapply(whitelist_data, length)==0)){
-        output_mat <- cbind(mzs=numeric(0), ints=numeric(0))
+    # Convert MS1 nodes into data.tables
+    ms1_minified <- lapply(mz_int_vals, function(mz_int_val){
+      mzs <- mz_int_val[,1]
+      ints <- mz_int_val[,2]
+
+      if(!is.null(mz_include)){
+        whitelist_data <- lapply(mz_include, function(mz_i){
+          range_i <- pmppm(mz_i, ppm)
+          mz_idxs <- mzs>min(range_i)&mzs<max(range_i)
+          ints <- ints[mz_idxs]
+          mzs <- mzs[mz_idxs]
+          cbind(mzs=mzs, ints=ints)
+        })
+        if(all(sapply(whitelist_data, length)==0)){
+          output_mat <- cbind(mzs=numeric(0), ints=numeric(0))
+        } else {
+          output_mat <- do.call(what = "rbind", whitelist_data)
+        }
+      } else if(!is.null(mz_exclude)){
+        iterated_mzs <- mzs
+        iterated_ints <- ints
+        for(mz_i in unique(mz_exclude)){
+          range_i <- pmppm(mz_i, ppm)
+          iterate_idxs <- iterated_mzs>min(range_i)&iterated_mzs<max(range_i)
+          iterated_mzs <- iterated_mzs[!iterate_idxs]
+          iterated_ints <- iterated_ints[!iterate_idxs]
+        }
+        output_mat <- cbind(mzs=iterated_mzs, ints=iterated_ints)
+        if(any(is.na(output_mat))){
+          browser("Found you an NA:")
+        }
       } else {
-        output_mat <- do.call(what = "rbind", whitelist_data)
+        output_mat <- cbind(mzs=mzs, ints=ints)
       }
-    } else if(!is.null(mz_exclude)){
-      iterated_mzs <- mzs
-      iterated_ints <- ints
-      for(mz_i in unique(mz_exclude)){
-        range_i <- pmppm(mz_i, ppm)
-        iterate_idxs <- iterated_mzs>min(range_i)&iterated_mzs<max(range_i)
-        iterated_mzs <- iterated_mzs[!iterate_idxs]
-        iterated_ints <- iterated_ints[!iterate_idxs]
+      subfilter_idxs <- output_mat[,"ints"]<prefilter
+      output_mat <- output_mat[!subfilter_idxs, ,drop=FALSE]
+      if(nrow(output_mat)==0){
+        recoded_mzints <- ""
+        bpmz <- 0
+        bpint <- 0
+        ticur <- 0
+        minmz <- 0
+        maxmz <- 0
+
+        arraylength <- 0
+      } else {
+        interped_mzints <- as.numeric(t(output_mat[,c("mzs", "ints")]))
+        recoded_mzints <- giveEncoding(interped_mzints,
+                                       compression_type = file_metadata$compression,
+                                       bin_precision = file_metadata$precision,
+                                       endi_enc = file_metadata$endi_enc)
+        bpmz <- unname(output_mat[which.max(output_mat[,"ints"]), "mzs"])
+        bpint <- max(output_mat[,"ints"], na.rm = TRUE)
+        ticur <- sum(output_mat[,"ints"], na.rm = TRUE)
+        minmz <- min(output_mat[,"mzs"], na.rm = TRUE)
+        maxmz <- max(output_mat[,"mzs"], na.rm = TRUE)
+
+        arraylength <- nrow(output_mat)
       }
-      output_mat <- cbind(mzs=iterated_mzs, ints=iterated_ints)
-      if(any(is.na(output_mat))){
-        browser("Found you an NA:")
-      }
-    } else {
-      stop("Either `mz_include` or `mz_exclude` must not be NULL")
-    }
-    subfilter_idxs <- output_mat[,"ints"]<prefilter
-    output_mat <- output_mat[!subfilter_idxs, ,drop=FALSE]
-    if(nrow(output_mat)==0){
-      recoded_mzints <- ""
-      bpmz <- 0
-      bpint <- 0
-      ticur <- 0
-      minmz <- 0
-      maxmz <- 0
+      data.frame(mzints=recoded_mzints,
+                 bpmz=bpmz, bpint=bpint,
+                 ticur=ticur, minmz=minmz, maxmz=maxmz,
+                 arraylength=arraylength)
+    })
+    ms1_minified <- do.call(what = "rbind", ms1_minified)
 
-      arraylength <- 0
-    } else {
-      interped_mzints <- as.numeric(t(output_mat[,c("mzs", "ints")]))
-      recoded_mzints <- giveEncoding(interped_mzints,
-                                     compression_type = file_metadata$compression,
-                                     bin_precision = file_metadata$precision,
-                                     endi_enc = file_metadata$endi_enc)
-      bpmz <- unname(output_mat[which.max(output_mat[,"ints"]), "mzs"])
-      bpint <- max(output_mat[,"ints"], na.rm = TRUE)
-      ticur <- sum(output_mat[,"ints"], na.rm = TRUE)
-      minmz <- min(output_mat[,"mzs"], na.rm = TRUE)
-      maxmz <- max(output_mat[,"mzs"], na.rm = TRUE)
+    peak_nodes <- xml2::xml_find_first(ms1_nodes, "d1:peaks")
+    xml2::xml_text(peak_nodes) <- ms1_minified$mzints
 
-      arraylength <- nrow(output_mat)
-    }
-    data.frame(mzints=recoded_mzints,
-               bpmz=bpmz, bpint=bpint,
-               ticur=ticur, minmz=minmz, maxmz=maxmz,
-               arraylength=arraylength)
-  })
-  ms1_minified <- do.call(what = "rbind", ms1_minified)
-
-  peak_nodes <- xml2::xml_find_first(ms1_nodes, "d1:peaks")
-  xml2::xml_text(peak_nodes) <- ms1_minified$mzints
-
-  xml2::xml_attr(ms1_nodes, "peaksCount") <- ms1_minified$arraylength
-  xml2::xml_attr(ms1_nodes, "lowMz") <- ms1_minified$minmz
-  xml2::xml_attr(ms1_nodes, "highMz") <- ms1_minified$maxmz
-  xml2::xml_attr(ms1_nodes, "basePeakMz") <- ms1_minified$bpmz
-  xml2::xml_attr(ms1_nodes, "basePeakIntensity") <- ms1_minified$bpint
-  xml2::xml_attr(ms1_nodes, "totIonCurrent") <- ms1_minified$ticur
+    xml2::xml_attr(ms1_nodes, "peaksCount") <- ms1_minified$arraylength
+    xml2::xml_attr(ms1_nodes, "lowMz") <- ms1_minified$minmz
+    xml2::xml_attr(ms1_nodes, "highMz") <- ms1_minified$maxmz
+    xml2::xml_attr(ms1_nodes, "basePeakMz") <- ms1_minified$bpmz
+    xml2::xml_attr(ms1_nodes, "basePeakIntensity") <- ms1_minified$bpint
+    xml2::xml_attr(ms1_nodes, "totIonCurrent") <- ms1_minified$ticur
+  }
 
 
   # MS2 things
@@ -641,6 +702,20 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_exclude=NULL,
 
 
 # Helper functions ----
+rt_bounds <- function(rt_min, rt_max){
+  if(is.null(rt_min)) rt_min <- -Inf
+  if(is.null(rt_max)) rt_max <- Inf
+  for(rt_val in list(rt_min, rt_max)){
+    if(!is.numeric(rt_val) || length(rt_val)!=1 || is.na(rt_val)){
+      stop("`rt_min` and `rt_max` must each be a single number (in minutes)")
+    }
+  }
+  if(rt_min>rt_max){
+    stop("`rt_min` must be less than or equal to `rt_max`")
+  }
+  c(rt_min, rt_max)
+}
+
 #' Convert from compressed binary to R numeric vector
 #'
 #' @param mzint_nodes The XML nodes containing the compressed binary string

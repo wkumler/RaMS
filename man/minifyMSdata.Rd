@@ -10,6 +10,8 @@ minifyMSdata(
   mz_exclude = NULL,
   mz_include = NULL,
   ppm = NULL,
+  rt_min = NULL,
+  rt_max = NULL,
   warn = TRUE,
   prefilter = -1,
   verbosity = NULL
@@ -29,7 +31,14 @@ m/z window of +/- `ppm` is calculated, and all data points within that window ar
 must be used with the `ppm` argument and should not be used with mz_exclude. For each mass provided, an
 m/z window of +/- `ppm` is calculated, and all data points within that window are kept.}
 
-\item{ppm}{The parts-per-million error of the instrument used to collect the original file.}
+\item{ppm}{The parts-per-million error of the instrument used to collect the original file.
+Required when using mz_include or mz_exclude.}
+
+\item{rt_min}{A single number giving the minimum retention time (in minutes) to include.
+Entire scans with retention times below this value will be removed.}
+
+\item{rt_max}{A single number giving the maximum retention time (in minutes) to include.
+Entire scans with retention times above this value will be removed.}
 
 \item{warn}{Boolean. Should the function warn the user when removing an index from an mzML file?}
 

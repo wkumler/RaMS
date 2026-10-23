@@ -671,14 +671,14 @@ editMSfileRTs <- function(files, new_rt_list, new_filenames=NULL,
 editMzmlRTs <- function(filename, output_filename, new_rts, interp_method="linear"){
   xml_data <- xml2::read_xml(filename)
   checkFileType(xml_data, "mzML")
-  scan_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level"]]'
+  scan_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level"] or ',
+                       'd1:cvParam[@accession="MS:1000579"]]')
   scan_nodes <- xml2::xml_find_all(xml_data, scan_xpath)
 
   if(length(scan_nodes)==length(new_rts)){
     new_rt_vals <- new_rts
   } else {
-    ms1_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level" and @value="1"]]'
-    ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
+    ms1_nodes <- xml2::xml_find_all(xml_data, mzml_ms1_xpath)
 
     if(length(ms1_nodes)!=length(new_rts)){
       stop_msg <- paste0(

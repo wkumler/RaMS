@@ -291,9 +291,13 @@ grabMzmlMetadata <- function(xml_data){
 
   mslevel_xpath <- '//d1:spectrum/d1:cvParam[@name="ms level"]'
   mslevel_nodes <- xml2::xml_find_all(xml_data, xpath = mslevel_xpath)
-  if(length(mslevel_nodes)>0){
-    ms_levels <- paste0("MS", unique(xml2::xml_attr(mslevel_nodes, "value")),
-                      collapse = ", ")
+  ms_level_vals <- unique(xml2::xml_attr(mslevel_nodes, "value"))
+  ms1_flag_xpath <- '//d1:spectrum/d1:cvParam[@accession="MS:1000579"]'
+  if(length(xml2::xml_find_all(xml_data, ms1_flag_xpath))>0){
+    ms_level_vals <- union("1", ms_level_vals)
+  }
+  if(length(ms_level_vals)>0){
+    ms_levels <- paste0("MS", ms_level_vals, collapse = ", ")
   } else {
     ms_levels <- "None found"
   }
@@ -466,7 +470,7 @@ grabMzmlEncodingData <- function(xml_data){
 #' @return A `data.table` with columns for retention time (rt), m/z (mz), and
 #'   intensity (int).
 grabMzmlMS1 <- function(xml_data, rtrange, file_metadata, prefilter, incl_polarity){
-  ms1_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level" and @value="1"]]'
+  ms1_xpath <- mzml_ms1_xpath
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
   if(!length(ms1_nodes)){
     if(incl_polarity){
@@ -657,9 +661,8 @@ grabMzmlMS3 <- function(xml_data, rtrange, file_metadata, incl_polarity){
 #' @return A `data.table` with columns for retention time (rt), and intensity
 #'   (int).
 grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE, incl_polarity){
-  ms1_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
-                      '@value="1"]][d1:cvParam[@name="base peak intensity"]]')
-
+  ms1_xpath <- paste0(mzml_ms1_xpath,
+                      '[d1:cvParam[@name="base peak intensity"]]')
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
 
   rt_vals <- grabSpectraRt(ms1_nodes)
@@ -916,3 +919,6 @@ shrinkRTrangemzML <- function(xml_nodes, rtrange){
   }
   xml_nodes[rt_vals%between%rtrange]
 }
+
+mzml_ms1_xpath <- paste0('//d1:spectrum[d1:cvParam[@accession="MS:1000579"] or ',
+                         'd1:cvParam[@accession="MS:1000511" and @value="1"]]')
