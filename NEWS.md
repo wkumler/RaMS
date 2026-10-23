@@ -1,4 +1,5 @@
 # RaMS (development version)
+ - `minifyMSdata()` can now drop whole scans outside a retention-time window with `rt_min` and `rt_max`; `ppm` is only required for m/z filtering.
  - mzML files that mark MS1 spectra with `MS:1000579` instead of `ms level`, such as Bruker exports, now return MS1, BPC and TIC data instead of empty tables (#50).
 
 # RaMS 1.4.3 (patch)

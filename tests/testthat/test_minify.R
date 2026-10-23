@@ -229,3 +229,33 @@ test_that("Mini data has points only within bounds", {
 
 unlink(output_filename)
 unlink(output_dir)
+
+# RT filter tests ----
+rt_window <- c(47, 48)
+for(filename in c(mzML_filenames[1], mzXML_filenames[1])){
+  output_filename <- file.path(tempdir(), sub("\\.gz$", "", basename(filename)))
+  suppressWarnings(minifyMSdata(filename, output_filename, rt_min = rt_window[1],
+                                rt_max = rt_window[2], warn = FALSE))
+  full_data <- grabMSdata(filename, grab_what = c("MS1", "MS2"))
+  mini_data <- grabMSdata(output_filename, grab_what = c("MS1", "MS2"))
+
+  test_that("RT filter keeps only scans inside the window", {
+    expect_true(all(mini_data$MS1$rt%between%rt_window))
+    expect_true(all(mini_data$MS2$rt%between%rt_window))
+    expect_equal(nrow(mini_data$MS1),
+                 nrow(full_data$MS1[rt%between%rt_window]))
+    expect_equal(nrow(mini_data$MS2),
+                 nrow(full_data$MS2[rt%between%rt_window]))
+  })
+  unlink(output_filename)
+}
+
+test_that("RT filter checks its bounds", {
+  output_filename <- file.path(tempdir(), "mini_rt.mzML")
+  expect_error(minifyMSdata(mzML_filenames[1], output_filename,
+                            rt_min = 10, rt_max = 5), "rt_min")
+  expect_error(minifyMSdata(mzML_filenames[1], output_filename,
+                            rt_min = c(1, 2)), "single number")
+  expect_error(minifyMSdata(mzML_filenames[1], output_filename,
+                            rt_max = "5"), "single number")
+})
